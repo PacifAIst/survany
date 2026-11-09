@@ -21,7 +21,8 @@
     "check": "pnpm check:gates && pnpm check:licenses && pnpm check:alarms",
     "gen-secrets": "node scripts/gen-secrets.ts",
     "doctor": "node scripts/doctor.ts",
-    "secrets:scan": "gitleaks git --redact --no-banner --config .gitleaks.toml --log-opts=--all ."
+    "secrets:scan": "gitleaks git --redact --no-banner --config .gitleaks.toml --log-opts=--all .",
+    "bench": "node bench/generate-benchmarks.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.37.0",

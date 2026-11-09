@@ -28,6 +28,10 @@ function sha256(buf: Buffer): string {
 }
 
 async function obtain(e: Entry): Promise<Buffer> {
+  if (e.source.startsWith('repo:')) {
+    // A model trained in this repository (models/fire-smoke): copied from the working tree, then checksum-verified.
+    return readFileSync(join(repoRoot, e.source.slice(5)));
+  }
   if (e.source.startsWith('npm:')) {
     const spec = e.source.slice(4); // onnxruntime-web@1.30.0/dist/file
     const [pkgAndVersion, ...rest] = spec.split('/');
