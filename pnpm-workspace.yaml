@@ -1,0 +1,9 @@
+packages:
+  - packages/*
+  - apps/*
+
+# Supply-chain guard: never resolve a version published in the last 14 days.
+minimumReleaseAge: 20160
+
+onlyBuiltDependencies:
+  - esbuild

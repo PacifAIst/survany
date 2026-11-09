@@ -1,0 +1,11 @@
+{
+  "id": "3d-print-failure",
+  "title": "3D print failure",
+  "description": "No visual trigger reliably precedes a failure, so the model is asked on a schedule under budget.",
+  "gate": { "type": "sampled", "everyMinutes": 10 },
+  "confirm": {
+    "prompt": "Does this 3D printer show a failed print: spaghetti-like loose filament, a part detached from the bed, a blob on the nozzle, or layers clearly shifted?",
+    "framesPerCheck": 1
+  },
+  "severity": "warning"
+}

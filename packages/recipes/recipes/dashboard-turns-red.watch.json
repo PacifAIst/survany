@@ -1,0 +1,11 @@
+{
+  "id": "dashboard-turns-red",
+  "title": "Dashboard turns red",
+  "description": "Draw the region over the panel you care about. Ideal for Grafana boards, HMIs and status pages.",
+  "gate": { "type": "region-diff", "region": { "x": 0, "y": 0, "w": 1, "h": 1 }, "mode": "color-shift", "targetColor": "red", "threshold": 0.05 },
+  "confirm": {
+    "prompt": "Does this dashboard show an alert, error or failure state (for example red panels, a firing alert or a status marked down)?",
+    "framesPerCheck": 1
+  },
+  "severity": "warning"
+}

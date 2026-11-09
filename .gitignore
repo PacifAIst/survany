@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+*.log
+.env
+deploy/.env
+deploy/data/
+apps/backend/data/
+playwright-report/
+test-results/
+.vite/
+*.tsbuildinfo
+# Downloaded at build time and verified against models/checksums.json (SG-26)
+apps/extension/public/models/*.onnx
+apps/extension/public/ort/
+bench/reports/*.raw.json
+release/

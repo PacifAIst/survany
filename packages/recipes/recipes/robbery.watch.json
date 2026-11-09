@@ -1,0 +1,18 @@
+{
+  "id": "robbery",
+  "title": "Robbery or break-in",
+  "description": "A person plus motion opens the gate; a visible knife is passed to the model as extra context. Four frames, because one frame rarely shows intent.",
+  "gate": {
+    "type": "detector",
+    "model": "yolox-tiny-coco",
+    "classes": ["person", "knife"],
+    "requireClasses": ["person"],
+    "requireMotion": true,
+    "minConfidence": 0.6
+  },
+  "confirm": {
+    "prompt": "These frames are in time order. Do they show a robbery, forced entry or someone threatening others with a weapon? Ordinary visitors, staff and customers are not a robbery.",
+    "framesPerCheck": 4
+  },
+  "severity": "critical"
+}

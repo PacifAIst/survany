@@ -1,0 +1,10 @@
+{
+  "id": "water-leak",
+  "title": "Water leak",
+  "gate": { "type": "sampled", "everyMinutes": 15 },
+  "confirm": {
+    "prompt": "Is there water pooling on the floor, dripping from pipes or ceilings, or spreading from an appliance?",
+    "framesPerCheck": 1
+  },
+  "severity": "critical"
+}

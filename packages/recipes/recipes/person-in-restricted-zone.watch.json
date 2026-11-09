@@ -1,0 +1,11 @@
+{
+  "id": "person-in-restricted-zone",
+  "title": "Person in restricted zone",
+  "description": "Draw the region over the zone. Detection only; nobody is identified.",
+  "gate": { "type": "detector", "model": "yolox-tiny-coco", "classes": ["person"], "minConfidence": 0.6, "region": { "x": 0.5, "y": 0, "w": 0.5, "h": 1 } },
+  "confirm": {
+    "prompt": "Is any person standing or moving inside the marked restricted area of this scene?",
+    "framesPerCheck": 1
+  },
+  "severity": "warning"
+}

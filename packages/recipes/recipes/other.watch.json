@@ -1,0 +1,10 @@
+{
+  "id": "other",
+  "title": "Anything unusual",
+  "gate": { "type": "motion", "pixelDelta": 25, "threshold": 0.08 },
+  "confirm": {
+    "prompt": "Is anything happening in this scene that looks unsafe, broken or urgent enough that the owner should be told now? Normal movement is not enough.",
+    "framesPerCheck": 1
+  },
+  "severity": "warning"
+}

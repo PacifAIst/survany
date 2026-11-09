@@ -1,0 +1,10 @@
+{
+  "id": "fire",
+  "title": "Fire or smoke",
+  "gate": { "type": "detector", "model": "fire-smoke-yolox-tiny", "classes": ["fire", "smoke"], "minConfidence": 0.6 },
+  "confirm": {
+    "prompt": "Is there visible fire or smoke indicating a real hazard? Ignore candles, normal stove use and screens showing fire.",
+    "framesPerCheck": 1
+  },
+  "severity": "critical"
+}

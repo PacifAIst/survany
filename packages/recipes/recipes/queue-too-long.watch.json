@@ -1,0 +1,10 @@
+{
+  "id": "queue-too-long",
+  "title": "Queue too long",
+  "gate": { "type": "detector", "model": "yolox-tiny-coco", "classes": ["person"], "minCount": 6, "minConfidence": 0.5 },
+  "confirm": {
+    "prompt": "Is there a queue of roughly six or more people waiting in line? Count only people who appear to be waiting.",
+    "framesPerCheck": 1
+  },
+  "severity": "info"
+}

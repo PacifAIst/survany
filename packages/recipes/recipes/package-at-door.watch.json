@@ -1,0 +1,10 @@
+{
+  "id": "package-at-door",
+  "title": "Package left at the door",
+  "gate": { "type": "motion", "pixelDelta": 25, "threshold": 0.03 },
+  "confirm": {
+    "prompt": "Compare the two frames in time order. Was a parcel, box or delivery bag left on the ground in the second frame that was not there before?",
+    "framesPerCheck": 2
+  },
+  "severity": "info"
+}
