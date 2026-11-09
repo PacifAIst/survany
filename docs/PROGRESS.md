@@ -2,7 +2,7 @@
 
 **Goal:** v1.0 as defined at the end of §8 of docs/PLAN.md
 **Current milestone:** M5 / M6 (finishing), then M7
-**Last updated:** 2026-11-09 10:25
+**Last updated:** 2026-11-09 13:40
 
 ## Milestones
 | ID | Status (todo/doing/done) | Acceptance evidence | Notes |
@@ -79,6 +79,7 @@
 - [ ] **Telegram bot.** Create a bot with @BotFather, set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_BOT_USERNAME` in `deploy/.env`.
 - [ ] **Public deployment (M5).** VPS with DNS for `PUBLIC_HOST` and `LIVE_HOST`, open 80/443, 3478/tcp, 10000/tcp and 10000-10003/udp; `OME_HOST_IP` = public IP. Then the Mini App on real iOS and Android, and one viewer on mobile data (CGNAT); record the reported candidate type for D11.
 - [ ] **Chrome Web Store account (M8).**
+- [ ] **Close GitHub secret-scanning alert #1** (Security → Secret scanning) with reason **"Used in tests"**. The flagged value was a fabricated fixture, never a BotFather-issued token, so there was nothing to revoke. It has been scrubbed from history (verified: no token-shaped literal in any revision; gitleaks clean over all refs).
 
 ## Decisions and deviations from PLAN.md
 | Date | Change | Why | Reversible? |
@@ -95,6 +96,7 @@
 | 2026-11-09 | Viewer CSP lives only in the Caddy header (`LIVE_CONNECT_SRC` env), not a `<meta>` tag; `style-src` allows `'unsafe-inline'` on the viewer because OvenPlayer sets inline styles. Scripts stay `'self'` + telegram.org. | Found in the real-OME M5 test. | Yes |
 | 2026-11-09 | Viewer waits out the remainder of the 5 s start budget measured from ingest admission (`liveForMs` in the grant), not only when `live` is false. | Real OME creates the playable output at the first keyframe (~1.3 s after admission); an instant viewer got 404 "Cannot create offer". | Yes |
 | 2026-11-09 | ORT loads through its extern-WASM entry (`onnxruntime-web-use-extern-wasm`) with `numThreads = 1`; jsep `.wasm` and `.mjs` are checksummed in `models/checksums.json`. | Avoids Vite emitting a second, unchecked 28 MB WASM; offscreen documents are not cross-origin isolated. | Yes |
+| 2026-11-09 | **History rewritten** with `git filter-repo --replace-text` and force-pushed (`main` ad361f9 → 72be6c1; all 4 commits re-hashed, `cla-signatures` unchanged). Token-shaped test fixtures replaced by obvious placeholders; gitleaks pre-commit hook (`.githooks/`, enabled by `pnpm install`) and a `secrets` CI job (gitleaks 8.30.1, checksum-pinned, full history, `.gitleaks.toml` adds a bare Telegram-token rule). | GitHub secret scanning alert #1 (telegram_bot_token) on a fabricated fixture in `apps/backend/test/helpers.ts`; a second token-shaped fixture in `packages/shared/test/security.test.ts` (since the first commit) was scrubbed too. The value was never an issued credential. | No (old SHAs are gone from the repo; clones made before 13:35 must re-clone or `git reset --hard origin/main`) |
 | 2026-11-09 | Backend data lives in named Docker volumes (`backend-data`, `caddy-data`, `gate-data`) and the image creates `/data` owned by `node`. | A root-owned bind mount made the backend fail to reopen its database after a restart (found in M5). | Yes |
 
 ## External facts checked
@@ -110,6 +112,10 @@
 | 2026-11-09 | Container images | Docker Hub | Pinned digests: OME v0.21.0 `sha256:172da912…`, caddy 2.10.2-alpine `sha256:4c6e91c6…`, mailpit v1.27 `sha256:e22dce5b…`, node 24-alpine `sha256:a34ab6d7…`, python 3.13-slim `sha256:e48f59cd…`. |
 
 ## Session log (newest first)
+### 2026-11-09 13:35: secret-scanning remediation
+- Done: replaced token-shaped fixtures (`TEST_BOT_TOKEN_NOT_REAL`, `whsec_test_not_real`, `ome_secret_test_not_real`, `m5_*_not_real`; the redaction test builds its token at runtime); `.gitleaks.toml` with a bare Telegram-token rule (default gitleaks rules missed it); `.githooks/pre-commit`; `secrets.yml` CI job; rewrote history with git-filter-repo 2.47.0 and force-pushed with `--force-with-lease` pinned to ad361f9.
+- Verified: custom rule flags a synthetic bare token that default rules miss; the hook blocked a staged token (exit 1); `git grep` over every revision finds no old literal and no `\d{8,10}:[A-Za-z0-9_-]{35}` string; `gitleaks git --log-opts=--all` → 5 commits, no leaks; `pnpm vitest run` → 202 passed before and after the rewrite; real-OME M5 suite 5/5 with the renamed compose secrets; CI `ci` and `secrets` both green on 72be6c1.
+- Note: GitHub still serves the old commit by direct SHA until it garbage-collects unreachable objects; irrelevant for a fabricated value.
 ### 2026-11-09 (later): M1–M6 implementation and verification
 - Done: extension (offscreen capture, Worker scan loop, YOLOX via ORT with checksums, gates, state machine, budget, guardedFetch, outbox, T0 direct senders, popup, consent, camera grant, pairing, Options); backend (pairing, contacts, events, parallel dispatcher + durable outbox, Telegram webhook, ack + escalation, dead-man, OME admission + forward_auth, viewer Telegram/email flows, PIN with lockout, clips, proxy with SSRF guard, approvals with confirm-gate client, audit hash chain, retention); viewer (metadata render, PIN flow, OvenPlayer ladder, shell SW); deploy (compose with pinned digests, Caddyfile, OME Server.xml, gate container, env template).
 - Bugs found by tests and fixed: lost-update race in SW storage (e2e); emergency-ban bypass via `call_police` underscore; confirm-gate replay rejection of identical GET signatures; OME protocol casing; viewer start-budget race; root-owned data volume; `URL.origin` "null" for chrome-extension URLs in the asset guard.
