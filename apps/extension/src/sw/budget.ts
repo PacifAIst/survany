@@ -115,4 +115,38 @@ export class BudgetLedger {
   get snapshot(): Readonly<BudgetState> {
     return this.state;
   }
+
+  /** What the Options page and popup show: today's use against each limit, and when the day resets (UTC). */
+  report(): BudgetReport {
+    this.roll();
+    const t = this.now();
+    const next = new Date(t);
+    next.setUTCHours(24, 0, 0, 0);
+    const blockedBy = this.state.dayCalls >= this.limits.dailyMaxApiCalls ? 'day-calls' : this.state.dayTokens >= this.limits.dailyTokenCap ? 'day-tokens' : null;
+    return {
+      day: this.state.day,
+      dayCalls: this.state.dayCalls,
+      dailyMaxApiCalls: this.limits.dailyMaxApiCalls,
+      dayTokens: this.state.dayTokens,
+      dailyTokenCap: this.limits.dailyTokenCap,
+      minuteCalls: this.state.minute.length,
+      maxCallsPerMinute: this.limits.maxCallsPerMinute,
+      exhausted: blockedBy !== null,
+      blockedBy,
+      resetsAt: next.toISOString(),
+    };
+  }
+}
+
+export interface BudgetReport {
+  day: string;
+  dayCalls: number;
+  dailyMaxApiCalls: number;
+  dayTokens: number;
+  dailyTokenCap: number;
+  minuteCalls: number;
+  maxCallsPerMinute: number;
+  exhausted: boolean;
+  blockedBy: 'day-calls' | 'day-tokens' | null;
+  resetsAt: string;
 }

@@ -15,9 +15,11 @@ import {
   type Notice,
   PairDeviceResponseSchema,
   type ProposeResponse,
+  type ProxyProbeRequest,
   ProposeResponseSchema,
   type ProxyAnalyzeRequest,
 } from '@survey-anything/shared';
+import type { ProbeResult } from '@survey-anything/providers';
 import type { z } from 'zod';
 import type { FrameKind } from './guarded-fetch';
 import type { ClipPayload } from './messages';
@@ -131,6 +133,11 @@ export class BackendClient {
   async proxyAnalyze(req: ProxyAnalyzeRequest): Promise<{ result: DetectionResult; usage: { inputTokens: number; outputTokens: number } }> {
     const res = await this.request('/api/proxy/analyze', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(req) }, 'provider-frame');
     return (await res.json()) as { result: DetectionResult; usage: { inputTokens: number; outputTokens: number } };
+  }
+
+  async proxyProbe(req: ProxyProbeRequest): Promise<ProbeResult> {
+    const res = await this.request('/api/proxy/probe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(req) }, 'none');
+    return (await res.json()) as ProbeResult;
   }
 
   actionTools(): Promise<ActionToolsResponse> {

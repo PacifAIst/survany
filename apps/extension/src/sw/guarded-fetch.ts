@@ -13,7 +13,13 @@ export type FetchPurpose =
   | 'telegram-direct' // T0 Telegram Bot API
   | 'email-direct'; // T0 HTTP mail API
 
-export type FrameKind = 'none' | 'alert-media' | 'provider-frame';
+/**
+ * - none: no image bytes allowed in the body
+ * - alert-media: snapshots and clips for alerts (needs egress.alertMedia)
+ * - provider-frame: captured frames for a model call
+ * - synthetic-probe: the C26 probe image (a rendered code, never captured pixels); Test Connection only
+ */
+export type FrameKind = 'none' | 'alert-media' | 'provider-frame' | 'synthetic-probe';
 
 export interface GuardContext {
   purpose: FetchPurpose;
@@ -60,9 +66,11 @@ export function egressDecision(url: string, init: RequestInit, ctx: GuardContext
   if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return `scheme ${parsed.protocol} not allowed`;
   const local = isLocalUrl(url);
 
-  if (ctx.purpose === 'provider' && !cfg.allowCloudProviders && !local) {
+  if ((ctx.purpose === 'provider' || ctx.purpose === 'probe') && !cfg.allowCloudProviders && !local) {
     return `allowCloudProviders is false and ${parsed.hostname} is not a loopback or RFC 1918 host`;
   }
+  if (ctx.frames === 'synthetic-probe' && ctx.purpose !== 'probe') return 'the synthetic probe image may only go to a provider being tested';
+  if (ctx.purpose === 'probe' && ctx.frames !== 'synthetic-probe' && ctx.frames !== 'none') return 'a probe may carry only the synthetic probe image';
   if (ctx.purpose === 'provider' && cfg.proxyMode && !(cfg.backend.url && url.startsWith(cfg.backend.url))) {
     return 'proxyMode is on: provider calls must go through the backend';
   }

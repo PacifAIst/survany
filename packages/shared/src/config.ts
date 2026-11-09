@@ -40,6 +40,8 @@ export const ProviderProfileSchema = z
 export type ProviderProfile = z.infer<typeof ProviderProfileSchema>;
 
 const PrimaryProviderSchema = ProviderProfileSchema.extend({ id: ProviderIdSchema }).strict();
+/** A provider profile with its id, as Test Connection sends it. */
+export const ResolvedProfileSchema = PrimaryProviderSchema;
 
 const RoleSchema = z.enum(['viewer', 'approver']);
 

@@ -9,7 +9,7 @@
     "build": "tsc -p tsconfig.json && vite build",
     "build:e2e": "vite build --mode e2e",
     "typecheck": "tsc -p tsconfig.json",
-    "e2e": "playwright test -c e2e/playwright.config.ts"
+    "e2e": "vite build --mode e2e && playwright test -c e2e/playwright.config.ts"
   },
   "dependencies": {
     "@survey-anything/providers": "workspace:*",

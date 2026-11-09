@@ -2,12 +2,13 @@
  * Service worker entry (§4.1). Listeners are registered synchronously at top level so a restarted
  * worker receives the event that woke it. No state lives in memory.
  */
-import { createProvider } from '@survey-anything/providers';
-import { type Config, parseConfig, resolveProfile, type ProviderId } from '@survey-anything/shared';
+import { createProvider, type ProbeResult } from '@survey-anything/providers';
+import { parseConfig, type ResolvedProfile, ResolvedProfileSchema } from '@survey-anything/shared';
 import { BudgetLedger } from './budget';
+import { createGuardedFetch, type PolicyConfig } from './guarded-fetch';
 import { HEARTBEAT_ALARM, ensureHeartbeatAlarm, sendHeartbeat } from './heartbeat';
 import { isFromExtension, type PopupStatus, type ToSw } from './messages';
-import { guardedFetch, backendClient } from './runtime';
+import { backendClient } from './runtime';
 import {
   arm,
   disarm,
@@ -62,16 +63,30 @@ function osForProbe(os: string): 'mac' | 'windows' | 'linux' {
   return 'linux';
 }
 
-async function probeProvider(config: Config, id: ProviderId): Promise<unknown> {
-  const p = resolveProfile(config, id);
-  if (!p?.model) return { ok: false, error: 'no model selected', supportsVision: false };
+function failedProbe(error: string, hint: string | null = null): ProbeResult {
+  return { ok: false, supportsVision: false, latencyMs: 0, expected: '', got: null, error, hint };
+}
+
+/**
+ * C26 probe of one provider profile, under the policy of the configuration being edited (not the stored
+ * one, which may not exist yet or may still forbid the cloud host the user is setting up). The request
+ * carries only the synthetic code image. In proxy mode the backend runs the probe with its own key.
+ */
+async function probeProfile(policy: PolicyConfig, p: ResolvedProfile): Promise<ProbeResult> {
+  if (!p.model) return failedProbe('no model selected');
+  if (policy.proxyMode) {
+    const backend = await backendClient();
+    if (!backend) return failedProbe('proxy mode needs a paired backend');
+    return backend.proxyProbe({ providerId: p.id, baseUrl: p.baseUrl, model: p.model }).catch((e: unknown) => failedProbe(e instanceof Error ? e.message : String(e)));
+  }
+  const gf = createGuardedFetch(async () => policy);
   const provider = createProvider({
     id: p.id,
     baseUrl: p.baseUrl,
     model: p.model,
     apiKey: await store.secret(p.apiKeyRef),
     timeoutMs: p.timeoutMs,
-    fetchFn: (url, init) => guardedFetch(url, init, { purpose: 'provider', frames: 'provider-frame' }),
+    fetchFn: (url, init) => gf(url, init, { purpose: 'probe', frames: 'synthetic-probe' }),
     directBrowser: true,
   });
   const platform = await chrome.runtime.getPlatformInfo();
@@ -89,11 +104,7 @@ async function status(): Promise<PopupStatus> {
   ]);
   const { config, errors } = await store.loadConfig();
   const off = armed.armed ? await offscreenStatus() : null;
-  let budget = { dayCalls: 0, dailyMax: 0, exhausted: false };
-  if (config) {
-    const ledger = await BudgetLedger.load(config.budget, () => store.get('budget'), async () => undefined);
-    budget = { dayCalls: ledger.snapshot.dayCalls, dailyMax: config.budget.dailyMaxApiCalls, exhausted: ledger.exhausted };
-  }
+  const budget = config ? (await BudgetLedger.load(config.budget, () => store.get('budget'), async () => undefined)).report() : null;
   return {
     consented: consentAt !== null,
     cameraGranted,
@@ -122,9 +133,15 @@ async function handle(msg: ToSw): Promise<unknown> {
       await stopStream();
       return status();
     case 'test-provider': {
-      const { config, errors } = await store.loadConfig();
-      if (!config) return { ok: false, error: errors.join('; ') };
-      return probeProvider(config, msg.providerId as ProviderId);
+      // Test Connection never saves the draft: it sends the profile and the draft's two policy switches.
+      const p = ResolvedProfileSchema.safeParse(msg.profile);
+      if (!p.success) return failedProbe(`profile invalid: ${p.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`);
+      const { config } = await store.loadConfig();
+      return probeProfile({ allowCloudProviders: msg.allowCloudProviders, proxyMode: msg.proxyMode, egress: { alertMedia: false, liveView: false }, backend: config?.backend ?? { url: null } }, p.data);
+    }
+    case 'action-tools': {
+      const backend = await backendClient();
+      return backend ? backend.actionTools() : null;
     }
     case 'save-config': {
       const r = parseConfig(msg.config);
@@ -132,10 +149,10 @@ async function handle(msg: ToSw): Promise<unknown> {
       // §6.1: refuse to save a Vision provider that fails the probe; re-probe when base URL or model changes.
       if (r.config.vision.enableVision) {
         const p = r.config.provider;
-        const key = `${p.id}|${p.baseUrl}|${p.model ?? ''}`;
+        const key = `${p.id}|${p.baseUrl}|${p.model ?? ''}|${r.config.proxyMode ? 'proxy' : 'direct'}`;
         const probed = (await chrome.storage.local.get('probedVision'))['probedVision'] as string | undefined;
         if (probed !== key) {
-          const res = (await probeProvider(r.config, p.id)) as { ok: boolean; error?: string; hint?: string };
+          const res = await probeProfile(r.config, { ...p });
           if (!res.ok) return { ok: false, errors: [`Vision provider failed the image probe: ${res.error ?? 'unknown error'}`], hint: res.hint ?? null };
           await chrome.storage.local.set({ probedVision: key });
         }

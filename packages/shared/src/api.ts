@@ -153,6 +153,16 @@ export const ProposeResponseSchema = z.union([
 ]);
 export type ProposeResponse = z.infer<typeof ProposeResponseSchema>;
 
+/** proxyMode Test Connection: the backend renders the probe image and calls the provider with its own key. */
+export const ProxyProbeRequestSchema = z
+  .object({
+    providerId: z.enum(['anthropic', 'openai', 'openrouter', 'deepseek', 'local']),
+    baseUrl: z.string().url(),
+    model: z.string().min(1).max(200),
+  })
+  .strict();
+export type ProxyProbeRequest = z.infer<typeof ProxyProbeRequestSchema>;
+
 export const ProxyAnalyzeRequestSchema = z
   .object({
     providerId: z.enum(['anthropic', 'openai', 'openrouter', 'deepseek', 'local']),

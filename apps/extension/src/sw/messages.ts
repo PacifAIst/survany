@@ -1,5 +1,6 @@
 /** Runtime messages between the service worker, the offscreen document and extension pages. JSON only (C4). */
 import type { GateInfo, ScanSetup, TickStats } from '../worker/protocol';
+import type { BudgetReport } from './budget';
 
 export type SourceSpec =
   | { kind: 'tab'; streamId: string; tabId: number; label: string }
@@ -59,7 +60,8 @@ export type ToSw =
   | { target: 'sw'; type: 'disarm' }
   | { target: 'sw'; type: 'get-status' }
   | { target: 'sw'; type: 'stop-stream' }
-  | { target: 'sw'; type: 'test-provider'; providerId: string }
+  | { target: 'sw'; type: 'test-provider'; profile: unknown; allowCloudProviders: boolean; proxyMode: boolean }
+  | { target: 'sw'; type: 'action-tools' }
   | { target: 'sw'; type: 'save-config'; config: unknown }
   | { target: 'sw'; type: 'send-test-alert'; contactId: string }
   | { target: 'sw'; type: 'debug-stats' }
@@ -72,7 +74,7 @@ export interface PopupStatus {
   source: { kind: SourceSpec['kind']; label: string } | null;
   lastTickAt: number | null;
   streaming: { recipients: string[]; since: number } | null;
-  budget: { dayCalls: number; dailyMax: number; exhausted: boolean };
+  budget: BudgetReport | null;
   configErrors: string[];
   notices: string[];
   backendPaired: boolean;

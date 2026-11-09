@@ -49,6 +49,23 @@ describe('per-rule state machine (§6.4)', () => {
   });
 });
 
+describe('budget report for the Options page (M3)', () => {
+  it('reports use against each limit, which limit blocked, and the next UTC midnight', async () => {
+    const limits = { maxCallsPerMinute: 5, dailyMaxApiCalls: 2, dailyTokenCap: 10_000, hardStopOnBudget: true as const };
+    let st: BudgetState = { day: '', dayCalls: 0, dayTokens: 0, minute: [], noticeDay: null, freeDayCalls: 0 };
+    const now = () => Date.parse('2026-11-09T21:30:00Z');
+    const l = await BudgetLedger.load(limits, async () => st, async (s) => void (st = structuredClone(s)), now);
+    const call = { cloud: true, providerId: 'openai', model: 'm' };
+    await l.begin(call);
+    await l.addTokens(call, 1200);
+    expect(l.report()).toMatchObject({ day: '2026-11-09', dayCalls: 1, dayTokens: 1200, minuteCalls: 1, exhausted: false, blockedBy: null, resetsAt: '2026-11-10T00:00:00.000Z' });
+    await l.begin(call);
+    expect(l.report()).toMatchObject({ dayCalls: 2, exhausted: true, blockedBy: 'day-calls' });
+    await l.begin({ cloud: false, providerId: 'local', model: 'x' });
+    expect(l.report().dayCalls).toBe(2); // local calls are free and uncounted
+  });
+});
+
 describe('budget engine survives restarts and hard-stops (M3)', () => {
   const limits = { maxCallsPerMinute: 2, dailyMaxApiCalls: 3, dailyTokenCap: 1000, hardStopOnBudget: true as const };
   let saved: BudgetState | null = null;
@@ -122,6 +139,17 @@ describe('SG-14 and SG-15: guardedFetch egress policy', () => {
     expect(egressDecision('file:///etc/passwd', {}, { purpose: 'backend', frames: 'none' }, base)).toMatch(/scheme/);
   });
 
+  it('Test Connection: the synthetic probe image goes only to the provider under test, and respects allowCloudProviders', () => {
+    const png = JSON.stringify({ image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUg' });
+    const probe = { purpose: 'probe', frames: 'synthetic-probe' } as const;
+    expect(egressDecision('https://openrouter.ai/api/v1/chat/completions', { body: png }, probe, base)).toBeNull();
+    expect(egressDecision('https://openrouter.ai/api/v1/chat/completions', { body: png }, probe, { ...base, allowCloudProviders: false })).toMatch(/allowCloudProviders/);
+    expect(egressDecision('http://127.0.0.1:11434/v1/chat/completions', { body: png }, probe, { ...base, allowCloudProviders: false })).toBeNull();
+    // The probe label cannot carry captured frames, and nothing else can use the probe label.
+    expect(egressDecision('https://openrouter.ai/api/v1/chat/completions', { body: jpegBody }, { purpose: 'probe', frames: 'provider-frame' }, base)).toMatch(/only the synthetic probe/);
+    expect(egressDecision('https://api.telegram.org/botX/sendPhoto', { body: png }, { purpose: 'telegram-direct', frames: 'synthetic-probe' }, base)).toMatch(/provider being tested/);
+  });
+
   it('applyEgressPolicy strips the snapshot and live view when their flags are off', () => {
     const r = parseConfig({ ...structuredClone(EXAMPLE_CONFIG_JSON), egress: { alertMedia: false, liveView: false } });
     if (!r.ok) throw new Error(r.errors.join());
@@ -169,6 +197,21 @@ describe('SG-23: capture is video only', () => {
 });
 
 describe('Options page model', () => {
+  it('import: a single-channel file without the acknowledgement asks for it instead of failing', async () => {
+    const { importConfigJson: imp, needsNonRedundantAck } = await import('../src/options/model');
+    const single = { ...structuredClone(EXAMPLE_CONFIG_JSON), alerts: { ...EXAMPLE_CONFIG_JSON.alerts, channels: ['email'] } };
+    const r = imp(JSON.stringify(single));
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.needsAck).toBeDefined();
+    expect(needsNonRedundantAck(r.needsAck!)).toBe(false);
+    expect(parseConfig(r.needsAck).ok).toBe(true);
+    // A file with zero channels is simply refused (no acknowledgement can fix it).
+    const zero = imp(JSON.stringify({ ...single, alerts: { ...single.alerts, channels: [] } }));
+    expect(zero.ok).toBe(false);
+    if (!zero.ok) expect(zero.needsAck).toBeUndefined();
+  });
+
   it('a single channel needs the one-time acknowledgement; zero channels are refused', () => {
     const d = structuredClone(EXAMPLE_CONFIG_JSON) as unknown as Record<string, unknown>;
     const r1 = toggleChannel(d, 'email', false, false);

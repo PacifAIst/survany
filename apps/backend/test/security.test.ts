@@ -98,6 +98,15 @@ describe('SG-19 proxy SSRF guard', () => {
     });
     expect(r.statusCode).toBe(403);
   });
+
+  it('the proxy probe route needs a device, a configured key and a public target (SG-19 applies)', async () => {
+    const t = await makeApp({ tg: tg.url, env: { PROXY_KEY_OPENAI: 'sk-test-proxy-key-0000000000' }, resolver: async () => ['10.0.0.7'] });
+    const body = { providerId: 'openai', baseUrl: 'https://api.openai.com/v1', model: 'm' };
+    expect((await t.app.inject({ method: 'POST', url: '/api/proxy/probe', payload: body })).statusCode).toBe(401);
+    expect((await t.app.inject({ method: 'POST', url: '/api/proxy/probe', headers: t.auth, payload: body })).statusCode).toBe(403);
+    expect((await t.app.inject({ method: 'POST', url: '/api/proxy/probe', headers: t.auth, payload: { ...body, providerId: 'anthropic' } })).statusCode).toBe(400);
+    expect((await t.app.inject({ method: 'POST', url: '/api/proxy/probe', headers: t.auth, payload: { ...body, extra: 1 } })).statusCode).toBe(400);
+  });
 });
 
 describe('SG-22 retention and audit chain', () => {

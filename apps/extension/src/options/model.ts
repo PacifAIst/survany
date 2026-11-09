@@ -37,8 +37,20 @@ export function toggleChannel(draft: Draft, channel: 'telegram' | 'email', on: b
   return { draft: next, needsAck: false, refused: null };
 }
 
-/** Import re-runs validation (§6.2) and never accepts embedded keys (SG-21). */
-export function importConfigJson(text: string): { ok: true; config: Config; raw: Draft } | { ok: false; errors: string[] } {
+/** One alert channel and the one-time "not redundant" acknowledgement not given yet (§6.2). */
+export function needsNonRedundantAck(draft: Draft): boolean {
+  const ch = getPath(draft, 'alerts.channels');
+  return Array.isArray(ch) && ch.length === 1 && getPath(draft, 'alerts.nonRedundantAck') !== true;
+}
+
+export type ImportResult = { ok: true; config: Config; raw: Draft } | { ok: false; errors: string[]; needsAck?: Draft };
+
+/**
+ * Import re-runs validation (§6.2) and never accepts embedded keys (SG-21). A single-channel file that
+ * is valid except for the missing acknowledgement comes back as `needsAck`, so the page can ask for it
+ * once instead of showing a schema error.
+ */
+export function importConfigJson(text: string): ImportResult {
   try {
     assertNoEmbeddedSecrets(text);
   } catch (e) {
@@ -51,7 +63,12 @@ export function importConfigJson(text: string): { ok: true; config: Config; raw:
     return { ok: false, errors: ['not valid JSON'] };
   }
   const r = parseConfig(raw);
-  return r.ok ? { ok: true, config: r.config, raw: raw as Draft } : { ok: false, errors: r.errors };
+  if (r.ok) return { ok: true, config: r.config, raw: raw as Draft };
+  if (raw && typeof raw === 'object' && needsNonRedundantAck(raw as Draft)) {
+    const acked = setPath(raw as Draft, 'alerts.nonRedundantAck', true);
+    if (parseConfig(acked).ok) return { ok: false, errors: r.errors, needsAck: acked };
+  }
+  return { ok: false, errors: r.errors };
 }
 
 export function moveInList<T>(list: T[], index: number, delta: number): T[] {

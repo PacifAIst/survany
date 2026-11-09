@@ -15,8 +15,11 @@ import {
   type ProviderId,
 } from '@survey-anything/shared';
 import type { ProbeResult } from '@survey-anything/providers';
+import type { ActionToolsResponse } from '@survey-anything/shared';
+import type { BudgetReport } from '../sw/budget';
+import type { PopupStatus } from '../sw/messages';
 import { requestHost, sw } from '../ui/rpc';
-import { type Draft, getPath, importConfigJson, moveInList, omit, setPath, toggleChannel } from './model';
+import { type Draft, getPath, importConfigJson, moveInList, needsNonRedundantAck, omit, setPath, toggleChannel } from './model';
 
 type Secrets = Record<string, string>;
 
@@ -85,14 +88,17 @@ function ProviderCard(p: { id: ProviderId; path: string; draft: Draft; set: (pat
   const baseUrl = getPath(p.draft, `${p.path}.baseUrl`) as string;
   const keyRef = getPath(p.draft, `${p.path}.apiKeyRef`) as string | null;
 
+  const proxyMode = getPath(p.draft, 'proxyMode') === true;
   const test = async (): Promise<void> => {
     setBusy(true);
     setProbe(null);
     try {
-      // C9: user-typed origins need optional host permission, requested from this click.
-      if (!(await requestHost(baseUrl))) throw new Error('permission to reach this host was not granted');
-      await chrome.storage.local.set({ config: p.draft });
-      setProbe(await sw<ProbeResult>({ type: 'test-provider', providerId: p.id }));
+      // C9: user-typed origins need optional host permission, requested from this click. In proxy mode the
+      // backend calls the provider, so the browser needs no access to the provider's host.
+      if (!proxyMode && !(await requestHost(baseUrl))) throw new Error('permission to reach this host was not granted');
+      // The draft is never saved by a test: only this profile and the draft's two policy switches are sent.
+      const profile = { id: p.id, ...(getPath(p.draft, p.path) as Record<string, unknown>) };
+      setProbe(await sw<ProbeResult>({ type: 'test-provider', profile, allowCloudProviders: getPath(p.draft, 'allowCloudProviders') === true, proxyMode }));
     } catch (e) {
       setProbe({ ok: false, error: e instanceof Error ? e.message : String(e) });
     } finally {
@@ -121,12 +127,14 @@ function ProviderCard(p: { id: ProviderId; path: string; draft: Draft; set: (pat
       </label>
       <SecretField label="API key" refName={keyRef} secrets={p.secrets} onSet={p.onSecret} />
       <NumberField label="Timeout (ms, max 25000)" path={`${p.path}.timeoutMs`} draft={p.draft} set={p.set} />
-      <button disabled={busy} onClick={() => void test()}>
+      <button disabled={busy} onClick={() => void test()} aria-label={`Test connection: ${p.id}`}>
         {busy ? 'Testing…' : 'Test connection'}
       </button>
       {probe && (
-        <div class={probe.ok ? 'ok' : 'error'}>
-          {probe.ok ? `Vision OK: read the code back in ${'latencyMs' in probe ? probe.latencyMs : 0} ms` : `Failed: ${probe.error}`}
+        <div class={probe.ok ? 'ok' : 'error'} data-testid={`probe-${p.id}`} role="status">
+          {probe.ok
+            ? `Vision OK: read the code back in ${'latencyMs' in probe ? probe.latencyMs : 0} ms`
+            : `Failed: ${probe.error ?? 'unknown error'}${'expected' in probe && probe.expected ? ` (showed ${probe.expected}, read ${probe.got ?? 'nothing'})` : ''}`}
           {'hint' in probe && probe.hint && <pre>{probe.hint}</pre>}
         </div>
       )}
@@ -140,11 +148,27 @@ function Options() {
   const [imported, setImported] = useState<Recipe[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [saved, setSaved] = useState<string | null>(null);
-  const [pendingAck, setPendingAck] = useState<{ channel: 'telegram' | 'email'; on: boolean } | null>(null);
+  // The one-time "not redundant" acknowledgement (§6.2), asked when a change leaves a single alert channel.
+  const [pendingAck, setPendingAck] = useState<{ kind: 'toggle'; channel: 'telegram' | 'email'; on: boolean } | { kind: 'draft'; draft: Draft; then: 'save' | 'load' } | null>(null);
   const [raw, setRaw] = useState('');
   const [contacts, setContacts] = useState<ContactStatus[] | null>(null);
   const [invite, setInvite] = useState<string | null>(null);
   const [device, setDevice] = useState<{ deviceId: string; backendUrl: string } | null>(null);
+  const [budget, setBudget] = useState<BudgetReport | null>(null);
+  const [tools, setTools] = useState<ActionToolsResponse | null>(null);
+  const [newContact, setNewContact] = useState('');
+  const [inviteEmail, setInviteEmail] = useState<Record<string, string>>({});
+  const [importMsg, setImportMsg] = useState<string | null>(null);
+
+  const refreshStatus = async (): Promise<void> => {
+    const s = await sw<PopupStatus>({ type: 'get-status' }).catch(() => null);
+    setBudget(s?.budget ?? null);
+  };
+
+  useEffect(() => {
+    void refreshStatus();
+    void sw<ActionToolsResponse | null>({ type: 'action-tools' }).then(setTools).catch(() => setTools(null));
+  }, []);
 
   useEffect(() => {
     void (async () => {
@@ -152,7 +176,7 @@ function Options() {
       const d = s.config ?? (defaultConfigInput() as Draft);
       setDraft(d);
       setRaw(JSON.stringify(d, null, 2));
-      setSecrets(s.secrets ?? {});
+      setSecrets(Object.fromEntries(Object.keys(s.secrets ?? {}).map((k) => [k, 'set'])));
       setImported(s.importedRecipes ?? []);
       setDevice(s.device ?? null);
       if (s.device) {
@@ -177,14 +201,26 @@ function Options() {
     setSaved(null);
   };
 
+  // Page state only knows which keys are set, never their values. Merge into what is stored now, so
+  // storing one key can never overwrite another (such as the backend device token).
   const storeSecret = async (ref: string, value: string): Promise<void> => {
-    const next = { ...secrets, [ref]: value };
+    const cur = ((await chrome.storage.local.get('secrets')) as { secrets?: Secrets }).secrets ?? {};
+    const next = { ...cur, [ref]: value };
     await chrome.storage.local.set({ secrets: next });
     setSecrets(Object.fromEntries(Object.keys(next).map((k) => [k, 'set'])));
   };
 
+  const load = (d: Draft): void => {
+    setDraft(d);
+    setRaw(JSON.stringify(d, null, 2));
+  };
+
   const save = async (d: Draft = draft): Promise<void> => {
     setErrors([]);
+    if (needsNonRedundantAck(d)) {
+      setPendingAck({ kind: 'draft', draft: d, then: 'save' });
+      return;
+    }
     const pre = parseConfig(d);
     if (!pre.ok) {
       setErrors(pre.errors);
@@ -197,18 +233,34 @@ function Options() {
     }
     const r = await sw<{ ok: boolean; errors: string[]; hint?: string | null }>({ type: 'save-config', config: d });
     if (!r.ok) setErrors([...r.errors, ...(r.hint ? [r.hint] : [])]);
-    else setSaved(`Saved at ${new Date().toLocaleTimeString()}`);
+    else {
+      setSaved(`Saved at ${new Date().toLocaleTimeString()}`);
+      void refreshStatus();
+    }
+  };
+
+  /** Import and "Apply JSON" share one path: validation, the acknowledgement if needed, then load (not save). */
+  const applyImport = (text: string, source: string): void => {
+    setErrors([]);
+    const r = importConfigJson(text);
+    if (r.ok) {
+      load(r.raw);
+      setImportMsg(`${source}: valid. Press Save to use it; the Vision provider is probed again.`);
+    } else if (r.needsAck) {
+      setPendingAck({ kind: 'draft', draft: r.needsAck, then: 'load' });
+      setImportMsg(`${source}: valid, but it has a single alert channel.`);
+    } else {
+      setErrors(r.errors);
+      setImportMsg(`${source}: refused, nothing changed.`);
+    }
   };
 
   const channels = (getPath(draft, 'alerts.channels') as string[]) ?? [];
   const onChannel = (channel: 'telegram' | 'email', on: boolean, ack = false): void => {
     const r = toggleChannel(draft, channel, on, ack);
     if (r.refused) setErrors([r.refused]);
-    else if (r.needsAck) setPendingAck({ channel, on });
-    else {
-      setDraft(r.draft);
-      setRaw(JSON.stringify(r.draft, null, 2));
-    }
+    else if (r.needsAck) setPendingAck({ kind: 'toggle', channel, on });
+    else load(r.draft);
   };
 
   const chain = (getPath(draft, 'failoverChain') as ProviderId[]) ?? [];
@@ -227,20 +279,26 @@ function Options() {
     <div>
       <h1>Survey Anything settings</h1>
       {pendingAck && (
-        <div class="warn">
+        <div class="warn" role="alertdialog" aria-label="Alerts will not be redundant">
           <p>
-            <strong>Alerts will not be redundant.</strong> With one channel, an outage of that channel delays every alert until the outbox can deliver it. Continue?
+            <strong>Alerts will not be redundant.</strong> With one channel, an outage of that channel delays every alert until the outbox can deliver it. You are asked this once.
           </p>
           <button
             class="primary"
             onClick={() => {
-              onChannel(pendingAck.channel, pendingAck.on, true);
+              if (pendingAck.kind === 'toggle') onChannel(pendingAck.channel, pendingAck.on, true);
+              else {
+                const acked = setPath(pendingAck.draft, 'alerts.nonRedundantAck', true);
+                load(acked);
+                if (pendingAck.then === 'save') void save(acked);
+                else setImportMsg('Loaded with one alert channel. Press Save to use it; the Vision provider is probed again.');
+              }
               setPendingAck(null);
             }}
           >
             I understand, use one channel
           </button>{' '}
-          <button onClick={() => setPendingAck(null)}>Keep both</button>
+          <button onClick={() => setPendingAck(null)}>{pendingAck.kind === 'toggle' ? 'Keep both' : 'Cancel'}</button>
         </div>
       )}
 
@@ -281,20 +339,21 @@ function Options() {
         ))}
       </div>
       <h3>Failover chain</h3>
-      <table>
-        <tbody>
-          {chain.map((id, i) => (
-            <tr key={id}>
-              <td>{i + 1}. {id}</td>
-              <td>
-                <button onClick={() => set('failoverChain', moveInList(chain, i, -1))}>↑</button>{' '}
-                <button onClick={() => set('failoverChain', moveInList(chain, i, 1))}>↓</button>{' '}
-                <button onClick={() => set('failoverChain', chain.filter((c) => c !== id))}>Remove</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <p class="muted">Tried top to bottom. The next one is used on a timeout, 429, 5xx, 401, 402, 403 or an unreadable answer; if all fail, the alert goes out labelled unconfirmed.</p>
+      <ol data-testid="chain">
+        {chain.map((id, i) => {
+          const configured = id === primaryId || id in profiles;
+          return (
+            <li key={id} data-provider={id}>
+              <span>{id}</span>
+              {!configured && <span class="error"> (no profile: add one above)</span>}{' '}
+              <button aria-label={`Move ${id} up`} disabled={i === 0} onClick={() => set('failoverChain', moveInList(chain, i, -1))}>↑</button>{' '}
+              <button aria-label={`Move ${id} down`} disabled={i === chain.length - 1} onClick={() => set('failoverChain', moveInList(chain, i, 1))}>↓</button>{' '}
+              <button aria-label={`Remove ${id} from chain`} onClick={() => set('failoverChain', chain.filter((c) => c !== id))}>Remove</button>
+            </li>
+          );
+        })}
+      </ol>
       <div class="row">
         {[primaryId, ...Object.keys(profiles)].filter((id, i, a) => a.indexOf(id) === i && !chain.includes(id as ProviderId)).map((id) => (
           <button key={id} onClick={() => set('failoverChain', [...chain, id])}>Add {id} to chain</button>
@@ -311,7 +370,18 @@ function Options() {
           ))}
         </select>
       </label>
-      <TextField label="Model" path="reasoner.model" draft={draft} set={set} nullable />
+      <TextField label="Reasoner model" path="reasoner.model" draft={draft} set={set} nullable />
+      <p class="muted">
+        The Reasoner gets the confirmed detection and the tools your backend's policy allows, never an image. It can only propose; a person approves on Telegram.{' '}
+        {tools === null
+          ? 'Pair a backend with a gate to see its tools.'
+          : tools.enabled
+            ? `Backend offers: ${tools.tools.map((t) => t.name).join(', ') || 'no tools'}; approval window ${tools.approvalTimeoutSec} s.`
+            : 'The paired backend has no gate, so no action will be proposed.'}
+      </p>
+      {tools?.enabled && getPath(draft, 'mcp.approvalTimeoutSec') !== tools.approvalTimeoutSec && (
+        <p class="warn">The backend's approval window is {tools.approvalTimeoutSec} s but this page says {String(getPath(draft, 'mcp.approvalTimeoutSec'))} s. Make them equal (docs/MCP_PAIRING.md).</p>
+      )}
 
       <h2>Privacy and egress</h2>
       <BoolField label="Allow cloud AI providers" path="allowCloudProviders" draft={draft} set={set} hint="Off: only loopback or private-network model hosts can receive frames." />
@@ -335,6 +405,23 @@ function Options() {
       <NumberField label="Gate: out of last N frames" path="gate.windowFrames" draft={draft} set={set} />
 
       <h2>Budget</h2>
+      <div class="card" data-testid="budget">
+        {budget ? (
+          <>
+            <div>
+              Today (UTC {budget.day}): <strong>{budget.dayCalls}</strong> of {budget.dailyMaxApiCalls} cloud AI calls, <strong>{budget.dayTokens}</strong> of {budget.dailyTokenCap} tokens; {budget.minuteCalls} of {budget.maxCallsPerMinute} in the last minute. Local models are not counted.
+            </div>
+            {budget.exhausted && (
+              <div class="error" role="alert">
+                Hard stop: the daily {budget.blockedBy === 'day-tokens' ? 'token' : 'call'} limit is reached, so cloud AI calls stopped until {new Date(budget.resetsAt).toLocaleString()}. The on-device gate keeps running and alerts go out labelled unconfirmed, under cooldown.
+              </div>
+            )}
+          </>
+        ) : (
+          <div class="muted">Save a valid configuration to see today's usage.</div>
+        )}
+        <button onClick={() => void refreshStatus()}>Refresh</button>
+      </div>
       <NumberField label="Max AI calls per minute" path="budget.maxCallsPerMinute" draft={draft} set={set} />
       <NumberField label="Max AI calls per day" path="budget.dailyMaxApiCalls" draft={draft} set={set} />
       <NumberField label="Max tokens per day" path="budget.dailyTokenCap" draft={draft} set={set} />
@@ -394,13 +481,14 @@ function Options() {
                 <td>
                   {device && (
                     <>
+                      <input aria-label={`Email for ${id} (optional)`} placeholder="email (optional)" size={22} value={inviteEmail[id] ?? ''} onInput={(e) => setInviteEmail({ ...inviteEmail, [id]: (e.target as HTMLInputElement).value })} />{' '}
                       <button onClick={() => void (async () => {
                         const { BackendClient } = await import('../sw/backend-client');
                         const { guardedFetch } = await import('../sw/runtime');
-                        const email = prompt(`Email for ${id} (optional)`) ?? null;
+                        const email = (inviteEmail[id] ?? '').trim() || null;
                         const token = (await chrome.storage.local.get('secrets')) as { secrets?: Secrets };
                         const b = new BackendClient(device.backendUrl, token.secrets?.['key_device_token'] ?? '', guardedFetch);
-                        const r = await b.inviteContact({ contactId: id, roles: c.roles as ('viewer' | 'approver')[], email: email || null, channels: channels as ('telegram' | 'email')[] });
+                        const r = await b.inviteContact({ contactId: id, roles: c.roles as ('viewer' | 'approver')[], email, channels: channels as ('telegram' | 'email')[] });
                         setInvite(`Send these to ${id} out of band:\nTelegram: ${r.telegramLink ?? '(bot not configured)'}\nPIN setup: ${r.pinSetupLink}`);
                       })().catch((e: unknown) => setErrors([e instanceof Error ? e.message : String(e)]))}>Invite</button>{' '}
                       <button onClick={() => void sw<Record<string, { ok: boolean; error: string | null }>>({ type: 'send-test-alert', contactId: id }).then((r) => setInvite(`Test to ${id}: ${Object.entries(r).map(([ch, v]) => `${ch} ${v.ok ? 'OK' : `failed (${v.error})`}`).join(', ')}`)).catch((e: unknown) => setErrors([String(e)]))}>Send test alert</button>
@@ -414,10 +502,19 @@ function Options() {
         </tbody>
       </table>
       {invite && <pre class="card">{invite}</pre>}
-      <button onClick={() => {
-        const id = prompt('New contact id (letters, digits, _ or -)');
-        if (id) set(`contacts.${id}`, { roles: ['viewer'] });
-      }}>Add contact</button>
+      <div class="row">
+        <input aria-label="New contact id" placeholder="new contact id" size={20} value={newContact} onInput={(e) => setNewContact((e.target as HTMLInputElement).value)} />
+        <button
+          disabled={!/^[A-Za-z][A-Za-z0-9_-]{0,31}$/.test(newContact) || newContact in contactsCfg}
+          onClick={() => {
+            set(`contacts.${newContact}`, { roles: ['viewer'] });
+            setNewContact('');
+          }}
+        >
+          Add contact
+        </button>
+        <span class="muted">Letters, digits, _ or -, up to 32.</span>
+      </div>
       <h3>Routing</h3>
       <table>
         <tbody>
@@ -517,6 +614,7 @@ function Options() {
       )}
 
       <h2>Import, export and raw JSON</h2>
+      <p class="muted">Export never includes API keys or tokens. Import checks the file against the schema and refuses embedded keys; nothing changes until you press Save, which probes the Vision provider again.</p>
       <div class="row">
         <button onClick={() => {
           const r = parseConfig(draft);
@@ -529,34 +627,37 @@ function Options() {
           a.href = URL.createObjectURL(blob);
           a.download = 'survey-anything-config.json';
           a.click();
+          setImportMsg('Exported survey-anything-config.json (no keys).');
         }}>Export (never includes keys)</button>
-        <input type="file" accept=".json,application/json" onChange={(e) => {
-          const f = (e.target as HTMLInputElement).files?.[0];
-          if (!f) return;
-          void f.text().then((t) => {
-            const r = importConfigJson(t);
-            if (!r.ok) setErrors(r.errors);
-            else {
-              setDraft(r.raw);
-              setRaw(JSON.stringify(r.raw, null, 2));
-              setSaved('Imported. Press Save: the Vision provider is probed again.');
-            }
-          });
-        }} />
+        <label>
+          Import configuration{' '}
+          <input type="file" accept=".json,application/json" onChange={(e) => {
+            const input = e.target as HTMLInputElement;
+            const f = input.files?.[0];
+            if (!f) return;
+            void f.text().then((t) => {
+              applyImport(t, f.name);
+              input.value = '';
+            });
+          }} />
+        </label>
       </div>
+      {importMsg && <p data-testid="import-status">{importMsg}</p>}
       <details>
         <summary>Edit every key as JSON</summary>
-        <textarea rows={24} value={raw} onInput={(e) => setRaw((e.target as HTMLTextAreaElement).value)} />
-        <button onClick={() => {
-          const r = importConfigJson(raw);
-          if (!r.ok) setErrors(r.errors);
-          else setDraft(r.raw);
-        }}>Apply JSON</button>
+        <textarea aria-label="Configuration JSON" rows={24} value={raw} onInput={(e) => setRaw((e.target as HTMLTextAreaElement).value)} />
+        <button onClick={() => applyImport(raw, 'JSON editor')}>Apply JSON</button>
       </details>
 
       <div class="card" style="position:sticky;bottom:0">
-        <button class="primary" onClick={() => void save()}>Save</button> {saved && <span class="ok">{saved}</span>}
-        {errors.length > 0 && <div class="error">{errors.join('\n')}</div>}
+        <button class="primary" onClick={() => void save()}>Save</button> {saved && <span class="ok" data-testid="saved">{saved}</span>}
+        {errors.length > 0 && (
+          <ul class="error" data-testid="errors" role="alert">
+            {errors.map((e) => (
+              <li key={e}>{e}</li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

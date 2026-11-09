@@ -32,3 +32,25 @@ jobs:
       - run: pnpm test
       - name: Security gates, licenses, alarm periods
         run: pnpm check
+
+  # Browser tests against the built extension (fake camera, local model mocks; no Docker): M1 checks,
+  # M2 model loading with the network blocked, M3 Options walk-through and the allowCloudProviders
+  # network log. The Docker-backed suites (OME, confirm-gate) run locally; see docs/PROGRESS.md.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Fetch bundled models and WASM (checksum-verified, SG-26)
+        run: pnpm --filter @survey-anything/extension fetch-assets
+      - run: pnpm -r build
+      - name: Install Chromium for Playwright
+        run: pnpm --filter @survey-anything/extension exec playwright install --with-deps chromium
+      - name: Extension e2e
+        run: pnpm --filter @survey-anything/extension e2e
