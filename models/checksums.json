@@ -1,0 +1,30 @@
+{
+  "comment": "SG-26: every model and WASM file bundled in the extension. The build and the runtime both refuse a file whose SHA-256 differs.",
+  "files": [
+    {
+      "name": "yolox_tiny.onnx",
+      "path": "models/yolox_tiny.onnx",
+      "license": "Apache-2.0",
+      "sha256": "427cc366d34e27ff7a03e2899b5e3671425c262ea2291f88bb942bc1cc70b0f7",
+      "bytes": 20219662,
+      "source": "https://huggingface.co/Heliosoph/yolox-onnx/resolve/9206d80cbad9ed54986edeff8d7457eb5333882a/yolox_tiny.onnx",
+      "upstream": "Megvii-BaseDetection/YOLOX published ONNX checkpoint (COCO, 416x416)"
+    },
+    {
+      "name": "ort-wasm-simd-threaded.jsep.wasm",
+      "path": "ort/ort-wasm-simd-threaded.jsep.wasm",
+      "license": "MIT",
+      "sha256": "3ad23231b5bd6d9dda55a7f84606315e0bf35b6750c28ee993c987c54cacab0f",
+      "source": "npm:onnxruntime-web@1.30.0/dist/ort-wasm-simd-threaded.jsep.wasm",
+      "upstream": "microsoft/onnxruntime"
+    },
+    {
+      "name": "ort-wasm-simd-threaded.jsep.mjs",
+      "path": "ort/ort-wasm-simd-threaded.jsep.mjs",
+      "license": "MIT",
+      "sha256": "709853412fd1ffc34247af1e73569227b5b79629c5ca3f59cc39cf7e500e4947",
+      "source": "npm:onnxruntime-web@1.30.0/dist/ort-wasm-simd-threaded.jsep.mjs",
+      "upstream": "microsoft/onnxruntime (Emscripten loader for the WASM above)"
+    }
+  ]
+}

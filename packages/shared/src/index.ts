@@ -1,3 +1,4 @@
+export * from './alert-text';
 export * from './api';
 export * from './base64';
 export * from './callback';

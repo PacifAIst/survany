@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["chrome", "node"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src", "test", "e2e", "scripts", "manifest.config.ts", "vite.config.ts", "vitest.config.ts"]
+}

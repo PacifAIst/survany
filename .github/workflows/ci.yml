@@ -24,6 +24,8 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Fetch bundled models and WASM (checksum-verified, SG-26)
+        run: pnpm --filter @survey-anything/extension fetch-assets
       - run: pnpm -r build
       - run: pnpm lint
       - run: pnpm typecheck

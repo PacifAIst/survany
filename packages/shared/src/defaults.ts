@@ -38,6 +38,17 @@ export const MODEL_LICENSES: Record<string, string> = {
   'deepseek-flash': 'DeepSeek API terms (hosted API).',
 };
 
+/**
+ * Model confidence is self-reported and poorly calibrated (§6.1). A "yes" below the threshold is
+ * treated as "none". Per-model values come from bench/; unknown models use the default.
+ */
+export const MODEL_CONFIRM_MIN_CONFIDENCE_DEFAULT = 0.5;
+export const MODEL_CONFIRM_MIN_CONFIDENCE: Record<string, number> = {};
+
+export function modelConfirmThreshold(model: string): number {
+  return MODEL_CONFIRM_MIN_CONFIDENCE[model] ?? MODEL_CONFIRM_MIN_CONFIDENCE_DEFAULT;
+}
+
 export const PROVIDER_TIMEOUT_DEFAULT_MS = 20_000;
 /** C4: the service worker is killed if a fetch response takes over 30 s. */
 export const PROVIDER_TIMEOUT_MAX_MS = 25_000;

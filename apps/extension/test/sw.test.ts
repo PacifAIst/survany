@@ -1,0 +1,238 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { EXAMPLE_CONFIG_JSON, parseConfig } from '@survey-anything/shared';
+import { CAMERA_CONSTRAINTS } from '../src/offscreen/source-camera';
+import { pickMime } from '../src/offscreen/clip-recorders';
+import { ensureWhipQuery } from '../src/offscreen/whip-publisher';
+import { importConfigJson, toggleChannel } from '../src/options/model';
+import { BudgetLedger, type BudgetState } from '../src/sw/budget';
+import { applyEgressPolicy } from '../src/sw/egress-policy';
+import { egressDecision, type PolicyConfig } from '../src/sw/guarded-fetch';
+import { initialRuleState, onCandidate, onClear, onConfirmed, STALE_CONFIRMING_MS } from '../src/sw/rule-state';
+import { buildManifest } from '../manifest.config';
+import { installChromeMock } from './chrome-mock';
+
+const T = { cooldownMs: 60_000, risingEdgeOnly: true };
+
+describe('per-rule state machine (§6.4)', () => {
+  it('idle -> confirming -> alerted/cooldown; rising edge needs a clear before re-alerting', () => {
+    let s = initialRuleState(0);
+    let r = onCandidate(s, 1000, T, 'candidate');
+    expect(r.decision).toBe('confirm');
+    s = onConfirmed(r.next, 2000, T, { kind: 'alert', eventId: 'e1' });
+    expect(s.phase).toBe('cooldown');
+    expect(onCandidate(s, 3000, T, 'still-hot').decision).toBe('ignore'); // cooling down
+    expect(onCandidate(s, 70_000, T, 'still-hot').decision).toBe('ignore'); // cooled, but never cleared
+    s = onClear(s, 70_001);
+    expect(s.phase).toBe('idle');
+    r = onCandidate(s, 70_002, T, 'candidate');
+    expect(r.decision).toBe('confirm');
+  });
+
+  it('without risingEdgeOnly, a persistent event re-alerts after the cooldown', () => {
+    const t = { ...T, risingEdgeOnly: false };
+    const s = onConfirmed(onCandidate(initialRuleState(0), 1, t, 'candidate').next, 2, t, { kind: 'alert', eventId: 'e' });
+    expect(onCandidate(s, 60_003, t, 'still-hot').decision).toBe('confirm');
+  });
+
+  it('a "none" answer re-asks a still-hot gate at most once per cooldown', () => {
+    let s = onConfirmed(onCandidate(initialRuleState(0), 1, T, 'candidate').next, 10, T, { kind: 'none' });
+    expect(onCandidate(s, 30_000, T, 'still-hot').decision).toBe('ignore');
+    expect(onCandidate(s, 70_000, T, 'still-hot').decision).toBe('confirm');
+    s = onCandidate(s, 70_000, T, 'candidate').next;
+    expect(s.phase).toBe('confirming');
+  });
+
+  it('concurrent candidates while confirming are ignored; a stale confirm (SW died mid-call) is abandoned', () => {
+    const c = onCandidate(initialRuleState(0), 0, T, 'candidate').next;
+    expect(onCandidate(c, 5_000, T, 'candidate').decision).toBe('ignore');
+    expect(onCandidate(c, STALE_CONFIRMING_MS + 1, T, 'candidate').decision).toBe('confirm');
+  });
+});
+
+describe('budget engine survives restarts and hard-stops (M3)', () => {
+  const limits = { maxCallsPerMinute: 2, dailyMaxApiCalls: 3, dailyTokenCap: 1000, hardStopOnBudget: true as const };
+  let saved: BudgetState | null = null;
+  const load = async (): Promise<BudgetState> => saved ?? { day: '', dayCalls: 0, dayTokens: 0, minute: [], noticeDay: null, freeDayCalls: 0 };
+  const save = async (s: BudgetState): Promise<void> => {
+    saved = structuredClone(s);
+  };
+  const call = { cloud: true, providerId: 'openai', model: 'm' };
+  beforeEach(() => {
+    saved = null;
+  });
+
+  it('per-minute, per-day and token caps block cloud calls; local calls are free', async () => {
+    let now = Date.UTC(2026, 10, 9, 10, 0, 0);
+    let l = await BudgetLedger.load(limits, load, save, () => now);
+    await l.begin(call);
+    await l.begin(call);
+    expect(l.block(call)).toBe('minute');
+    expect(l.allow({ ...call, cloud: false })).toBe(true);
+    now += 61_000;
+    // Simulated service worker restart: a fresh ledger from storage.
+    l = await BudgetLedger.load(limits, load, save, () => now);
+    expect(l.allow(call)).toBe(true);
+    await l.begin(call);
+    expect(l.block(call)).toBe('day-calls');
+    expect(await l.claimExhaustedNotice()).toBe(true);
+    l = await BudgetLedger.load(limits, load, save, () => now);
+    expect(await l.claimExhaustedNotice()).toBe(false); // one notice per day, across restarts
+    now += 24 * 3600_000;
+    l = await BudgetLedger.load(limits, load, save, () => now);
+    expect(l.allow(call)).toBe(true);
+    await l.addTokens(call, 1000);
+    expect(l.block(call)).toBe('day-tokens');
+  });
+
+  it('models OpenRouter :free quotas (C27)', async () => {
+    const l = await BudgetLedger.load({ ...limits, dailyMaxApiCalls: 1000, maxCallsPerMinute: 600 }, load, save, () => Date.UTC(2026, 10, 9));
+    const free = { cloud: true, providerId: 'openrouter', model: 'qwen/qwen2.5-vl-72b-instruct:free' };
+    for (let i = 0; i < 20; i++) await l.begin(free);
+    expect(l.block(free)).toBe('openrouter-free-minute');
+  });
+});
+
+describe('SG-14 and SG-15: guardedFetch egress policy', () => {
+  const base: PolicyConfig = { allowCloudProviders: true, proxyMode: false, egress: { alertMedia: true, liveView: true }, backend: { url: null } };
+  const jpegBody = JSON.stringify({ image: '/9j/4AAQSkZJRgABAQ' });
+
+  it('allowCloudProviders:false blocks cloud provider hosts and allows loopback/RFC 1918', () => {
+    const p = { ...base, allowCloudProviders: false };
+    expect(egressDecision('https://api.openai.com/v1/chat/completions', { body: jpegBody }, { purpose: 'provider', frames: 'provider-frame' }, p)).toMatch(/allowCloudProviders/);
+    expect(egressDecision('http://127.0.0.1:11434/v1/chat/completions', { body: jpegBody }, { purpose: 'provider', frames: 'provider-frame' }, p)).toBeNull();
+    expect(egressDecision('http://192.168.1.5:8000/v1/chat/completions', { body: jpegBody }, { purpose: 'provider', frames: 'provider-frame' }, p)).toBeNull();
+  });
+
+  it('alert media needs egress.alertMedia; undeclared image bytes are always blocked', () => {
+    expect(egressDecision('https://api.telegram.org/botX/sendPhoto', { body: jpegBody }, { purpose: 'telegram-direct', frames: 'alert-media' }, { ...base, egress: { alertMedia: false, liveView: true } })).toMatch(/alertMedia/);
+    expect(egressDecision('https://api.telegram.org/botX/sendMessage', { body: jpegBody }, { purpose: 'telegram-direct', frames: 'none' }, base)).toMatch(/not declared/);
+    expect(egressDecision('https://api.telegram.org/botX/sendMessage', { body: '{"text":"hi"}' }, { purpose: 'telegram-direct', frames: 'none' }, base)).toBeNull();
+    const jpegBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2]);
+    expect(egressDecision('https://b.example/api/events/x/clip', { body: jpegBytes }, { purpose: 'backend', frames: 'none' }, base)).toMatch(/not declared/);
+  });
+
+  it('provider frames go only to providers or the proxy backend; proxyMode forces the backend', () => {
+    expect(egressDecision('https://evil.example/', { body: jpegBody }, { purpose: 'email-direct', frames: 'provider-frame' }, base)).toMatch(/only go to a provider/);
+    const proxy = { ...base, proxyMode: true, backend: { url: 'https://alerts.example.org' } };
+    expect(egressDecision('https://api.openai.com/v1/chat/completions', { body: jpegBody }, { purpose: 'provider', frames: 'provider-frame' }, proxy)).toMatch(/proxyMode/);
+    expect(egressDecision('https://alerts.example.org/api/proxy/analyze', { body: jpegBody }, { purpose: 'backend', frames: 'provider-frame' }, proxy)).toBeNull();
+  });
+
+  it('rejects non-http schemes', () => {
+    expect(egressDecision('file:///etc/passwd', {}, { purpose: 'backend', frames: 'none' }, base)).toMatch(/scheme/);
+  });
+
+  it('applyEgressPolicy strips the snapshot and live view when their flags are off', () => {
+    const r = parseConfig({ ...structuredClone(EXAMPLE_CONFIG_JSON), egress: { alertMedia: false, liveView: false } });
+    if (!r.ok) throw new Error(r.errors.join());
+    const sub = applyEgressPolicy(
+      {
+        eventId: crypto.randomUUID(), rule: 'fire', ruleTitle: 'Fire', severity: 'critical', confirmed: true, unconfirmedReason: null,
+        confidence: 0.9, provider: 'local', reason: 'x', timestamp: new Date().toISOString(), sourceLabel: 's', recipients: ['owner'],
+        channels: ['telegram'], snapshotJpegB64: '/9j/abc', wantLiveView: true,
+      },
+      r.config,
+    );
+    expect(sub.snapshotJpegB64).toBeNull();
+    expect(sub.wantLiveView).toBe(false);
+  });
+});
+
+describe('SG-23: capture is video only', () => {
+  it('camera constraints never request audio', () => {
+    expect(CAMERA_CONSTRAINTS(null).audio).toBe(false);
+    expect(CAMERA_CONSTRAINTS('dev1').audio).toBe(false);
+  });
+
+  it('the manifest requests no microphone, no content scripts and only optional host access', () => {
+    const m = buildManifest({ version: '0.1.0' });
+    expect(m.content_scripts).toBeUndefined();
+    expect(m.host_permissions).toBeUndefined();
+    expect(m.optional_host_permissions).toEqual(['https://*/*', 'http://*/*']);
+    expect(JSON.stringify(m)).not.toMatch(/audio|microphone|externally_connectable/i);
+    expect(m.content_security_policy?.extension_pages).toBe("script-src 'self' 'wasm-unsafe-eval'; object-src 'self'");
+    expect(m.minimum_chrome_version).toBe('120');
+  });
+});
+
+describe('Options page model', () => {
+  it('a single channel needs the one-time acknowledgement; zero channels are refused', () => {
+    const d = structuredClone(EXAMPLE_CONFIG_JSON) as unknown as Record<string, unknown>;
+    const r1 = toggleChannel(d, 'email', false, false);
+    expect(r1.needsAck).toBe(true);
+    const r2 = toggleChannel(d, 'email', false, true);
+    expect((r2.draft['alerts'] as { channels: string[]; nonRedundantAck: boolean }).channels).toEqual(['telegram']);
+    expect(parseConfig(r2.draft).ok).toBe(true);
+    const r3 = toggleChannel(r2.draft, 'telegram', false, true);
+    expect(r3.refused).toMatch(/At least one/);
+  });
+
+  it('import re-validates and refuses embedded keys', () => {
+    expect(importConfigJson(JSON.stringify(EXAMPLE_CONFIG_JSON)).ok).toBe(true);
+    expect(importConfigJson(JSON.stringify({ ...EXAMPLE_CONFIG_JSON, alerts: { ...EXAMPLE_CONFIG_JSON.alerts, channels: [] } })).ok).toBe(false);
+    const withKey = importConfigJson(JSON.stringify({ ...EXAMPLE_CONFIG_JSON, note: 'sk-abcdefghijklmnopqrstuvwxyz012345' }));
+    expect(withKey.ok).toBe(false);
+  });
+});
+
+describe('clips and WHIP URLs', () => {
+  it('prefers MP4 when the encoder exists, else WebM (C11)', () => {
+    expect(pickMime((m) => m.startsWith('video/mp4'))).toBe('video/mp4;codecs=avc1');
+    expect(pickMime((m) => m.startsWith('video/webm'))).toBe('video/webm;codecs=vp9');
+  });
+
+  it('WHIP URLs always carry direction=whip and transport=all (D11)', () => {
+    const u = new URL(ensureWhipQuery('https://ome.example.org/app/tok?x=1&transport=udptcp'));
+    expect(u.searchParams.get('direction')).toBe('whip');
+    expect(u.searchParams.get('transport')).toBe('all');
+    expect(u.searchParams.get('x')).toBe('1');
+  });
+});
+
+describe('outbox (durable local retries)', () => {
+  it('keys de-duplicate, failures back off, retryable errors honour retry-after, successes leave', async () => {
+    installChromeMock();
+    const { enqueue, processOutbox, RetryableError, backoffMs } = await import('../src/sw/outbox');
+    await enqueue('telegram', 'e1:owner:telegram', { n: 1 }, 'down', 0);
+    await enqueue('telegram', 'e1:owner:telegram', { n: 2 }, 'down', 0);
+    await enqueue('email', 'e1:owner:email', { n: 3 }, 'down', 0);
+    let attempts = 0;
+    const r1 = await processOutbox(
+      {
+        telegram: async () => {
+          attempts++;
+          throw new RetryableError('429', 7);
+        },
+        email: async () => undefined,
+      },
+      backoffMs(1) + 1,
+    );
+    expect(attempts).toBe(1);
+    expect(r1.sent).toEqual(['e1:owner:email']);
+    expect(r1.failed).toEqual(['e1:owner:telegram']);
+    const items = (await chrome.storage.local.get('outbox'))['outbox'] as { nextAt: number; attempts: number }[];
+    expect(items).toHaveLength(1);
+    expect(items[0]!.nextAt).toBe(backoffMs(1) + 1 + 7000);
+    expect(items[0]!.attempts).toBe(2);
+  });
+});
+
+describe('SG-13 live indicator must be verified before streaming', () => {
+  it('beginLiveIndicator sets LIVE, the banner and a notification', async () => {
+    const mock = installChromeMock();
+    const { beginLiveIndicator, endLiveIndicator } = await import('../src/sw/badge');
+    await beginLiveIndicator('ev1', ['contactA']);
+    expect(mock.badge.text).toBe('LIVE');
+    expect(((await chrome.storage.local.get('streaming'))['streaming'] as { recipients: string[] }).recipients).toEqual(['contactA']);
+    expect(mock.notifications).toContain('sa-live');
+    await endLiveIndicator(null);
+    expect(mock.badge.text).toBe('');
+  });
+
+  it('throws (so no stream starts) if the badge cannot be verified', async () => {
+    installChromeMock();
+    (chrome.action as unknown as { getBadgeText: () => Promise<string> }).getBadgeText = async () => '';
+    const { beginLiveIndicator } = await import('../src/sw/badge');
+    await expect(beginLiveIndicator('ev2', ['x'])).rejects.toThrow(/SG-13/);
+  });
+});

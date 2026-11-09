@@ -1,0 +1,50 @@
+:root {
+  --bg: #ffffff;
+  --fg: #1b1f24;
+  --muted: #5b6470;
+  --line: #d9dee5;
+  --accent: #1f5fbf;
+  --ok: #1f7a3d;
+  --danger: #c0161b;
+  --warn-bg: #fff5d6;
+  --panel: #f6f8fa;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15181c;
+    --fg: #e6e9ee;
+    --muted: #9aa4b1;
+    --line: #2d333b;
+    --accent: #6ea8ff;
+    --ok: #4cc27a;
+    --danger: #ff6b6b;
+    --warn-bg: #3a3214;
+    --panel: #1c2026;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+main { padding: 16px; max-width: 920px; margin: 0 auto; }
+h1 { font-size: 20px; margin: 0 0 12px; }
+h2 { font-size: 16px; margin: 20px 0 8px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+p.muted, .muted { color: var(--muted); }
+button { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+button.danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+button:disabled { opacity: 0.55; cursor: not-allowed; }
+input, select, textarea { font: inherit; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); max-width: 100%; }
+textarea { width: 100%; font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+label { display: block; margin: 6px 0; }
+label.inline { display: inline-flex; gap: 6px; align-items: center; margin-right: 14px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.card { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin: 8px 0; background: var(--panel); }
+.banner-live { background: var(--danger); color: #fff; padding: 10px 12px; border-radius: 8px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.warn { background: var(--warn-bg); padding: 8px 10px; border-radius: 6px; }
+.error { color: var(--danger); white-space: pre-wrap; }
+.ok { color: var(--ok); }
+code { font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+table { border-collapse: collapse; width: 100%; }
+td, th { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.popup { width: 340px; padding: 12px; }

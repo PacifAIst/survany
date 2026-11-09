@@ -4,7 +4,7 @@
  * works unpacked and silently breaks at release, so CI rejects any alarm period or
  * delay under 0.5 min. Values must be numeric literals or same-file numeric consts.
  */
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -61,7 +61,7 @@ function main(): void {
   const root = join(fileURLToPath(new URL('.', import.meta.url)), '..');
   const srcDir = join(root, 'apps', 'extension', 'src');
   const files: string[] = [];
-  walk(srcDir, files);
+  if (existsSync(srcDir)) walk(srcDir, files);
   const all = files.flatMap((f) => findAlarmPeriods(readFileSync(f, 'utf8'), relative(root, f)));
   const bad = violations(all);
   for (const b of bad) console.error(`::error::check-alarm-period: ${b}`);

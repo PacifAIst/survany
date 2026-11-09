@@ -13,6 +13,8 @@ export const PairDeviceRequestSchema = z
   .strict();
 export const PairDeviceResponseSchema = z.object({ deviceId: z.string(), deviceToken: z.string(), capabilities: z.lazy(() => CapabilitiesSchema) });
 
+export const IceServerSchema = z.object({ urls: z.string(), username: z.string().optional(), credential: z.string().optional() });
+
 export const CapabilitiesSchema = z.object({
   telegram: z.boolean(),
   email: z.boolean(),
@@ -53,7 +55,11 @@ export const EventResponseSchema = z.object({
   eventId: Uuid,
   deduplicated: z.boolean(),
   stream: z
-    .object({ whipUrl: z.string(), publisherToken: z.string(), expiresAt: IsoUtc })
+    .object({
+      whipUrl: z.string(),
+      expiresAt: IsoUtc,
+      iceServers: z.array(z.object({ urls: z.string(), username: z.string().optional(), credential: z.string().optional() })),
+    })
     .nullable(),
 });
 export type EventResponse = z.infer<typeof EventResponseSchema>;
