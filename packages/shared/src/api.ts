@@ -117,6 +117,42 @@ export const ActionProposalSchema = z
   .strict();
 export type ActionProposal = z.infer<typeof ActionProposalSchema>;
 
+/** One tool the backend's policy allows, as offered to the Reasoner (GET /api/actions/tools). */
+export const ActionToolSchema = z
+  .object({
+    name: z.string().regex(/^[a-z][a-z0-9_.]{0,63}$/),
+    description: z.string().max(400),
+    args: z.record(
+      z.string().max(64),
+      z
+        .object({
+          type: z.enum(['string', 'number', 'boolean']),
+          enum: z.array(z.union([z.string(), z.number()])).max(100).optional(),
+          pattern: z.string().max(200).optional(),
+          min: z.number().optional(),
+          max: z.number().optional(),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+export type ActionTool = z.infer<typeof ActionToolSchema>;
+
+export const ActionToolsResponseSchema = z
+  .object({
+    enabled: z.boolean(),
+    approvalTimeoutSec: z.number().int().min(0).max(3600),
+    tools: z.array(ActionToolSchema).max(50),
+  })
+  .strict();
+export type ActionToolsResponse = z.infer<typeof ActionToolsResponseSchema>;
+
+export const ProposeResponseSchema = z.union([
+  z.object({ status: z.literal('pending'), approvalId: z.string(), sentTo: z.number().int() }),
+  z.object({ status: z.literal('rejected'), reason: z.string() }),
+]);
+export type ProposeResponse = z.infer<typeof ProposeResponseSchema>;
+
 export const ProxyAnalyzeRequestSchema = z
   .object({
     providerId: z.enum(['anthropic', 'openai', 'openrouter', 'deepseek', 'local']),

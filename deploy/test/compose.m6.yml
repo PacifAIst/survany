@@ -24,6 +24,10 @@ services:
       - "18181:8081" # test only: the runner reads recorded Bot API calls
 
   backend:
+    # Built from the working tree on every `up --build`, so the test never runs a stale image.
+    build:
+      context: ../..
+      dockerfile: apps/backend/Dockerfile
     image: survey-anything/backend:local
     environment:
       PUBLIC_BASE_URL: http://localhost:8189

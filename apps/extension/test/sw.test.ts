@@ -153,6 +153,19 @@ describe('SG-23: capture is video only', () => {
     expect(m.content_security_policy?.extension_pages).toBe("script-src 'self' 'wasm-unsafe-eval'; object-src 'self'");
     expect(m.minimum_chrome_version).toBe('120');
   });
+
+  it('only the e2e test build pre-grants host access, and only to the two loopback origins', () => {
+    expect(buildManifest({ version: '0.1.0', e2eLoopbackHosts: false }).host_permissions).toBeUndefined();
+    expect(buildManifest({ version: '0.1.0', e2eLoopbackHosts: true }).host_permissions).toEqual(['http://localhost/*', 'http://127.0.0.1/*']);
+  });
+
+  it('the shipped dist/manifest.json, when built, has no host_permissions', async () => {
+    const { existsSync, readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const p = join(__dirname, '..', 'dist', 'manifest.json');
+    if (!existsSync(p)) return;
+    expect((JSON.parse(readFileSync(p, 'utf8')) as { host_permissions?: unknown }).host_permissions).toBeUndefined();
+  });
 });
 
 describe('Options page model', () => {

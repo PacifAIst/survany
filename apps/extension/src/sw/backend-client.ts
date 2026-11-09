@@ -1,6 +1,8 @@
 /** Device-token authenticated client for the T1+ backend (SG-16 is enforced server-side). */
 import {
   type ActionProposal,
+  type ActionToolsResponse,
+  ActionToolsResponseSchema,
   type Capabilities,
   CapabilitiesSchema,
   type ContactInviteRequest,
@@ -12,6 +14,8 @@ import {
   type Heartbeat,
   type Notice,
   PairDeviceResponseSchema,
+  type ProposeResponse,
+  ProposeResponseSchema,
   type ProxyAnalyzeRequest,
 } from '@survey-anything/shared';
 import type { z } from 'zod';
@@ -24,6 +28,7 @@ export class BackendError extends Error {
   constructor(
     message: string,
     public readonly status: number,
+    public readonly body = '',
   ) {
     super(message);
   }
@@ -52,7 +57,10 @@ export class BackendClient {
       const ra = Number(res.headers.get('retry-after'));
       throw new RetryableError(`backend HTTP ${res.status}`, Number.isFinite(ra) && ra > 0 ? ra : null);
     }
-    if (!res.ok) throw new BackendError(`backend HTTP ${res.status}: ${(await res.text().catch(() => '')).slice(0, 200)}`, res.status);
+    if (!res.ok) {
+      const body = (await res.text().catch(() => '')).slice(0, 2000);
+      throw new BackendError(`backend HTTP ${res.status}: ${body.slice(0, 200)}`, res.status, body);
+    }
     return res;
   }
 
@@ -125,8 +133,27 @@ export class BackendClient {
     return (await res.json()) as { result: DetectionResult; usage: { inputTokens: number; outputTokens: number } };
   }
 
-  async proposeAction(p: ActionProposal): Promise<{ status: string }> {
-    const res = await this.request('/api/actions/propose', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(p) }, 'none');
-    return (await res.json()) as { status: string };
+  actionTools(): Promise<ActionToolsResponse> {
+    return this.json('/api/actions/tools', null, ActionToolsResponseSchema, 'none', 'GET');
+  }
+
+  /** A policy refusal is an answer (422 with a reason), not an error. */
+  async proposeAction(p: ActionProposal): Promise<ProposeResponse> {
+    try {
+      const res = await this.request('/api/actions/propose', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(p) }, 'none');
+      return ProposeResponseSchema.parse(await res.json());
+    } catch (e) {
+      if (e instanceof BackendError && e.status === 422) {
+        const parsed = ProposeResponseSchema.safeParse((() => {
+          try {
+            return JSON.parse(e.body) as unknown;
+          } catch {
+            return null;
+          }
+        })());
+        return parsed.success ? parsed.data : { status: 'rejected', reason: e.body.slice(0, 200) || 'rejected' };
+      }
+      throw e;
+    }
   }
 }

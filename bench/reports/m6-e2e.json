@@ -1,0 +1,91 @@
+{
+  "startedAt": "2026-11-09T16:51:14.681Z",
+  "gate": "confirm-gate-mcp 0.8.0 (mcp 2.3.0)",
+  "scenarios": {
+    "approve": {
+      "outcome": "approval JFXea8NPaNL3MoAoO9OcWw sent to 1 approver(s); nothing runs without a tap",
+      "alertToCardMs": 63,
+      "executionsBeforeTap": 0,
+      "executionsAfterTap": 1,
+      "executionsAfterThreeReplays": 1,
+      "tapToExecutionMs": 460,
+      "cardEdited": true,
+      "confirmCallsWithImage": 1,
+      "reasonerCallsWithImage": 0
+    },
+    "obeySign": {
+      "outcome": "Reasoner output refused: argument 'service' is outside the allowed values",
+      "card": false,
+      "executions": 0
+    },
+    "outsidePolicy": {
+      "outcome": "backend refused the proposal: entity switch.garage_door is not allowed by policy",
+      "card": false,
+      "executions": 0
+    },
+    "deny": {
+      "outcome": "approval -50YV1sN3r8qMPOromdgFg sent to 1 approver(s); nothing runs without a tap",
+      "card": true,
+      "executionsAfterDenyAndLateApprove": 0
+    }
+  },
+  "gatePairing": "Paired with the gate as d_469dc289438f76e8. Restart the backend to load the credentials.",
+  "finishedAt": "2026-11-09T16:52:09.859Z",
+  "executionsLog": [
+    {
+      "at": 1794243181.4223619,
+      "tool": "ha_call_service",
+      "arguments": {
+        "service": "light.turn_on",
+        "entity_id": "light.porch"
+      }
+    }
+  ],
+  "modelCalls": [
+    {
+      "kind": "probe",
+      "hasImage": true,
+      "model": "mock-vision"
+    },
+    {
+      "kind": "confirm",
+      "hasImage": true,
+      "model": "mock-vision"
+    },
+    {
+      "kind": "reasoner",
+      "hasImage": false,
+      "model": "mock-reasoner"
+    },
+    {
+      "kind": "confirm",
+      "hasImage": true,
+      "model": "mock-vision"
+    },
+    {
+      "kind": "reasoner",
+      "hasImage": false,
+      "model": "mock-reasoner"
+    },
+    {
+      "kind": "confirm",
+      "hasImage": true,
+      "model": "mock-vision"
+    },
+    {
+      "kind": "reasoner",
+      "hasImage": false,
+      "model": "mock-reasoner"
+    },
+    {
+      "kind": "confirm",
+      "hasImage": true,
+      "model": "mock-vision"
+    },
+    {
+      "kind": "reasoner",
+      "hasImage": false,
+      "model": "mock-reasoner"
+    }
+  ]
+}

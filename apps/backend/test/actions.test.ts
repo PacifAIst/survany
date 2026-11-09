@@ -15,6 +15,7 @@ import { ConfirmGateClient, type ConfirmResult, type GateClient, GateUnavailable
 import { checkProposal, loadPolicy, type Policy } from '../src/actions/policy';
 import { renderCard } from '../src/actions/render-card';
 import { canonicalJson } from '../src/actions/signer';
+import { ActionToolsResponseSchema } from '@survey-anything/shared';
 import { addContact, clock, eventBody, makeApp, startFakeTelegram, waitUntil, WEBHOOK_SECRET } from './helpers';
 
 const POLICY_PATH = join(__dirname, '..', '..', '..', 'deploy', 'gate', 'policy.yaml');
@@ -26,6 +27,9 @@ class FakeGate implements GateClient {
   denied: string[] = [];
   down = false;
   tamperArgs = false;
+  /** Behave like confirm-gate for a --high-risk tool: the first yes opens a new card that needs a final yes. */
+  highRisk = false;
+  private finals = new Set<string>();
   async propose(_tool: string, args: Record<string, unknown>): Promise<ProposeResult> {
     if (this.down) throw new GateUnavailableError('gate unreachable: ECONNREFUSED');
     const id = `p_${randomBytes(4).toString('hex')}`;
@@ -39,6 +43,12 @@ class FakeGate implements GateClient {
     const actual = this.tamperArgs ? { ...held, entity_id: 'light.everything' } : held;
     if (canonicalJson(actual) !== canonicalJson(expected)) return { status: 'refused', receipt: null, reason: 'arguments differ', nextPendingId: null };
     this.held.delete(pendingId);
+    if (this.highRisk && !this.finals.has(pendingId)) {
+      const next = `${pendingId}_final`;
+      this.finals.add(next);
+      this.held.set(next, held);
+      return { status: 'needs_final_yes', receipt: null, reason: null, nextPendingId: next };
+    }
     this.executed.push({ pendingId, args: held });
     return { status: 'done', receipt: { receipt_id: 'rcpt_x' }, reason: null, nextPendingId: null };
   }
@@ -114,6 +124,26 @@ describe('M6 adversarial suite: 0 unapproved executions (SG-01 to SG-06)', () =>
     await Promise.all([tap(`ok:${approvalId}`), tap(`ok:${approvalId}`), tap(`ok:${approvalId}`)]);
     await tap(`ok:${approvalId}`);
     expect(gate.executed).toHaveLength(1);
+  });
+
+  it('high-risk second yes: the card keeps its buttons, and only the second tap executes, once', async () => {
+    const { gate, propose, tap } = await setup();
+    gate.highRisk = true;
+    const { approvalId } = (await propose('ha_call_service', light)).json() as { approvalId: string };
+    await tap(`ok:${approvalId}`);
+    expect(gate.executed).toHaveLength(0);
+    const edit = tg.calls.filter((c) => c.method === 'editMessageText').at(-1)!;
+    expect(edit.fields['text']).toContain('tap Approve once more');
+    // Telegram drops inline buttons on an edit without reply_markup; the second tap must still be possible.
+    const kb = JSON.parse(edit.fields['reply_markup'] ?? '{}') as { inline_keyboard?: { callback_data: string }[][] };
+    expect(kb.inline_keyboard?.flat().map((b) => b.callback_data)).toEqual([`ok:${approvalId}`, `no:${approvalId}`]);
+    await tap(`ok:${approvalId}`);
+    expect(gate.executed).toHaveLength(1);
+    await tap(`ok:${approvalId}`);
+    expect(gate.executed).toHaveLength(1);
+    const closed = tg.calls.filter((c) => c.method === 'editMessageText').at(-1)!;
+    expect(closed.fields['text']).toContain('Executed');
+    expect(closed.fields['reply_markup']).toBeUndefined();
   });
 
   it('SG-01 expiry: no tap within the timeout means deny; a late tap does nothing', async () => {
@@ -207,6 +237,24 @@ describe('M6 adversarial suite: 0 unapproved executions (SG-01 to SG-06)', () =>
     const card = renderCard(t, { service: 'light.turn_on', entity_id: 'light.porch' }, { ruleTitle: 'Fire', sourceLabel: 'Cam', timeoutSec: 300 });
     expect(card.html).toContain('light.turn_on');
     expect(card.paramsHash).toBe(createHash('sha256').update(canonicalJson({ tool: 'ha_call_service', args: { service: 'light.turn_on', entity_id: 'light.porch' } })).digest('hex'));
+  });
+
+  it('GET /api/actions/tools offers only policy tools, needs a device token, and is empty without a gate', async () => {
+    const { t } = await setup();
+    expect((await t.app.inject({ method: 'GET', url: '/api/actions/tools' })).statusCode).toBe(401);
+    const r = await t.app.inject({ method: 'GET', url: '/api/actions/tools', headers: t.auth });
+    expect(r.statusCode).toBe(200);
+    const body = ActionToolsResponseSchema.parse(r.json());
+    expect(body.enabled).toBe(true);
+    expect(body.approvalTimeoutSec).toBe(policy.pendingTtlSeconds);
+    expect(body.tools.map((x) => x.name)).toEqual(policy.tools.map((x) => x.name));
+    const ha = body.tools[0]!;
+    expect(ha.args['service']?.enum).toEqual(policy.tools[0]!.args['service']?.enum);
+    expect(ha.description).toContain('light.*');
+    // Without a gate the extension is told there is nothing to propose.
+    const bare = await makeApp({ tg: tg.url, policy });
+    const r2 = await bare.app.inject({ method: 'GET', url: '/api/actions/tools', headers: bare.auth });
+    expect(ActionToolsResponseSchema.parse(r2.json())).toEqual({ enabled: false, approvalTimeoutSec: 0, tools: [] });
   });
 });
 

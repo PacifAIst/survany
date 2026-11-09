@@ -11,6 +11,7 @@ export const SECRET_KEYS = [
   'OME_API_TOKEN',
   'SERVER_HMAC_KEY',
   'FORWARD_AUTH_SECRET',
+  'GATE_AGENT_TOKEN',
 ] as const;
 
 export function fillSecrets(envText: string, gen: () => string = () => randomBytes(32).toString('base64url')): string {

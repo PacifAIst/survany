@@ -2,7 +2,7 @@
  * Turns an untrusted action proposal into a pending, human-approvable card (§4.3 step 6).
  * SECURITY-GATE SG-02: the model only ever produces JSON data that arrives here; it holds no MCP connection, HMAC key, device key or nonce. Only this deterministic code talks to the gate.
  */
-import { ActionProposalSchema } from '@survey-anything/shared';
+import { ActionProposalSchema, type ActionToolsResponse } from '@survey-anything/shared';
 import type { FastifyInstance } from 'fastify';
 import { getEvent, notify } from '../alerts/dispatcher';
 import type { Senders } from '../alerts/outbox';
@@ -42,7 +42,30 @@ export async function proposeAction(ctx: AppCtx, senders: Senders, policy: Polic
   return { status: 'pending', approvalId: a.id, sentTo: a.sentTo };
 }
 
+/**
+ * The tool list the extension's Reasoner may choose from. It is derived from the policy so the Reasoner
+ * never sees a tool the backend would refuse; the policy check on /propose still decides.
+ */
+export function toolsFor(ctx: AppCtx, policy: Policy | null): ActionToolsResponse {
+  if (!policy || !ctx.gate) return { enabled: false, approvalTimeoutSec: 0, tools: [] };
+  return {
+    enabled: true,
+    approvalTimeoutSec: policy.pendingTtlSeconds,
+    tools: policy.tools.map((t) => {
+      const allow = t.entities.allow.concat(t.entities.allowSensitive);
+      const entityNote = t.entityArg && allow.length ? ` ${t.entityArg} must match one of: ${allow.join(', ')}.` : '';
+      return {
+        name: t.name,
+        description: `Card shown to the approver: "${t.card}".${entityNote}`.slice(0, 400),
+        args: Object.fromEntries(Object.entries(t.args).map(([k, s]) => [k, { ...s }])),
+      };
+    }),
+  };
+}
+
 export function registerActionRoutes(app: FastifyInstance, ctx: AppCtx, senders: Senders, policy: Policy | null): void {
+  app.get('/api/actions/tools', { preHandler: requireDevice(ctx) }, async () => toolsFor(ctx, policy));
+
   app.post('/api/actions/propose', { preHandler: requireDevice(ctx) }, async (req, reply) => {
     if (!req.device) return reply.code(401).send({ error: 'device required' });
     const out = await proposeAction(ctx, senders, policy, req.device.id, req.body);

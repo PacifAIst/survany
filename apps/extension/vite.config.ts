@@ -9,13 +9,13 @@ const root = __dirname;
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as { version: string };
 
 /** Writes manifest.json and fails the build if a bundled model or WASM file does not match its pinned SHA-256 (SG-26). */
-function extensionPlugin(): Plugin {
+function extensionPlugin(outDir: string, e2e: boolean): Plugin {
   return {
     name: 'survey-anything-extension',
     apply: 'build',
     closeBundle() {
-      const out = join(root, 'dist');
-      writeFileSync(join(out, 'manifest.json'), JSON.stringify(buildManifest({ version: pkg.version }), null, 2));
+      const out = outDir;
+      writeFileSync(join(out, 'manifest.json'), JSON.stringify(buildManifest({ version: pkg.version, e2eLoopbackHosts: e2e }), null, 2));
       const sums = JSON.parse(readFileSync(join(root, '..', '..', 'models', 'checksums.json'), 'utf8')) as { files: { path: string; sha256: string }[] };
       for (const f of sums.files) {
         const p = join(out, f.path);
@@ -33,16 +33,20 @@ function extensionPlugin(): Plugin {
   };
 }
 
-export default defineConfig({
+// `vite build --mode e2e` writes dist-e2e/ for the end-to-end tests; see buildManifest's e2eLoopbackHosts.
+export default defineConfig(({ mode }) => {
+  const e2e = mode === 'e2e';
+  const outDir = resolve(root, e2e ? 'dist-e2e' : 'dist');
+  return {
   root,
   base: '/',
   publicDir: resolve(root, 'public'),
-  plugins: [preact(), extensionPlugin()],
+  plugins: [preact(), extensionPlugin(outDir, e2e)],
   // ORT's extern-WASM entry loads its glue and WASM only from ort.env.wasm.wasmPaths, i.e. the
   // checksummed files in public/ort (SG-26), instead of Vite emitting a second, unchecked copy.
   resolve: { conditions: ['onnxruntime-web-use-extern-wasm', 'module', 'browser', 'production'] },
   build: {
-    outDir: resolve(root, 'dist'),
+    outDir,
     emptyOutDir: true,
     target: 'chrome120',
     modulePreload: false,
@@ -67,7 +71,8 @@ export default defineConfig({
     },
   },
   worker: {
-    format: 'es',
+    format: 'es' as const,
     rollupOptions: { output: { entryFileNames: 'assets/[name]-[hash].js' } },
   },
+  };
 });

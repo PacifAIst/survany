@@ -5,9 +5,17 @@
  */
 export interface ManifestInput {
   version: string;
+  /**
+   * Test builds only (`vite build --mode e2e` -> dist-e2e/): pre-grant the two loopback origins the
+   * end-to-end tests talk to, because the permission prompt is browser UI that automation cannot click.
+   * The release build never sets this (asserted in test/sw.test.ts).
+   */
+  e2eLoopbackHosts?: boolean;
 }
 
-export function buildManifest({ version }: ManifestInput): chrome.runtime.ManifestV3 {
+export const E2E_LOOPBACK_HOSTS = ['http://localhost/*', 'http://127.0.0.1/*'];
+
+export function buildManifest({ version, e2eLoopbackHosts = false }: ManifestInput): chrome.runtime.ManifestV3 {
   const icons = { '16': 'icons/icon-16.png', '32': 'icons/icon-32.png', '48': 'icons/icon-48.png', '128': 'icons/icon-128.png' };
   return {
     manifest_version: 3,
@@ -22,6 +30,7 @@ export function buildManifest({ version }: ManifestInput): chrome.runtime.Manife
     options_ui: { page: 'src/options/index.html', open_in_tab: true },
     permissions: ['offscreen', 'tabCapture', 'activeTab', 'storage', 'alarms', 'notifications'],
     optional_host_permissions: ['https://*/*', 'http://*/*'],
+    ...(e2eLoopbackHosts ? { host_permissions: E2E_LOOPBACK_HOSTS } : {}),
     content_security_policy: {
       extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'",
     },

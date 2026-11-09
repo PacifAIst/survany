@@ -99,8 +99,9 @@ export class TelegramApi {
     await this.call('editMessageReplyMarkup', { chat_id: chatId, message_id: messageId, reply_markup: keyboard });
   }
 
-  async editMessageText(chatId: string, messageId: number, html: string): Promise<void> {
-    await this.call('editMessageText', { chat_id: chatId, message_id: messageId, text: html.slice(0, 4096), parse_mode: 'HTML' });
+  /** Without `keyboard`, Telegram removes the message's inline buttons; pass it to keep them. */
+  async editMessageText(chatId: string, messageId: number, html: string, keyboard?: Keyboard): Promise<void> {
+    await this.call('editMessageText', { chat_id: chatId, message_id: messageId, text: html.slice(0, 4096), parse_mode: 'HTML', ...(keyboard ? { reply_markup: keyboard } : {}) });
   }
 
   async setWebhook(url: string, secretToken: string): Promise<void> {

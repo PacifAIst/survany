@@ -15,7 +15,7 @@ export * from './probe';
 export * from './prompt';
 
 /** Text-only call for the Reasoner role (§6.1): it never receives a frame. */
-export { reasonText, type ReasonerRequest } from './reasoner';
+export { parseReasonerOutput, reasonText, REASONER_SYSTEM, type ReasonerDecision, type ReasonerRequest, type ReasonerResponse } from './reasoner';
 
 export function createProvider(cfg: AdapterConfig): VisionProvider & { chatImage: AnthropicAdapter['chatImage'] } {
   const id: ProviderId = cfg.id;

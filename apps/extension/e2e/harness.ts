@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 import { chromium, type BrowserContext, type Page, type Worker } from '@playwright/test';
 
 export const DIST = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
+/** `pnpm build:e2e`: same code, plus the two loopback origins pre-granted (manifest.config.ts). */
+export const DIST_E2E = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist-e2e');
 
 export interface Harness {
   context: BrowserContext;
@@ -16,14 +18,15 @@ export interface Harness {
   close: () => Promise<void>;
 }
 
-export async function launch(opts: { blockNetwork?: boolean } = {}): Promise<Harness> {
+export async function launch(opts: { blockNetwork?: boolean; dist?: string } = {}): Promise<Harness> {
   const userDataDir = mkdtempSync(join(tmpdir(), 'sa-e2e-'));
+  const dist = opts.dist ?? DIST;
   const context = await chromium.launchPersistentContext(userDataDir, {
     channel: 'chromium',
     headless: process.env['HEADED'] !== '1',
     args: [
-      `--disable-extensions-except=${DIST}`,
-      `--load-extension=${DIST}`,
+      `--disable-extensions-except=${dist}`,
+      `--load-extension=${dist}`,
       '--use-fake-device-for-media-stream',
       '--use-fake-ui-for-media-stream',
       '--disable-features=WebGPU',

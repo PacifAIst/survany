@@ -6,6 +6,7 @@ import { encodeCallback, newId22 } from '@survey-anything/shared';
 import { getContact, notify } from '../alerts/dispatcher';
 import type { Senders } from '../alerts/outbox';
 import type { AppCtx } from '../context';
+import type { Keyboard } from '../alerts/telegram';
 import { appendAudit } from './audit';
 import { GateUnavailableError } from './gate-client';
 
@@ -50,12 +51,7 @@ export async function createApproval(
     )
     .run(id, a.eventId, a.tool, JSON.stringify(a.args), a.paramsHash, a.cardHtml, now, now + a.timeoutSec * 1000, a.gatePendingId);
   appendAudit(ctx.db, 'approval.created', { id, eventId: a.eventId, tool: a.tool, paramsHash: a.paramsHash }, now);
-  const keyboard = {
-    inline_keyboard: [[
-      { text: '✅ Approve', callback_data: encodeCallback({ kind: 'approve', id }) },
-      { text: '❌ Deny', callback_data: encodeCallback({ kind: 'deny', id }) },
-    ]],
-  };
+  const keyboard = approvalKeyboard(id);
   let sent = 0;
   for (const ap of approverChats(ctx)) {
     try {
@@ -69,11 +65,24 @@ export async function createApproval(
   return { id, sentTo: sent };
 }
 
-async function closeCards(ctx: AppCtx, id: string, footer: string): Promise<void> {
+function approvalKeyboard(id: string): Keyboard {
+  return {
+    inline_keyboard: [[
+      { text: '✅ Approve', callback_data: encodeCallback({ kind: 'approve', id }) },
+      { text: '❌ Deny', callback_data: encodeCallback({ kind: 'deny', id }) },
+    ]],
+  };
+}
+
+/**
+ * Edits every copy of the card. Telegram drops a message's buttons when an edit omits reply_markup, so a
+ * closed card loses them and a card that needs one more tap (high-risk second yes) keeps them.
+ */
+async function closeCards(ctx: AppCtx, id: string, footer: string, keepButtons = false): Promise<void> {
   const row = ctx.db.prepare('SELECT card_text FROM approvals WHERE id = ?').get(id) as { card_text: string } | undefined;
   const msgs = ctx.db.prepare('SELECT chat_id, message_id FROM approval_messages WHERE approval_id = ?').all(id) as { chat_id: string; message_id: number }[];
   for (const m of msgs) {
-    await ctx.telegram?.editMessageText(m.chat_id, m.message_id, `${row?.card_text ?? ''}\n\n${footer}`).catch(() => undefined);
+    await ctx.telegram?.editMessageText(m.chat_id, m.message_id, `${row?.card_text ?? ''}\n\n${footer}`, keepButtons ? approvalKeyboard(id) : undefined).catch(() => undefined);
   }
 }
 
@@ -124,7 +133,7 @@ export async function decideApproval(ctx: AppCtx, senders: Senders, id: string, 
       ctx.db
         .prepare("UPDATE approvals SET status = 'pending', decided_by = NULL, decided_at = NULL, expires_at = ?, gate_pending_id = COALESCE(?, gate_pending_id) WHERE id = ?")
         .run(now + 60_000, r.nextPendingId, id);
-      await closeCards(ctx, id, '⚠️ High-risk action: tap Approve once more within 60 s to confirm.');
+      await closeCards(ctx, id, '⚠️ High-risk action: tap Approve once more within 60 s to confirm.', true);
       return { message: 'Second confirmation required.' };
     }
     ctx.db.prepare('UPDATE approvals SET status = ?, result = ? WHERE id = ?').run(status, JSON.stringify(r.receipt ?? r.reason ?? null).slice(0, 4000), id);

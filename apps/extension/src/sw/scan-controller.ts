@@ -26,6 +26,7 @@ import {
   type UnconfirmedReason,
   uuidv4,
 } from '@survey-anything/shared';
+import { describeOutcome, proposeForEvent } from './actions';
 import { endLiveIndicator, setIndicator } from './badge';
 import { BudgetLedger, type MeteredCall } from './budget';
 import { dispatchAlert } from './dispatch';
@@ -327,6 +328,12 @@ export function handleCandidate(msg: CandidateMsg): Promise<void> {
       },
       config,
     );
+    // §4.3 step 6: only after the alert is out, and only for a model-confirmed event. The Reasoner may
+    // suggest one action; a human must tap Approve on Telegram before the gate runs anything.
+    if (outcome.confirmed && config.mcp.enabled) {
+      const p = await proposeForEvent(config, { eventId, rule: recipe.id, detection: { event: recipe.id, confidence: outcome.confidence, reason: outcome.reason } });
+      await store.appendLog(`action proposal for ${recipe.id}: ${describeOutcome(p)}`);
+    }
   });
 }
 
