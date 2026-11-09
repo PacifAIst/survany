@@ -1,0 +1,226 @@
+{
+  "milestone": "M1",
+  "test": "soak",
+  "minutes": 30,
+  "chromium": "156.0.8078.4",
+  "headless": true,
+  "intervalMs": 5000,
+  "ticks": 360,
+  "fractionWithinOneSecond": 1,
+  "maxGapMs": 5014,
+  "maxConsecutiveMissed": 0,
+  "pass": true,
+  "samples": [
+    {
+      "atMin": 1,
+      "ticks": 12,
+      "fraction": 1,
+      "maxGapMs": 5010,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 2,
+      "ticks": 24,
+      "fraction": 1,
+      "maxGapMs": 5010,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 3,
+      "ticks": 36,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 4,
+      "ticks": 48,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 5,
+      "ticks": 60,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 6,
+      "ticks": 72,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 7,
+      "ticks": 84,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 8,
+      "ticks": 96,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 9,
+      "ticks": 108,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 10,
+      "ticks": 120,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 11,
+      "ticks": 132,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 12,
+      "ticks": 144,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 13,
+      "ticks": 156,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 14,
+      "ticks": 168,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 15,
+      "ticks": 180,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 16,
+      "ticks": 192,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 17,
+      "ticks": 204,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 18,
+      "ticks": 216,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 19,
+      "ticks": 228,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 20,
+      "ticks": 240,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 21,
+      "ticks": 252,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 22,
+      "ticks": 264,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 23,
+      "ticks": 276,
+      "fraction": 1,
+      "maxGapMs": 5013,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 24,
+      "ticks": 288,
+      "fraction": 1,
+      "maxGapMs": 5014,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 25,
+      "ticks": 300,
+      "fraction": 1,
+      "maxGapMs": 5014,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 26,
+      "ticks": 312,
+      "fraction": 1,
+      "maxGapMs": 5014,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 27,
+      "ticks": 324,
+      "fraction": 1,
+      "maxGapMs": 5014,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 28,
+      "ticks": 336,
+      "fraction": 1,
+      "maxGapMs": 5014,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 29,
+      "ticks": 348,
+      "fraction": 1,
+      "maxGapMs": 5014,
+      "maxMissed": 0
+    },
+    {
+      "atMin": 30,
+      "ticks": 360,
+      "fraction": 1,
+      "maxGapMs": 5014,
+      "maxMissed": 0
+    }
+  ],
+  "finishedAt": "2026-11-09T08:55:28.186Z"
+}

@@ -46,6 +46,8 @@ export const EventSubmissionSchema = z
     channels: z.array(ChannelSchema).min(1).max(2),
     snapshotJpegB64: z.string().max(MAX_SNAPSHOT_B64).nullable(),
     wantLiveView: z.boolean(),
+    ackTimeoutSec: z.number().int().min(30).max(86_400).default(300),
+    streamTtlMinutes: z.number().int().min(1).max(10).default(10),
   })
   .strict()
   .refine((e) => e.confirmed === (e.unconfirmedReason === null), 'unconfirmedReason must be set exactly when confirmed is false');

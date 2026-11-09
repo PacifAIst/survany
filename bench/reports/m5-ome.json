@@ -1,0 +1,74 @@
+{
+  "startedAt": "2026-11-09T09:16:31.880Z",
+  "omeImage": "airensoft/ovenmediaengine:v0.21.0@sha256:172da912...",
+  "publish": {
+    "status": 201,
+    "state": "connected"
+  },
+  "viewerConsole": [
+    "error: Loading the font 'data:font/ttf;base64,AAEAAAALAIAAAwAwT1MvMg8SBjMAAAC8AAAAYGNtYXAXVtKQAAABHAAAAFRnYXNwAAAAEAAAAXAAAAAIZ2x5Ztiu3OUAAAF4AAAEAGhlYWQOP/c1AAAFeAAAADZoaGVhCT8FzwAABbAAAAAkaG10eDAABnQAAAXUAAAAOGxvY2EGgAWAAAAGDAAAAB5tYXhwABMARAAABiwAAAAgbmFtZZlKCfsAAAZMAAABhnBvc3QAAwAAAAAH1AAAACAAAw",
+    "error: Loading the font 'data:font/ttf;base64,AAEAAAAPAIAAAwBwR1NVQiCLJXoAAAD8AAAAVE9TLzI/IEqpAAABUAAAAFZjbWFwvM20gQAAAagAAAJgY3Z0IAbV/wQAABq4AAAAIGZwZ22KkZBZAAAa2AAAC3BnYXNwAAAAEAAAGrAAAAAIZ2x5Zin85QoAAAQIAAARVmhlYWQXb/zlAAAVYAAAADZoaGVhCWwFkQAAFZgAAAAkaG10eEiN/+MAABW8AAAASGxvY2ElHSFKAAAWBAAAACZtYX",
+    "error: Loading the font 'data:font/ttf;base64,AAEAAAAPAIAAAwBwR1NVQiCLJXoAAAD8AAAAVE9TLzI/QEsYAAABUAAAAFZjbWFwjePtyQAAAagAAAF+Y3Z0IAAAAAAAAAh4AAAADmZwZ21iLvl6AAAIiAAADgxnYXNwAAAAEAAACHAAAAAIZ2x5ZuLwowoAAAMoAAABiGhlYWQaqKjBAAAEsAAAADZoaGVhBzwDVgAABOgAAAAkaG10eAu4AAAAAAUMAAAADGxvY2EAYADEAAAFGAAAAAhtYX",
+    "error: Loading the image 'https://http//localhost:8089/v/' violates the following Content Security Policy directive: \"img-src 'self' data:\". The action has been blocked.",
+    "failed https://http//localhost:8089/v/ csp",
+    "ws open ws://127.0.0.1:8090/app/<tok>?transport=all",
+    "ws sent {\"command\":\"request_offer\"}",
+    "ws recv {\"candidates\":[{\"candidate\":\"candidate:4730738461537611471 1 UDP 2130706431 127.0.0.1 10003 typ host\",\"sdpMLineIndex\":0},{\"candidate\":\"candidate:130816752288707",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"answer\",\"sdp\":{\"sdp\":\"v=0\\r\\no=- 6946518593596799874 2 IN IP4 127.0.0.1\\r\\ns=-\\r\\",
+    "ws recv {\"command\":\"notification\",\"message\":{\"auto\":false,\"file_name\":\"webrtc_default\",\"name\":\"webrtc_default\",\"renditions\":[{\"name\":\"default\",\"video_track\":{\"id\":0,\"na",
+    "ws recv {\"command\":\"notification\",\"message\":{\"auto\":false,\"rendition_name\":\"default\"},\"type\":\"rendition_changed\"}",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:3736124854 1 udp 2122260223 172.",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:1959923724 1 udp 2122194687 172.",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:890358658 1 udp 2122129151 172.2",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:2007196058 1 udp 2122063615 172.",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:2918982509 1 udp 2121998079 172.",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:1281779327 1 udp 2121932543 192.",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:1816809671 1 udp 2121867007 192.",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:440891825 1 udp 25108479 1.1.1.1",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:440891825 1 udp 24911871 1.1.1.1",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:440891825 1 udp 24715263 1.1.1.1",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:440891825 1 udp 25042943 1.1.1.1",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:440891825 1 udp 24977407 1.1.1.1",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:440891825 1 udp 24780799 1.1.1.1",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:440891825 1 udp 24846335 1.1.1.1",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:1373614222 1 tcp 1518280447 172.",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:1188156834 1 tcp 1518214911 172.",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:2244071968 1 tcp 1518149375 172.",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:1023621152 1 tcp 1518083839 172.",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:53882091 1 tcp 1518018303 172.21",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:2369337991 1 tcp 1517952767 192.",
+    "ws sent {\"id\":336826289,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:1851496367 1 tcp 1517887231 192."
+  ],
+  "view": {
+    "status": "Live (WebRTC). The link stops working at 10:27:46 AM.",
+    "video": {
+      "w": 640,
+      "h": 480,
+      "t": 0.510875
+    }
+  },
+  "untokened": {
+    "direct": 401,
+    "directFake": 401,
+    "viaCaddy": 403
+  },
+  "admittedDummySdp": 500,
+  "rest": {
+    "hostPort8081Open": false,
+    "inNetworkNoToken": "401",
+    "inNetworkWithToken": "200",
+    "tcpRelay3478Open": true
+  },
+  "webhookFailures": {
+    "hungStatus": 401,
+    "hungMs": 3392,
+    "downDirect": 401,
+    "downCaddy": 502
+  },
+  "lifetime": {
+    "ttlMinutes": 1,
+    "endState": "disconnected",
+    "cutAfterMs": 64121
+  },
+  "finishedAt": "2026-11-09T09:18:01.130Z"
+}

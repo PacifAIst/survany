@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Survey Anything: OvenMediaEngine v0.21.0 configuration (PLAN M5).
+  OvenMediaEngine is AGPL-3.0-only (principle 6). Source: https://github.com/OvenMediaLabs/ovenmediaengine
+  Based on the image's own origin_conf/Server.xml, reduced to WebRTC/WHIP ingest and WebRTC + LL-HLS playback.
+  Values come from the environment (${env:NAME:default}) set in deploy/.env.
+-->
+<Server version="8">
+	<Name>SurveyAnything</Name>
+	<Type>origin</Type>
+	<IP>*</IP>
+	<PrivacyProtection>true</PrivacyProtection>
+
+	<Modules>
+		<HTTP2>
+			<Enable>false</Enable>
+		</HTTP2>
+		<LLHLS>
+			<Enable>true</Enable>
+		</LLHLS>
+		<P2P>
+			<Enable>false</Enable>
+		</P2P>
+	</Modules>
+
+	<Bind>
+		<!-- SECURITY-GATE SG-20: the REST API listens only inside the compose network (no published port) and requires the AccessToken below. -->
+		<Managers>
+			<API>
+				<Port>8081</Port>
+				<WorkerCount>1</WorkerCount>
+			</API>
+		</Managers>
+
+		<Providers>
+			<WebRTC>
+				<!-- Signalling (and WHIP) is reachable only through Caddy, which runs forward_auth first (SG-11). -->
+				<Signalling>
+					<Port>3333</Port>
+					<WorkerCount>1</WorkerCount>
+				</Signalling>
+				<IceCandidates>
+					<!-- Explicit public IP, never '*': '*' would advertise Docker bridge addresses (S50). -->
+					<IceCandidate>${env:OME_HOST_IP}:${env:OME_WEBRTC_CANDIDATE_PORT:10000-10003/udp}</IceCandidate>
+					<IceCandidate>${env:OME_HOST_IP}:${env:OME_WEBRTC_TCP_ICE_PORT:10000/tcp}</IceCandidate>
+					<!-- Built-in TURN-over-TCP relay for UDP-blocked peers (D11). Offered only with transport=all. -->
+					<TcpRelay>${env:OME_HOST_IP}:3478</TcpRelay>
+					<TcpRelayForce>false</TcpRelayForce>
+					<TcpRelayWorkerCount>1</TcpRelayWorkerCount>
+				</IceCandidates>
+			</WebRTC>
+		</Providers>
+
+		<Publishers>
+			<LLHLS>
+				<Port>3333</Port>
+				<WorkerCount>1</WorkerCount>
+			</LLHLS>
+			<WebRTC>
+				<Signalling>
+					<Port>3333</Port>
+					<WorkerCount>1</WorkerCount>
+				</Signalling>
+				<IceCandidates>
+					<IceCandidate>${env:OME_HOST_IP}:${env:OME_WEBRTC_CANDIDATE_PORT:10000-10003/udp}</IceCandidate>
+					<IceCandidate>${env:OME_HOST_IP}:${env:OME_WEBRTC_TCP_ICE_PORT:10000/tcp}</IceCandidate>
+					<TcpRelay>${env:OME_HOST_IP}:3478</TcpRelay>
+					<TcpRelayForce>false</TcpRelayForce>
+					<TcpRelayWorkerCount>1</TcpRelayWorkerCount>
+				</IceCandidates>
+			</WebRTC>
+		</Publishers>
+	</Bind>
+
+	<Managers>
+		<Host>
+			<Names>
+				<Name>*</Name>
+			</Names>
+		</Host>
+		<API>
+			<AccessToken>${env:OME_API_TOKEN}</AccessToken>
+		</API>
+	</Managers>
+
+	<VirtualHosts>
+		<VirtualHost>
+			<Name>default</Name>
+			<Host>
+				<Names>
+					<Name>*</Name>
+				</Names>
+			</Host>
+
+			<!--
+			  SECURITY-GATE SG-11: every WebRTC/WHIP publish and every WebRTC or LL-HLS play is admitted by the backend.
+			  A missing <Enables> entry would mean no check at all, so both directions are listed explicitly.
+			  OME denies on a non-200 answer, a connection error, a timeout or malformed JSON (S49); M5 re-proves it.
+			-->
+			<AdmissionWebhooks>
+				<ControlServerUrl>${env:OME_ADMISSION_URL:http://backend:8080/ome/admission}</ControlServerUrl>
+				<SecretKey>${env:OME_ADMISSION_SECRET}</SecretKey>
+				<Timeout>3000</Timeout>
+				<Enables>
+					<Providers>webrtc</Providers>
+					<Publishers>webrtc,llhls</Publishers>
+				</Enables>
+			</AdmissionWebhooks>
+
+			<CrossDomains>
+				<Url>${env:OME_ALLOWED_ORIGIN:*}</Url>
+			</CrossDomains>
+
+			<Applications>
+				<Application>
+					<Name>app</Name>
+					<Type>live</Type>
+					<OutputProfiles>
+						<OutputProfile>
+							<Name>bypass_stream</Name>
+							<OutputStreamName>${OriginStreamName}</OutputStreamName>
+							<Playlist>
+								<Name>default</Name>
+								<FileName>master</FileName>
+								<Options>
+									<WebRtcAutoAbr>false</WebRtcAutoAbr>
+								</Options>
+								<RenditionTemplate>
+									<Name>${Height}p</Name>
+									<VideoTemplate>
+										<EncodingType>all</EncodingType>
+									</VideoTemplate>
+								</RenditionTemplate>
+							</Playlist>
+							<Encodes>
+								<!-- No transcoding: the publisher prefers H.264 so LL-HLS can carry it. Video only (SG-23). -->
+								<Video>
+									<Name>bypass_video</Name>
+									<Bypass>true</Bypass>
+								</Video>
+							</Encodes>
+						</OutputProfile>
+					</OutputProfiles>
+					<Providers>
+						<WebRTC>
+							<Timeout>30000</Timeout>
+							<CrossDomains>
+								<Url>${env:OME_ALLOWED_ORIGIN:*}</Url>
+							</CrossDomains>
+						</WebRTC>
+					</Providers>
+					<Publishers>
+						<AppWorkerCount>1</AppWorkerCount>
+						<StreamWorkerCount>4</StreamWorkerCount>
+						<WebRTC>
+							<Timeout>30000</Timeout>
+							<Rtx>false</Rtx>
+							<Ulpfec>false</Ulpfec>
+							<JitterBuffer>false</JitterBuffer>
+							<CreateDefaultPlaylist>true</CreateDefaultPlaylist>
+						</WebRTC>
+						<LLHLS>
+							<OriginMode>true</OriginMode>
+							<ChunkDuration>0.5</ChunkDuration>
+							<PartHoldBack>1.5</PartHoldBack>
+							<SegmentDuration>6</SegmentDuration>
+							<SegmentCount>10</SegmentCount>
+							<CreateDefaultPlaylist>true</CreateDefaultPlaylist>
+							<CrossDomains>
+								<Url>${env:OME_ALLOWED_ORIGIN:*}</Url>
+							</CrossDomains>
+						</LLHLS>
+					</Publishers>
+				</Application>
+			</Applications>
+		</VirtualHost>
+	</VirtualHosts>
+</Server>

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <!-- CSP comes from the Caddy header (deploy/Caddyfile), which knows the live host for this deployment. -->
+    <title>Survey Anything: live view</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Survey Anything</h1>
+      <section id="meta" aria-live="polite"></section>
+      <form id="pin-form" hidden>
+        <label>Your PIN <input id="pin" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required /></label>
+        <button type="submit">Open live view</button>
+      </form>
+      <p id="status" role="status"></p>
+      <div id="player"></div>
+      <p id="owner"></p>
+      <footer>No account, no tracking. <a id="source" rel="noreferrer" target="_blank">Source code (AGPL-3.0)</a></footer>
+    </main>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

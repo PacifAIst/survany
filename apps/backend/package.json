@@ -1,0 +1,26 @@
+{
+  "name": "@survey-anything/backend",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node build.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@survey-anything/providers": "workspace:*",
+    "@survey-anything/shared": "workspace:*",
+    "fastify": "^5.6.1",
+    "nodemailer": "^7.0.9",
+    "yaml": "^2.9.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^7.0.2",
+    "@types/smtp-server": "^3.5.12",
+    "esbuild": "^0.25.10",
+    "smtp-server": "^3.14.0"
+  }
+}

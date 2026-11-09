@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'" />
+    <title>Survey Anything: acknowledge</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Acknowledge alert</h1>
+      <section id="meta"></section>
+      <form id="pin-form">
+        <label>Your PIN <input id="pin" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required /></label>
+        <button type="submit">Acknowledge</button>
+      </form>
+      <p id="status" role="status"></p>
+      <footer>This page cannot approve any action. <a id="source" rel="noreferrer" target="_blank">Source code (AGPL-3.0)</a></footer>
+    </main>
+    <script type="module" src="./src/ack.ts"></script>
+  </body>
+</html>

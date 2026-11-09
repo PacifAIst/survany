@@ -14,3 +14,4 @@ test-results/
 apps/extension/public/
 bench/reports/*.raw.json
 release/
+deploy/viewer-config.json

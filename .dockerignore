@@ -1,0 +1,16 @@
+**/node_modules
+**/dist
+**/.vite
+**/coverage
+**/test-results
+**/playwright-report
+.git
+apps/extension
+apps/viewer
+bench
+demo
+docs
+models
+deploy/data
+deploy/.env
+release

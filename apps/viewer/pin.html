@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'" />
+    <title>Survey Anything: choose your PIN</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Choose your PIN</h1>
+      <p>6 to 8 digits. You will type it to open live view and to acknowledge alerts from email.</p>
+      <form id="pin-form">
+        <label>PIN <input id="pin" type="password" inputmode="numeric" maxlength="8" required /></label>
+        <label>Again <input id="pin2" type="password" inputmode="numeric" maxlength="8" required /></label>
+        <button type="submit">Save PIN</button>
+      </form>
+      <p id="status" role="status"></p>
+      <footer><a id="source" rel="noreferrer" target="_blank">Source code (AGPL-3.0)</a></footer>
+    </main>
+    <script type="module" src="./src/pin.ts"></script>
+  </body>
+</html>

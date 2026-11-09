@@ -62,6 +62,8 @@ export function toSubmission(d: AlertDraft, c: Config): EventSubmission {
       channels: c.alerts.channels,
       snapshotJpegB64: d.snapshotB64,
       wantLiveView: true,
+      ackTimeoutSec: c.alerts.ackTimeoutSec,
+      streamTtlMinutes: c.stream.ttlMinutes,
     },
     c,
   );

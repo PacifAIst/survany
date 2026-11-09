@@ -122,7 +122,11 @@ export async function whipRequest(url: string, method: 'POST' | 'DELETE', sdp: s
 export async function fetchBundledAsset(url: string, extensionBase: string): Promise<ArrayBuffer> {
   const u = new URL(url);
   const base = new URL(extensionBase);
-  if (u.origin !== base.origin || base.protocol !== 'chrome-extension:') throw new EgressBlockedError(`asset ${url} is not inside the extension package`);
+  // Compare scheme and host explicitly: URL.origin is the opaque string "null" for non-special schemes
+  // in some runtimes, which would make every chrome-extension:// origin look equal.
+  if (base.protocol !== 'chrome-extension:' || u.protocol !== base.protocol || u.host !== base.host || u.host === '') {
+    throw new EgressBlockedError(`asset ${url} is not inside the extension package`);
+  }
   const res = await fetch(u.href);
   if (!res.ok) throw new Error(`bundled asset missing: ${u.pathname} (HTTP ${res.status})`);
   return res.arrayBuffer();

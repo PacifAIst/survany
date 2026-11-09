@@ -1,0 +1,72 @@
+# Survey Anything: Caddy (Apache-2.0) terminates TLS for HTTP and signaling only. Media never passes
+# through it (C14): OME's UDP range, 10000/tcp and the 3478/tcp relay are published directly.
+{
+	email {$ACME_EMAIL}
+	# SECURITY-GATE SG-27: no access logs by default; viewer and OME URLs carry tokens.
+	log default {
+		output stderr
+		level ERROR
+	}
+}
+
+{$PUBLIC_HOST} {
+	encode gzip
+
+	# The admission webhook and forward_auth endpoints are for OME and Caddy on the compose network only.
+	handle /ome/* {
+		respond 404
+	}
+
+	handle /api/* {
+		reverse_proxy backend:8080
+	}
+	handle /telegram/webhook {
+		reverse_proxy backend:8080
+	}
+	handle /source {
+		reverse_proxy backend:8080
+	}
+	handle /healthz {
+		reverse_proxy backend:8080
+	}
+
+	# Static viewer, served from disk so it loads while the backend is down (§4.1, §10).
+	handle_path /v/* {
+		root * /srv/viewer
+		header {
+			Referrer-Policy no-referrer
+			X-Content-Type-Options nosniff
+			Cache-Control no-store
+			Permissions-Policy "camera=(), microphone=(), geolocation=()"
+			Content-Security-Policy "default-src 'self'; script-src 'self' https://telegram.org; connect-src 'self' {$LIVE_CONNECT_SRC}; media-src 'self' blob:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' https://web.telegram.org https://*.telegram.org"
+		}
+		file_server
+	}
+
+	handle {
+		redir https://{$PUBLIC_HOST}/v/ 302
+	}
+}
+
+{$LIVE_HOST} {
+	# SECURITY-GATE SG-11: forward_auth checks the stream token before OME sees any signaling request.
+	# It covers every request on this host, with no `direction` matcher. The only exception is a plain
+	# GET/HEAD for an LL-HLS playlist or part (no Upgrade header), which cannot publish and is still
+	# subject to OME's admission webhook.
+	@llhls {
+		method GET HEAD
+		path_regexp llhls ^/app/[A-Za-z0-9_-]{43}/[A-Za-z0-9_./-]+\.(m3u8|m4s|mp4|aac)$
+		not header Upgrade *
+	}
+	handle @llhls {
+		reverse_proxy ome:3333
+	}
+	handle {
+		# If the backend is down or answers non-2xx, Caddy returns that error and never proxies (fail closed).
+		forward_auth backend:8080 {
+			uri /ome/forward-auth
+			header_up X-SA-Forward-Auth {$FORWARD_AUTH_SECRET}
+		}
+		reverse_proxy ome:3333
+	}
+}

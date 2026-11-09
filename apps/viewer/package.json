@@ -1,0 +1,19 @@
+{
+  "name": "@survey-anything/viewer",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && vite build",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@survey-anything/shared": "workspace:*",
+    "hls.js": "^1.6.0",
+    "ovenplayer": "0.10.54"
+  },
+  "devDependencies": {
+    "vite": "^7.1.9"
+  }
+}

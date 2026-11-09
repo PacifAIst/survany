@@ -129,7 +129,7 @@ describe('SG-14 and SG-15: guardedFetch egress policy', () => {
       {
         eventId: crypto.randomUUID(), rule: 'fire', ruleTitle: 'Fire', severity: 'critical', confirmed: true, unconfirmedReason: null,
         confidence: 0.9, provider: 'local', reason: 'x', timestamp: new Date().toISOString(), sourceLabel: 's', recipients: ['owner'],
-        channels: ['telegram'], snapshotJpegB64: '/9j/abc', wantLiveView: true,
+        channels: ['telegram'], snapshotJpegB64: '/9j/abc', wantLiveView: true, ackTimeoutSec: 300, streamTtlMinutes: 10,
       },
       r.config,
     );
@@ -234,5 +234,29 @@ describe('SG-13 live indicator must be verified before streaming', () => {
     (chrome.action as unknown as { getBadgeText: () => Promise<string> }).getBadgeText = async () => '';
     const { beginLiveIndicator } = await import('../src/sw/badge');
     await expect(beginLiveIndicator('ev2', ['x'])).rejects.toThrow(/SG-13/);
+  });
+});
+
+describe('SG-26 bundled assets only, checksum-verified', () => {
+  it('refuses any asset URL outside the extension package', async () => {
+    const { fetchBundledAsset } = await import('../src/sw/guarded-fetch');
+    await expect(fetchBundledAsset('https://cdn.example/model.onnx', 'chrome-extension://abc/')).rejects.toThrow(/not inside the extension package/);
+    await expect(fetchBundledAsset('chrome-extension://other/model.onnx', 'chrome-extension://abc/')).rejects.toThrow(/not inside the extension package/);
+  });
+
+  it('rejects a model whose SHA-256 differs from checksums.json, and one not listed at all', async () => {
+    const { loadVerifiedAsset, ChecksumMismatchError } = await import('../src/worker/detector');
+    const bytes = new TextEncoder().encode('model-bytes');
+    const real = globalThis.fetch;
+    globalThis.fetch = (async () => new Response(bytes)) as typeof fetch;
+    try {
+      const good = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map((b) => b.toString(16).padStart(2, '0')).join('');
+      const list = [{ name: 'm', path: 'models/m.onnx', sha256: good, license: 'Apache-2.0' }];
+      await expect(loadVerifiedAsset('models/m.onnx', 'chrome-extension://abc/', list)).resolves.toBeInstanceOf(ArrayBuffer);
+      await expect(loadVerifiedAsset('models/m.onnx', 'chrome-extension://abc/', [{ ...list[0]!, sha256: '0'.repeat(64) }])).rejects.toBeInstanceOf(ChecksumMismatchError);
+      await expect(loadVerifiedAsset('models/other.onnx', 'chrome-extension://abc/', list)).rejects.toThrow(/not listed/);
+    } finally {
+      globalThis.fetch = real;
+    }
   });
 });

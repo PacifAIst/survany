@@ -1,0 +1,39 @@
+:root {
+  --bg: #fff;
+  --fg: #1b1f24;
+  --muted: #5b6470;
+  --ok: #1f7a3d;
+  --warn: #8a5a00;
+  --danger: #c0161b;
+  --line: #d9dee5;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15181c;
+    --fg: #e6e9ee;
+    --muted: #9aa4b1;
+    --ok: #4cc27a;
+    --warn: #f0b84a;
+    --danger: #ff6b6b;
+    --line: #2d333b;
+    color-scheme: dark;
+  }
+}
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+main { max-width: 720px; margin: 0 auto; padding: 16px; }
+h1 { font-size: 20px; margin: 0 0 12px; }
+h2 { font-size: 18px; margin: 4px 0; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 8px 0; }
+dt { color: var(--muted); }
+dd { margin: 0; word-break: break-all; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 13px; border: 1px solid var(--line); }
+.badge.ok { color: var(--ok); }
+.badge.warn { color: var(--warn); }
+.error { color: var(--danger); }
+#player { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 8px; overflow: hidden; margin: 8px 0; }
+#player:empty { display: none; }
+input, button { font: inherit; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); }
+button { background: #1f5fbf; color: #fff; border-color: #1f5fbf; }
+label { display: block; margin: 8px 0; }
+footer { margin-top: 24px; color: var(--muted); font-size: 13px; }

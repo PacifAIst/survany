@@ -1,0 +1,92 @@
+# Survey Anything deployment (PLAN §4.2).
+#   T1:  docker compose up -d                       -> backend + Caddy
+#   T2:  docker compose --profile ome up -d         -> + OvenMediaEngine (private live view)
+#   T3:  docker compose --profile ome --profile gate up -d -> + confirm-gate-mcp (human-approved actions)
+# Media plane: only OvenMediaEngine (AGPL-3.0). Caddy (Apache-2.0) terminates TLS for HTTP and signaling only.
+# Third-party images are pinned by digest (resolved 2026-11-09 with docker pull + docker inspect).
+
+name: survey-anything
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: apps/backend/Dockerfile
+    image: survey-anything/backend:local
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATA_DIR: /data
+      OME_ADMISSION_URL: http://backend:8080/ome/admission
+      OME_API_URL: http://ome:8081
+      GATE_URL: http://gate:8800
+      GATE_POLICY_PATH: /etc/survey-anything/policy.yaml
+    volumes:
+      - backend-data:/data
+      - ./gate/policy.yaml:/etc/survey-anything/policy.yaml:ro
+    expose:
+      - "8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+
+  caddy:
+    image: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../apps/viewer/dist:/srv/viewer:ro
+      - ./viewer-config.json:/srv/viewer/viewer-config.json:ro
+      - caddy-data:/data
+    depends_on: [backend]
+
+  ome:
+    profiles: [ome]
+    image: airensoft/ovenmediaengine:v0.21.0@sha256:172da9129d32093f3c92c426d385a318db38c7e70de0a3a685693e69614672a6
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      OME_ADMISSION_URL: http://backend:8080/ome/admission
+    volumes:
+      - ./ome/Server.xml:/opt/ovenmediaengine/bin/origin_conf/Server.xml:ro
+    # SECURITY-GATE SG-20: 8081 (REST API) is not published; only the compose network can reach it, and it needs OME_API_TOKEN.
+    # Signaling (3333) is reached only through Caddy's forward_auth. Media ports are published directly (not through Caddy).
+    expose:
+      - "3333"
+      - "8081"
+    ports:
+      - "3478:3478/tcp"
+      - "10000:10000/tcp"
+      - "10000-10003:10000-10003/udp"
+    depends_on: [backend]
+
+  gate:
+    profiles: [gate]
+    build:
+      context: ./gate
+    image: survey-anything/confirm-gate:0.8.0
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - gate-data:/data
+    expose:
+      - "8800"
+
+  mailpit:
+    profiles: [test]
+    image: axllent/mailpit:v1.27@sha256:e22dce5b36f93c77082e204a3942fb6b283b7896e057458400a4c88344c3df68
+    ports:
+      - "8025:8025"
+    expose:
+      - "1025"
+
+volumes:
+  backend-data:
+  caddy-data:
+  gate-data:

@@ -1,0 +1,35 @@
+# Survey Anything action policy (PLAN §7 SG-06). The backend validates every proposal against this
+# file before anything is sent to confirm-gate-mcp, and renders the approval card from `card`.
+#
+# - Lock, unlock and alarm-disarm are denied unless one exact entity is listed in allowSensitive.
+# - Emergency-service actions are refused in code; no entry here can enable them.
+# - pendingTtlSeconds must equal mcp.approvalTimeoutSec in the extension and the gate's pending_ttl.
+version: 1
+pendingTtlSeconds: 300
+tools:
+  - name: ha_call_service
+    card: "{service} on {entity_id}"
+    entityArg: entity_id
+    args:
+      service:
+        type: string
+        enum:
+          - light.turn_on
+          - light.turn_off
+          - switch.turn_on
+          - switch.turn_off
+          - siren.turn_on
+          - siren.turn_off
+          - camera.snapshot
+      entity_id:
+        type: string
+        pattern: '^[a-z_]+\.[a-z0-9_]+$'
+    entities:
+      allow:
+        - "light.*"
+        - "switch.*"
+        - "siren.*"
+        - "camera.*"
+      deny:
+        - "switch.main_power"
+      allowSensitive: []

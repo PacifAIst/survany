@@ -84,7 +84,7 @@ test('offscreen document killed: camera restored within 60 s by the watchdog', a
   expect(restored.log.join('\n')).toMatch(/camera restored after/);
 });
 
-test('M2: bundled YOLOX loads on CPU (WASM) with WebGPU disabled and every network request blocked', async () => {
+test('M2 / SG-26: bundled, checksummed YOLOX loads on CPU (WASM) with WebGPU disabled and every network request blocked', async () => {
   h = await launch({ blockNetwork: true });
   await acceptConsentAndCamera(h);
   const saved = await h.send<{ ok: boolean; errors: string[] }>({ type: 'save-config', config: localGateOnly(['robbery', 'fire', 'other']) });
