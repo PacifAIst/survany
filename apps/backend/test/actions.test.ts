@@ -32,15 +32,15 @@ class FakeGate implements GateClient {
     this.held.set(id, { ...args });
     return { pendingId: id, stage: 'choose', preview: null };
   }
-  async approve(pendingId: string, expected: Record<string, unknown>): Promise<ConfirmResult> {
+  async approve(pendingId: string, _tool: string, expected: Record<string, unknown>): Promise<ConfirmResult> {
     if (this.down) throw new GateUnavailableError('gate unreachable: ECONNREFUSED');
     const held = this.held.get(pendingId);
-    if (!held) return { status: 'refused', receipt: null, reason: 'unknown pending' };
+    if (!held) return { status: 'refused', receipt: null, reason: 'unknown pending', nextPendingId: null };
     const actual = this.tamperArgs ? { ...held, entity_id: 'light.everything' } : held;
-    if (canonicalJson(actual) !== canonicalJson(expected)) return { status: 'refused', receipt: null, reason: 'arguments differ' };
+    if (canonicalJson(actual) !== canonicalJson(expected)) return { status: 'refused', receipt: null, reason: 'arguments differ', nextPendingId: null };
     this.held.delete(pendingId);
     this.executed.push({ pendingId, args: held });
-    return { status: 'done', receipt: { receipt_id: 'rcpt_x' }, reason: null };
+    return { status: 'done', receipt: { receipt_id: 'rcpt_x' }, reason: null, nextPendingId: null };
   }
   async deny(pendingId: string): Promise<void> {
     this.denied.push(pendingId);
@@ -238,12 +238,17 @@ describe('ConfirmGateClient against a signature-verifying fake confirm-gate', ()
         const sig = String(req.headers['x-signature']);
         if (req.headers['x-device-id'] !== 'dev1' || sig !== expected || Math.abs(Date.now() / 1000 - ts) > 60 || seen.has(sig)) return void res.writeHead(401).end('{"error":"auth"}');
         seen.add(sig);
-        if (path.startsWith('/device/pending')) return void res.end(JSON.stringify({ pending: [{ pending_id: 'pend1', nonce, args: pendingArgs }] }));
-        const j = JSON.parse(body.toString()) as { nonce?: string; answer?: string; evidence_ref?: string };
+        // Shapes as confirm-gate-mcp 0.8.0 (gate.py public_view, submit_tap): options[] with n/action/args.
+        if (path.startsWith('/device/pending')) {
+          return void res.end(JSON.stringify({ pending: [{ pending_id: 'pend1', nonce, stage: 'choose', options: [{ n: 1, action: 'ha_call_service', args: pendingArgs, text: 'x', risk: 'low' }] }] }));
+        }
+        const j = JSON.parse(body.toString()) as { nonce?: string; option?: number; answer?: string; evidence_ref?: string };
         if (path === '/device/evidence') {
           if (j.nonce !== nonce) return void res.writeHead(409).end('{}');
-          log.push(`evidence ${j.answer}`);
-          return void res.end(JSON.stringify({ evidence_ref: 'ev1', decision: j.answer }));
+          // A "choose" card takes the option number; "yes" alone is rejected outside the final stage.
+          if (j.answer === 'yes' || j.option !== 1) return void res.writeHead(409).end('{"error":"choose a card from 1 to 1"}');
+          log.push(`evidence option ${j.option}`);
+          return void res.end(JSON.stringify({ evidence_ref: 'ev1', decision: 'choose' }));
         }
         if (path === '/device/confirm') {
           log.push('confirm');
@@ -258,12 +263,14 @@ describe('ConfirmGateClient against a signature-verifying fake confirm-gate', ()
       const gate = new ConfirmGateClient(url, 'agent-token', { deviceId: 'dev1', key });
       const p = await gate.propose('ha_call_service', light);
       expect(p.pendingId).toBe('pend1');
-      const r = await gate.approve('pend1', light);
+      const r = await gate.approve('pend1', 'ha_call_service', light);
       expect(r).toMatchObject({ status: 'done', receipt: { receipt_id: 'rcpt_1' } });
-      expect(log).toEqual(['propose ha_call_service', 'evidence yes', 'confirm']);
+      expect(log).toEqual(['propose ha_call_service', 'evidence option 1', 'confirm']);
       // Changed args at the gate: refused before any evidence is sent.
       pendingArgs = { ...light, entity_id: 'light.other' };
-      expect((await gate.approve('pend1', light)).status).toBe('refused');
+      expect((await gate.approve('pend1', 'ha_call_service', light)).status).toBe('refused');
+      pendingArgs = { ...light };
+      expect((await gate.approve('pend1', 'other_tool', light)).status).toBe('refused'); // a different action is refused too
       // A gate that is down is an error, which the approval flow turns into a denial (SG-05).
       server.close();
       server.closeAllConnections();

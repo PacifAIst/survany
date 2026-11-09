@@ -18,11 +18,14 @@ export interface ConfirmResult {
   status: 'done' | 'needs_final_yes' | 'cancelled' | 'refused' | 'failed';
   receipt: unknown;
   reason: string | null;
+  /** For needs_final_yes: the gate opens a new card set for the separate final yes (gate.py confirm). */
+  nextPendingId: string | null;
 }
 
 export interface GateClient {
   propose(tool: string, args: Record<string, unknown>): Promise<ProposeResult>;
-  approve(pendingId: string, expectedArgs: Record<string, unknown>): Promise<ConfirmResult>;
+  /** Taps "yes" for exactly the action the human saw. The gate's card must still hold `tool` with `expectedArgs`. */
+  approve(pendingId: string, tool: string, expectedArgs: Record<string, unknown>): Promise<ConfirmResult>;
   deny(pendingId: string): Promise<void>;
 }
 
@@ -31,13 +34,12 @@ export interface GateDevice {
   key: string;
 }
 
+/** A card set as GET /device/pending returns it (confirm-gate-mcp 0.8.0, gate.py public_view + nonce). */
 interface PendingCard {
   pending_id: string;
   nonce: string;
-  action?: string;
-  args?: Record<string, unknown>;
-  options?: unknown[];
   stage?: string;
+  options?: { n: number; action: string; args: Record<string, unknown>; text?: string; risk?: string }[];
 }
 
 export class ConfirmGateClient implements GateClient {
@@ -113,25 +115,38 @@ export class ConfirmGateClient implements GateClient {
     return card;
   }
 
-  async approve(pendingId: string, expectedArgs: Record<string, unknown>): Promise<ConfirmResult> {
+  async approve(pendingId: string, tool: string, expectedArgs: Record<string, unknown>): Promise<ConfirmResult> {
     const card = await this.card(pendingId);
-    // Re-check arguments at confirm time (§6.5): the gate must still hold exactly what the human saw.
-    if (card.args && canonicalJson(card.args) !== canonicalJson(expectedArgs)) {
+    // Re-check at confirm time (§6.5): the gate must hold exactly one option, and it must be the very
+    // action and arguments the human approved. Anything else is refused and the card set withdrawn.
+    const options = card.options ?? [];
+    const only = options.length === 1 ? options[0] : undefined;
+    if (!only || only.action !== tool || canonicalJson(only.args ?? {}) !== canonicalJson(expectedArgs)) {
       await this.deny(pendingId).catch(() => undefined);
-      return { status: 'refused', receipt: null, reason: 'arguments at the gate differ from the approved card' };
+      return { status: 'refused', receipt: null, reason: 'the action held by the gate differs from the approved card', nextPendingId: null };
     }
-    const ev = (await this.http('POST', '/device/evidence', { pending_id: pendingId, nonce: card.nonce, kind: 'tap', answer: 'yes', input: 'touch' }, true)) as {
+    // A "choose" card takes the option number; the separate high-risk "final" card takes yes (gate.py submit_tap).
+    const tap = card.stage === 'final' ? { answer: 'yes' } : { option: only.n };
+    const ev = (await this.http('POST', '/device/evidence', { pending_id: pendingId, nonce: card.nonce, kind: 'tap', ...tap, input: 'touch' }, true)) as {
       evidence_ref?: string;
       decision?: string;
     };
     if (!ev.evidence_ref) throw new GateUnavailableError('gate returned no evidence reference');
     const c = (await this.http('POST', '/device/confirm', { pending_id: pendingId, evidence_ref: ev.evidence_ref }, true)) as {
       status?: ConfirmResult['status'];
+      pending_id?: string;
       receipt?: unknown;
+      result?: unknown;
       reason?: string;
+      error?: string;
     };
     const status = c.status ?? 'failed';
-    return { status, receipt: c.receipt ?? null, reason: c.reason ?? null };
+    return {
+      status,
+      receipt: c.receipt ?? c.result ?? null,
+      reason: c.reason ?? c.error ?? null,
+      nextPendingId: status === 'needs_final_yes' && typeof c.pending_id === 'string' ? c.pending_id : null,
+    };
   }
 
   async deny(pendingId: string): Promise<void> {

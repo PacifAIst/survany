@@ -1,0 +1,37 @@
+{
+  "startedAt": "2026-11-09T13:00:00.832Z",
+  "gate": "confirm-gate-mcp 0.8.0 (mcp 2.3.0)",
+  "scenarios": {
+    "approveOnce": {
+      "executionsBeforeTap": 0,
+      "executionsAfterTap": 1,
+      "afterThreeReplays": 1,
+      "cardEditedToExecuted": true
+    },
+    "wrongUserAndDeny": {
+      "executionsAfterWrongTaps": 0,
+      "executionsAfterDenyAndLateApprove": 0
+    },
+    "timeout": {
+      "policyWindowSeconds": 30,
+      "expiredAfterMs": 32023,
+      "executionsAfterLateTap": 0
+    },
+    "gateDown": {
+      "ownerNotified": true,
+      "executions": 0
+    }
+  },
+  "gatePairing": "Paired with the gate as d_d8390501c058530c. Restart the backend to load the credentials.",
+  "finishedAt": "2026-11-09T13:01:02.316Z",
+  "executionsLog": [
+    {
+      "at": 1794229283.0013094,
+      "tool": "ha_call_service",
+      "arguments": {
+        "service": "light.turn_on",
+        "entity_id": "light.porch"
+      }
+    }
+  ]
+}

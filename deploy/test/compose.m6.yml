@@ -1,0 +1,47 @@
+# M6 acceptance against the real confirm-gate-mcp 0.8.0 (PLAN §8 M6). Local only.
+# Run with: pnpm vitest run -c apps/backend/vitest.docker.config.ts
+name: sa-m6
+
+services:
+  gate:
+    build:
+      context: ../gate
+    image: survey-anything/confirm-gate:0.8.0
+    command: ["sh", "-c", "confirm-gate serve --host 0.0.0.0 --port 8800 --db /data/gate.db --token \"$$GATE_AGENT_TOKEN\" --upstream-cmd 'python /test/fake_ha.py'"]
+    environment:
+      GATE_AGENT_TOKEN: m6_gate_agent_token_not_real
+      EXECUTIONS_PATH: /data/executions.jsonl
+    volumes:
+      - m6-gate-data:/data
+      - ./fake_ha.py:/test/fake_ha.py:ro
+
+  telegram:
+    image: node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8
+    command: ["node", "/fake/fake-telegram.mjs"]
+    volumes:
+      - ./fake-telegram.mjs:/fake/fake-telegram.mjs:ro
+    ports:
+      - "18181:8081" # test only: the runner reads recorded Bot API calls
+
+  backend:
+    image: survey-anything/backend:local
+    environment:
+      PUBLIC_BASE_URL: http://localhost:8189
+      DATA_DIR: /data
+      TELEGRAM_BOT_TOKEN: TEST_BOT_TOKEN_NOT_REAL
+      TELEGRAM_BOT_USERNAME: survey_test_bot
+      TELEGRAM_WEBHOOK_SECRET: whsec_test_not_real
+      TELEGRAM_API_BASE: http://telegram:8081
+      GATE_URL: http://gate:8800
+      GATE_AGENT_TOKEN: m6_gate_agent_token_not_real
+      GATE_POLICY_PATH: /policy/policy.yaml
+    volumes:
+      - m6-backend-data:/data
+      - ./policy.m6.yaml:/policy/policy.yaml:ro
+    ports:
+      - "8188:8080" # test only: lets the runner create events, contacts and Telegram updates
+    depends_on: [gate, telegram]
+
+volumes:
+  m6-gate-data:
+  m6-backend-data:

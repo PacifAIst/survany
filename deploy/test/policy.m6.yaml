@@ -1,0 +1,21 @@
+# Test policy for the M6 real-gate test: same tool as deploy/gate/policy.yaml, 30 s approval window.
+version: 1
+pendingTtlSeconds: 30
+tools:
+  - name: ha_call_service
+    card: "{service} on {entity_id}"
+    entityArg: entity_id
+    args:
+      service:
+        type: string
+        enum:
+          - light.turn_on
+          - light.turn_off
+      entity_id:
+        type: string
+        pattern: '^[a-z_]+\.[a-z0-9_]+$'
+    entities:
+      allow:
+        - "light.*"
+      deny: []
+      allowSensitive: []

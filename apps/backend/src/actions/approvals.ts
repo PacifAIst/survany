@@ -116,11 +116,14 @@ export async function decideApproval(ctx: AppCtx, senders: Senders, id: string, 
     return { message: 'Gate not configured: nothing ran.' };
   }
   try {
-    const r = await ctx.gate.approve(a.gate_pending_id, JSON.parse(a.args) as Record<string, unknown>);
+    const r = await ctx.gate.approve(a.gate_pending_id, a.tool, JSON.parse(a.args) as Record<string, unknown>);
     const status = r.status === 'done' ? 'executed' : r.status === 'needs_final_yes' ? 'pending' : 'failed';
     if (status === 'pending') {
-      // High-risk tool: the gate wants a second, separate yes. Re-open this approval for one more tap.
-      ctx.db.prepare("UPDATE approvals SET status = 'pending', decided_by = NULL, decided_at = NULL, expires_at = ? WHERE id = ?").run(now + 60_000, id);
+      // High-risk tool: the gate opened a new card set for a second, separate yes (its final_ttl is 60 s).
+      // Re-open this approval for one more tap, bound to the new gate card.
+      ctx.db
+        .prepare("UPDATE approvals SET status = 'pending', decided_by = NULL, decided_at = NULL, expires_at = ?, gate_pending_id = COALESCE(?, gate_pending_id) WHERE id = ?")
+        .run(now + 60_000, r.nextPendingId, id);
       await closeCards(ctx, id, '⚠️ High-risk action: tap Approve once more within 60 s to confirm.');
       return { message: 'Second confirmation required.' };
     }
