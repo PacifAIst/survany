@@ -1,0 +1,104 @@
+# M5 / §9 "UDP-blocked viewer" (local only). Everything runs on one private network so the viewer's
+# browser can be firewalled for real: OME advertises its address on this network as the ICE candidate and
+# TcpRelay, Caddy serves the viewer and fronts OME signaling and LL-HLS, and two browsers (publisher and
+# viewer) run in containers driven from the host. The viewer container has NET_ADMIN; the test changes its
+# iptables rules per step. Port 8090 on Caddy stands in for 443 (the live host).
+# Run: pnpm --filter @survey-anything/extension exec playwright test -c e2e/ladder/ladder.config.ts
+name: sa-ladder
+
+x-secrets: &secrets
+  OME_ADMISSION_SECRET: ladder_admission_secret_not_real
+  OME_API_TOKEN: ladder_ome_api_token_not_real
+  FORWARD_AUTH_SECRET: ladder_forward_auth_secret_not_real
+
+networks:
+  ladder:
+    ipam:
+      config:
+        - subnet: 10.231.77.0/24
+
+services:
+  backend:
+    build:
+      context: ../..
+      dockerfile: apps/backend/Dockerfile
+    image: survey-anything/backend:local
+    environment:
+      <<: *secrets
+      PUBLIC_BASE_URL: http://caddy:8089
+      DATA_DIR: /data
+      OME_ENABLED: "true"
+      OME_PUBLIC_HOST: 10.231.77.10
+      OME_SIGNALING_BASE: http://caddy:8090
+      OME_LLHLS_BASE: http://caddy:8090
+      OME_API_URL: http://ome:8081
+      SMTP_URL: smtp://mailpit:1025
+      MAIL_FROM: alerts@ladder.test
+      TELEGRAM_BOT_TOKEN: TEST_BOT_TOKEN_NOT_REAL
+      TELEGRAM_BOT_USERNAME: survey_test_bot
+      TELEGRAM_WEBHOOK_SECRET: whsec_test_not_real
+      TELEGRAM_API_BASE: http://telegram:8081
+    ports:
+      - "18089:8080" # test only: the runner creates events, contacts and Telegram updates
+    networks: [ladder]
+
+  ome:
+    image: airensoft/ovenmediaengine:v0.21.0@sha256:172da9129d32093f3c92c426d385a318db38c7e70de0a3a685693e69614672a6
+    environment:
+      <<: *secrets
+      OME_HOST_IP: 10.231.77.10
+      OME_ADMISSION_URL: http://backend:8080/ome/admission
+    volumes:
+      - ./../ome/Server.xml:/opt/ovenmediaengine/bin/origin_conf/Server.xml:ro
+    networks:
+      ladder:
+        ipv4_address: 10.231.77.10
+
+  caddy:
+    image: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+    environment:
+      <<: *secrets
+      PUBLIC_HOST: http://caddy:8089
+      LIVE_HOST: http://caddy:8090
+      LIVE_CONNECT_SRC: http://caddy:8090 ws://caddy:8090
+      ACME_EMAIL: test@ladder.test
+    volumes:
+      - ../Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../../apps/viewer/dist:/srv/viewer:ro
+    networks: [ladder]
+
+  mailpit:
+    image: axllent/mailpit:v1.27@sha256:e22dce5b36f93c77082e204a3942fb6b283b7896e057458400a4c88344c3df68
+    ports:
+      - "18026:8025"
+    networks: [ladder]
+
+  telegram:
+    image: node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8
+    command: ["node", "/fake/fake-telegram.mjs"]
+    volumes:
+      - ./fake-telegram.mjs:/fake/fake-telegram.mjs:ro
+    ports:
+      - "18183:8081"
+    networks: [ladder]
+
+  # Plain-HTTP test hosts on this private network are treated as secure contexts (as HTTPS would be in
+  # production); getUserMedia needs one. The publisher also gets Chrome's fake camera.
+  publisher:
+    build: ./ladder
+    image: survey-anything/test-browser:1.64.1
+    environment:
+      CHROME_ARGS: '["--use-fake-device-for-media-stream","--use-fake-ui-for-media-stream","--unsafely-treat-insecure-origin-as-secure=http://backend:8080,http://caddy:8089,http://caddy:8090"]'
+    ports:
+      - "13101:3000"
+    networks: [ladder]
+
+  viewer:
+    build: ./ladder
+    image: survey-anything/test-browser:1.64.1
+    environment:
+      CHROME_ARGS: '["--unsafely-treat-insecure-origin-as-secure=http://backend:8080,http://caddy:8089,http://caddy:8090"]'
+    cap_add: [NET_ADMIN]
+    ports:
+      - "13102:3000"
+    networks: [ladder]

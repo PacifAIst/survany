@@ -5,7 +5,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, type BrowserContext, type Page, type Worker } from '@playwright/test';
 
-export const DIST = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
+/** The built extension under test; `SA_EXTENSION_DIST` points it at an unzipped release instead (docs/release/RELEASE.md). */
+export const DIST = process.env['SA_EXTENSION_DIST'] ?? join(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
 /** `pnpm build:e2e`: same code, plus the two loopback origins pre-granted (manifest.config.ts). */
 export const DIST_E2E = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist-e2e');
 

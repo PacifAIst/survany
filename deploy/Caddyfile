@@ -61,6 +61,9 @@
 	handle @llhls {
 		reverse_proxy ome:3333
 	}
+	# LL-HLS chunklists, parts and segments live under the internal stream id (admission's new_url) and carry
+	# no token in the path; they go through forward_auth below, which requires the viewer's play token (`sa=`)
+	# for that same stream (stream/admission.ts decideForwardAuth). Found by the UDP-blocked viewer test.
 	handle {
 		# If the backend is down or answers non-2xx, Caddy returns that error and never proxies (fail closed).
 		forward_auth backend:8080 {

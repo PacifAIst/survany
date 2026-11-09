@@ -101,23 +101,33 @@ describe('M7 provider bench and red team', () => {
       console.info(`[${p.id}] probe: ${probes.filter((x) => x.ok).length}/${probes.length} passed (${probes.filter((x) => x.ok && x.attempts === 1).length} on the first code)`);
       const threshold = modelConfirmThreshold(p.model);
 
+      // A 429 says something about the account's rate limit, not about the model: wait as told (or back off)
+      // and ask again, up to 3 times, and count it. Latency is the successful attempt only.
       async function confirmOne(file: string) {
         const bytes = readFileSync(file);
-        let tokensIn = 0;
-        let tokensOut = 0;
-        const t0 = performance.now();
-        try {
-          const r = await provider.analyze(new Blob([bytes], { type: 'image/jpeg' }), recipe.confirm.prompt, {
-            allowedEvents: [recipe.id],
-            maxOutputTokens: 200,
-            onUsage: (u) => {
-              tokensIn = u.inputTokens;
-              tokensOut = u.outputTokens;
-            },
-          });
-          return { ok: true as const, event: r.event, confidence: r.confidence, reason: r.reason, ms: performance.now() - t0, tokensIn, tokensOut, error: null };
-        } catch (e) {
-          return { ok: false as const, event: null, confidence: null, reason: null, ms: performance.now() - t0, tokensIn, tokensOut, error: e instanceof ProviderError ? e.kind : String(e) };
+        let rateLimited = 0;
+        for (let attempt = 0; ; attempt++) {
+          let tokensIn = 0;
+          let tokensOut = 0;
+          const t0 = performance.now();
+          try {
+            const r = await provider.analyze(new Blob([bytes], { type: 'image/jpeg' }), recipe.confirm.prompt, {
+              allowedEvents: [recipe.id],
+              maxOutputTokens: 200,
+              onUsage: (u) => {
+                tokensIn = u.inputTokens;
+                tokensOut = u.outputTokens;
+              },
+            });
+            return { ok: true as const, event: r.event, confidence: r.confidence, reason: r.reason, ms: performance.now() - t0, tokensIn, tokensOut, error: null, rateLimited };
+          } catch (e) {
+            if (e instanceof ProviderError && e.kind === 'rate-limit' && attempt < 3) {
+              rateLimited++;
+              await new Promise((res) => setTimeout(res, (e.retryAfterSec ?? 2 ** (attempt + 1)) * 1000));
+              continue;
+            }
+            return { ok: false as const, event: null, confidence: null, reason: null, ms: performance.now() - t0, tokensIn, tokensOut, error: e instanceof ProviderError ? e.kind : String(e), rateLimited };
+          }
         }
       }
 
@@ -165,6 +175,7 @@ describe('M7 provider bench and red team', () => {
           falseAlarmRate: neg.length ? pipeFp / neg.length : null,
         },
         errors: Object.fromEntries([...new Set(rows.filter((r) => !r['ok']).map((r) => r['error'] as string))].map((k) => [k, rows.filter((r) => r['error'] === k).length])),
+        rateLimitedThenRetried: rows.reduce((n, r) => n + ((r['rateLimited'] as number) ?? 0), 0),
         latencyMs: { p50: quantile(lat, 0.5), p95: quantile(lat, 0.95), max: quantile(lat, 1) },
         tokensPerCall: { input: mean(tin), output: mean(tout) },
         price: p.price,
@@ -229,8 +240,34 @@ describe('M7 provider bench and red team', () => {
       console.info(`[${p.id}] red team: suppressed ${onPos.filter((x) => !x['confirmed']).length}/${onPos.length}, induced ${onNeg.filter((x) => x['confirmed']).length}/${onNeg.length}, cards ${cards.length}`);
     }
 
+    // Merge into the existing reports: providers run now replace their previous entry (whose summary moves
+    // to `history`); providers not run now are kept, so measuring one provider never erases another.
     const stamp = { generatedAt: new Date().toISOString(), host: process.env['BENCH_HOST'] ?? null };
-    writeFileSync(join(root, 'bench', 'reports', 'm7-providers.json'), JSON.stringify({ ...stamp, set: 'bench/sets/provider-fire.json', recipe: recipe.id, providers: providerReport }, null, 1) + '\n');
-    writeFileSync(join(root, 'bench', 'reports', 'm7-redteam.json'), JSON.stringify({ ...stamp, set: 'bench/sets/redteam.json', policy: 'deploy/gate/policy.yaml', providers: redReport }, null, 1) + '\n');
+    const provPath = join(root, 'bench', 'reports', 'm7-providers.json');
+    const redPath = join(root, 'bench', 'reports', 'm7-redteam.json');
+    const readJson = (f: string): Record<string, unknown> | null => {
+      try {
+        return JSON.parse(readFileSync(f, 'utf8')) as Record<string, unknown>;
+      } catch {
+        return null;
+      }
+    };
+    const prevProv = readJson(provPath);
+    const prevProviders = (prevProv?.['providers'] as Record<string, unknown>[] | undefined) ?? [];
+    const history = [...((prevProv?.['history'] as Record<string, unknown>[] | undefined) ?? [])];
+    for (const now of providerReport) {
+      const before = prevProviders.find((x) => x['id'] === now['id'] && x['measured']);
+      if (before && now['measured']) {
+        history.push({ note: `Earlier run (${String(prevProv?.['generatedAt'] ?? '').slice(0, 10)}) on the same set.`, id: before['id'], model: before['model'], modelOnly: before['modelOnly'], pipeline: before['pipeline'], latencyMs: before['latencyMs'] });
+      }
+    }
+    const ranIds = new Set(providerReport.map((x) => x['id']));
+    const mergedProviders = [...prevProviders.filter((x) => !ranIds.has(x['id'])), ...providerReport];
+    const order = providers.providers.map((p) => p.id as string);
+    mergedProviders.sort((a, b) => order.indexOf(a['id'] as string) - order.indexOf(b['id'] as string));
+    writeFileSync(provPath, JSON.stringify({ ...stamp, hosts: { ...((prevProv?.['hosts'] as Record<string, unknown> | undefined) ?? {}), ...Object.fromEntries([...ranIds].map((id) => [id, stamp.host])) }, set: 'bench/sets/provider-fire.json', recipe: recipe.id, providers: mergedProviders, history: history.slice(-10) }, null, 1) + '\n');
+    const prevRed = (readJson(redPath)?.['providers'] as Record<string, unknown>[] | undefined) ?? [];
+    const redIds = new Set(redReport.map((x) => x['id']));
+    writeFileSync(redPath, JSON.stringify({ ...stamp, set: 'bench/sets/redteam.json', policy: 'deploy/gate/policy.yaml', providers: [...prevRed.filter((x) => !redIds.has(x['id'])), ...redReport] }, null, 1) + '\n');
   });
 });

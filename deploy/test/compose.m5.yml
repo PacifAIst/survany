@@ -9,6 +9,10 @@ x-secrets: &secrets
 
 services:
   backend:
+    # Built from the working tree on `up --build`, so the test never runs a stale image.
+    build:
+      context: ../..
+      dockerfile: apps/backend/Dockerfile
     image: survey-anything/backend:local
     environment:
       <<: *secrets

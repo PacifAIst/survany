@@ -69,11 +69,35 @@ export function decideAdmission(db: Db, app: string, body: AdmissionRequest, now
  * exception (an LL-HLS playlist or part GET/HEAD without Upgrade) is decided in the Caddyfile and
  * still goes through admission.
  */
+/**
+ * LL-HLS after admission: OME's master playlist points its chunklists, parts and segments at the internal
+ * stream name (/app/<stream id>/...), which carries no token, and OME does not check its own session id in
+ * those file names. So the viewer adds its play token as `sa=` to every LL-HLS request (apps/viewer), and a
+ * media file under a stream id is allowed only with a live play token for that same stream. The master
+ * playlist by stream id is never allowed: it must be opened with the token path, through admission.
+ */
+const LLHLS_MEDIA = /^\/[^/]+\/([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\/(chunklist|part|seg|init)_[A-Za-z0-9_.-]+\.(m3u8|m4s)$/;
+
+function decideLlhlsMedia(db: Db, app: string, u: URL, now: number): { ok: boolean; reason: string } | null {
+  const m = LLHLS_MEDIA.exec(u.pathname);
+  if (!m || !u.pathname.startsWith(`/${app}/`)) return null;
+  const play = u.searchParams.get('sa');
+  if (!play) return { ok: false, reason: 'LL-HLS media without a play token' };
+  const l = lookupToken(db, play, now);
+  if (!l.ok) return { ok: false, reason: l.reason };
+  if (l.token.role !== 'play') return { ok: false, reason: 'not a play token' };
+  if (l.token.stream_id !== m[1]) return { ok: false, reason: 'play token is for another stream' };
+  return { ok: true, reason: 'ok' };
+}
+
 export function decideForwardAuth(db: Db, app: string, forwardedUri: string | undefined, now = Date.now()): { ok: boolean; reason: string } {
   if (!forwardedUri) return { ok: false, reason: 'no X-Forwarded-Uri' };
   let token: string | null;
   try {
-    token = tokenFromOmeUrl(new URL(forwardedUri, 'https://placeholder.invalid').href, app);
+    const u = new URL(forwardedUri, 'https://placeholder.invalid');
+    const media = decideLlhlsMedia(db, app, u, now);
+    if (media) return media;
+    token = tokenFromOmeUrl(u.href, app);
   } catch {
     return { ok: false, reason: 'bad URI' };
   }

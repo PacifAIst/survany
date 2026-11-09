@@ -47,7 +47,17 @@ async function loadTelegramScript(): Promise<void> {
   });
 }
 
-function makePlayer(): PlayerAdapter {
+/**
+ * LL-HLS: after admission, OME's playlists point at the internal stream name, so every LL-HLS request
+ * carries this session's play token as `sa=`; Caddy's forward_auth checks it against the stream (SG-10).
+ */
+export function withPlayToken(url: string, playToken: string): string {
+  const u = new URL(url, location.href);
+  u.searchParams.set('sa', playToken);
+  return u.href;
+}
+
+function makePlayer(playToken: string): PlayerAdapter {
   let player: { remove(): void; on(ev: string, cb: (d?: unknown) => void): void } | null = null;
   return {
     play(src: LadderSource, signal: AbortSignal): Promise<boolean> {
@@ -61,7 +71,12 @@ function makePlayer(): PlayerAdapter {
           mute: true,
           autoFallback: true,
           webrtcConfig: { timeoutMaxRetry: 0 },
-          hlsConfig: { enableWorker: false, lowLatencyMode: true },
+          hlsConfig: {
+            enableWorker: false,
+            lowLatencyMode: true,
+            // hls.js opens the request before calling this; re-opening with the new URL is its documented way to change it.
+            xhrSetup: (xhr: XMLHttpRequest, url: string) => xhr.open('GET', withPlayToken(url, playToken), true),
+          },
           sources: [{ type: src.kind === 'webrtc' ? 'webrtc' : 'llhls', file: src.url, label: src.kind }],
         }) as unknown as { remove(): void; on(ev: string, cb: (d?: unknown) => void): void };
         player.on('stateChanged', (d) => {
@@ -130,7 +145,7 @@ async function start(): Promise<void> {
   const g = grant.value;
   renderMeta(metaRoot, g.meta ? { ...g.meta } : meta, 'verified');
   status(g.live ? 'Connecting…' : 'Waiting for the stream to start…');
-  const outcome = await runLadder(buildSources(g.sources.webrtc, g.sources.llhls), makePlayer(), { live: g.live, liveForMs: g.liveForMs });
+  const outcome = await runLadder(buildSources(g.sources.webrtc, g.sources.llhls), makePlayer(g.playToken), { live: g.live, liveForMs: g.liveForMs });
   if (outcome.ok) {
     status(`Live (${outcome.source.kind === 'webrtc' ? 'WebRTC' : 'LL-HLS'}). The link stops working at ${new Date(g.expiresAt).toLocaleTimeString()}.`);
     if (outcome.source.kind === 'webrtc') {

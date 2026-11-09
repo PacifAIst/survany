@@ -45,7 +45,11 @@ beforeEach(async () => {
       const r: Req = { method: req.method ?? '', path: req.url ?? '', auth: req.headers.authorization, body: Buffer.concat(chunks).toString('utf8') };
       reqs.push(r);
       res.setHeader('content-type', 'application/json');
-      if (r.path === '/api/actions/tools') {
+      if (r.path === '/api/stream/probe') {
+        res.end(JSON.stringify({ whipUrl: 'http://127.0.0.1:9/app/probe_token?direction=whip&transport=all', iceServers: [], expiresAt: new Date(Date.now() + 30_000).toISOString() }));
+      } else if (r.path === '/api/stream/probe-result') {
+        res.end('{"ok":true}');
+      } else if (r.path === '/api/actions/tools') {
         res.end(JSON.stringify(toolsEnabled ? TOOLS : { enabled: false, approvalTimeoutSec: 0, tools: [] }));
       } else if (r.path === '/api/actions/propose') {
         res.statusCode = proposeStatus;
@@ -146,5 +150,40 @@ describe('extension proposes actions only through the backend (M6, SG-02)', () =
     const { run } = await setup();
     expect((await run()).status).toBe('skipped');
     expect(reqs.map((r) => r.path)).toEqual(['/api/actions/tools']);
+  });
+});
+
+describe('arm-time live-view probe (M5): warns only when UDP is unavailable, never fails arm', () => {
+  async function probeWith(candidateType: string | Error) {
+    await setup({ mcp: false }); // the mock backend and a paired device
+    const cfg = parseConfig({ ...(await chrome.storage.local.get('config'))['config'] as object, egress: { alertMedia: true, liveView: true } });
+    if (!cfg.ok) throw new Error(cfg.errors.join('; '));
+    const dev = (await chrome.storage.local.get('device'))['device'] as { capabilities: Record<string, unknown> };
+    await chrome.storage.local.set({ device: { ...dev, capabilities: { ...dev.capabilities, liveView: true } } });
+    const sent: unknown[] = [];
+    (chrome.runtime as unknown as { sendMessage: (m: unknown) => Promise<unknown> }).sendMessage = async (m) => {
+      sent.push(m);
+      return candidateType instanceof Error ? { ok: false, error: candidateType.message } : { ok: true, value: { candidateType } };
+    };
+    const { probeLiveView } = await import('../src/sw/scan-controller');
+    await probeLiveView(cfg.config);
+    const notices = ((await chrome.storage.local.get('recentNotices'))['recentNotices'] as string[] | undefined) ?? [];
+    const log = ((await chrome.storage.local.get('log'))['log'] as string[] | undefined) ?? [];
+    return { sent, notices, log, reported: reqs.filter((r) => r.path === '/api/stream/probe-result').map((r) => JSON.parse(r.body) as { candidateType: string }) };
+  }
+
+  it('UDP: reported, no warning; TCP: reported and warned; offscreen failure: logged, no throw', async () => {
+    const udp = await probeWith('udp');
+    expect(udp.sent).toEqual([expect.objectContaining({ type: 'whip-probe', url: expect.stringContaining('direction=whip') })]);
+    expect(udp.reported).toEqual([{ candidateType: 'udp' }]);
+    expect(udp.notices.join('\n')).not.toMatch(/TCP relay/);
+    reqs = [];
+    const tcp = await probeWith('tcp');
+    expect(tcp.reported).toEqual([{ candidateType: 'tcp' }]);
+    expect(tcp.notices.join('\n')).toMatch(/UDP media is unavailable from this network \(tcp\); live view will use the TCP relay/);
+    reqs = [];
+    const broken = await probeWith(new Error('WHIP 503'));
+    expect(broken.reported).toEqual([]);
+    expect(broken.log.join('\n')).toMatch(/live-view probe skipped: WHIP 503/);
   });
 });

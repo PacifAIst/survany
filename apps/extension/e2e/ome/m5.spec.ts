@@ -112,7 +112,7 @@ let browser: Awaited<ReturnType<Awaited<ReturnType<typeof chromium.launch>>['new
 
 test.beforeAll(async () => {
   dc('down', '-v', '--remove-orphans');
-  dc('up', '-d');
+  dc('up', '-d', '--build');
   await waitHttp(`${BACKEND}/healthz`);
   await waitHttp('http://localhost:8089/v/');
   const out = dc('exec', '-T', 'backend', 'node', '--disable-warning=ExperimentalWarning', 'dist/cli.js', 'pair-device');
@@ -308,4 +308,105 @@ test('lifetime cuts the WebRTC publish at the stream TTL', async () => {
   expect(endState).not.toMatch(/^still/);
   expect(elapsed).toBeLessThan(120_000);
   await pub.close();
+});
+
+test('doctor, inside the compose network: webhook signature verified, OME itself refuses an untokened publish, REST needs the token', async () => {
+  const run = (...env: string[]) => {
+    try {
+      return { code: 0, out: execFileSync('docker', ['compose', '-f', compose, 'exec', '-T', ...env.flatMap((e) => ['-e', e]), 'backend', 'node', '--disable-warning=ExperimentalWarning', 'dist/cli.js', 'doctor'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }) };
+    } catch (e) {
+      return { code: (e as { status?: number }).status ?? 1, out: String((e as { stdout?: string }).stdout ?? '') };
+    }
+  };
+  const real = run();
+  expect(real.out, real.out).not.toMatch(/FAIL/);
+  expect(real.code).toBe(0);
+  expect(real.out).toMatch(/ok {3}OME itself refuses an untokened WHIP publish \(no Caddy in front\): HTTP 401/);
+  // The same check against the OME whose webhook hangs: it must still refuse (it denies on timeout).
+  const hung = run('OME_INTERNAL_SIGNALING=http://ome-hung:3333');
+  expect(hung.out).toMatch(/ok {3}OME itself refuses an untokened WHIP publish/);
+  evidence['doctorInside'] = { output: real.out.trim().split('\n'), hungOme: hung.out.trim().split('\n').filter((l) => l.includes('OME itself')) };
+});
+
+/** Arms the real extension (camera) against this stack's backend; returns its debug log reader and the harness. */
+async function armedExtension(extraArgs: string[]) {
+  const { acceptConsentAndCamera, DIST_E2E, launch } = await import('../harness');
+  const h = await launch({ dist: DIST_E2E, extraArgs });
+  await acceptConsentAndCamera(h);
+  const code = /code: ([A-Z2-9]{8})/.exec(dc('exec', '-T', 'backend', 'node', '--disable-warning=ExperimentalWarning', 'dist/cli.js', 'pair-device'))![1]!;
+  const p = await h.context.newPage();
+  await p.goto(`chrome-extension://${h.extId}/src/onboarding/pair-backend/index.html`);
+  await p.getByLabel('Backend URL').fill(BACKEND);
+  await p.getByLabel('Pairing code').fill(code);
+  await p.getByRole('button', { name: 'Pair' }).click();
+  await p.getByText(/Paired as .* live view: yes/).waitFor({ timeout: 20_000 });
+  await p.close();
+  const { EXAMPLE_CONFIG_JSON } = await import('@survey-anything/shared');
+  const saved = await h.send<{ ok: boolean; errors: string[] }>({
+    type: 'save-config',
+    config: {
+      ...structuredClone(EXAMPLE_CONFIG_JSON),
+      provider: { id: 'local', baseUrl: 'http://127.0.0.1:11434/v1', model: 'qwen2.5vl', apiKeyRef: null },
+      providerProfiles: {},
+      failoverChain: ['local'],
+      vision: { ...EXAMPLE_CONFIG_JSON.vision, enableVision: false },
+      egress: { alertMedia: true, liveView: true },
+      alerts: { ...EXAMPLE_CONFIG_JSON.alerts, channels: ['email'], nonRedundantAck: true },
+      contacts: { owner: { roles: ['viewer', 'approver'] } },
+      routing: { other: ['owner'] },
+      rules: ['other'],
+      backend: { url: BACKEND },
+    },
+  });
+  expect(saved.value, JSON.stringify(saved)).toEqual({ ok: true, errors: [] });
+  const armed = await h.send<{ armed: boolean }>({ type: 'arm', source: { kind: 'camera', label: 'M5 probe camera' } });
+  expect(armed.ok, armed.error).toBe(true);
+  expect(armed.value?.armed).toBe(true);
+  const log = async () => ((await h.send<{ log: string[] }>({ type: 'debug-stats' })).value?.log ?? []).join('\n');
+  const probe = await (async () => {
+    for (let i = 0; i < 60; i++) {
+      const m = /live-view probe: (\w+)|live-view probe skipped: (.*)/.exec(await log());
+      if (m) return m[1] ?? `skipped: ${m[2]}`;
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    return 'timeout';
+  })();
+  const status = await h.send<{ armed: boolean; notices: string[] }>({ type: 'get-status' });
+  return { h, probe, status: status.value! };
+}
+
+function publisherProbeReports(): string[] {
+  const out = dc('exec', '-T', 'backend', 'node', '--disable-warning=ExperimentalWarning', '-e',
+    "const {DatabaseSync}=require('node:sqlite');const db=new DatabaseSync('/data/survey-anything.db');console.log(JSON.stringify(db.prepare(\"SELECT candidate_type FROM probe_reports WHERE side='publisher' ORDER BY at\").all().map(r=>r.candidate_type)))");
+  return JSON.parse(out.trim()) as string[];
+}
+
+test('arm-time probe: a black-canvas WHIP publish under a 30 s probe token reports the candidate type; arm succeeds', async () => {
+  test.setTimeout(3 * 60_000);
+  const before = publisherProbeReports().length;
+  const { h, probe, status } = await armedExtension([]);
+  try {
+    expect(['udp', 'tcp', 'relay']).toContain(probe);
+    expect(status.armed).toBe(true);
+    const reports = publisherProbeReports();
+    expect(reports.length).toBe(before + 1);
+    expect(reports.at(-1)).toBe(probe);
+    evidence['armProbe'] = { normal: { candidateType: probe, armed: status.armed, warned: status.notices.some((n) => /UDP media is unavailable/.test(n)) } };
+  } finally {
+    await h.close();
+  }
+});
+
+test('arm-time probe with UDP unavailable: arm still succeeds, and the user is warned that live view will need the TCP relay', async () => {
+  test.setTimeout(3 * 60_000);
+  // Chromium's WebRTC policy that refuses non-proxied UDP: the probe can only connect over TCP.
+  const { h, probe, status } = await armedExtension(['--force-webrtc-ip-handling-policy=disable_non_proxied_udp']);
+  try {
+    expect(status.armed).toBe(true);
+    expect(probe).not.toBe('udp');
+    expect(status.notices.join('\n')).toMatch(/UDP media is unavailable from this network \((tcp|relay|none)\); live view will use the TCP relay/);
+    (evidence['armProbe'] as Record<string, unknown>)['udpBlocked'] = { candidateType: probe, armed: status.armed, warned: true };
+  } finally {
+    await h.close();
+  }
 });

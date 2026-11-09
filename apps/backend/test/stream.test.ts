@@ -9,6 +9,7 @@ import { processDue } from '../src/alerts/outbox';
 import { enforceStreamStartBudget } from '../src/watchdog';
 import { addContact, BOT_TOKEN, clock, eventBody, makeApp, OME_SECRET, signInitData, startFakeSmtp, startFakeTelegram, waitUntil } from './helpers';
 import { validateInitData } from '../src/routes/viewer';
+import { createStream, mintToken } from '../src/stream/tokens';
 
 type Tg = Awaited<ReturnType<typeof startFakeTelegram>>;
 type Smtp = Awaited<ReturnType<typeof startFakeSmtp>>;
@@ -195,6 +196,29 @@ describe('SG-11 OME admission and forward_auth', () => {
     expect(r.lifetime).toBeLessThanOrEqual(10 * 60_000);
     // A publisher token cannot play, a viewer token cannot publish.
     expect((await admission(t.app, { direction: 'outgoing', protocol: 'webrtc', status: 'opening', url: out.stream.whipUrl })).json()).toMatchObject({ allowed: false });
+  });
+
+  it('LL-HLS media under the stream id needs this stream\'s play token (forward_auth); the master by stream id never passes', async () => {
+    const { t, emailUrl } = await liveEvent();
+    const g = (await t.app.inject({ method: 'POST', url: '/api/viewer/email', payload: { token: tokenOf(emailUrl), sessionId: 'sessLLHLSAAAAAAAAAAAAAAA', pin: '135790' } })).json() as { playToken: string };
+    const r = (await admission(t.app, { direction: 'outgoing', protocol: 'llhls', status: 'opening', url: `https://live.example.org/app/${g.playToken}/llhls.m3u8` })).json() as { new_url: string };
+    const streamId = /\/app\/([0-9a-f-]{36})\//.exec(r.new_url)![1]!;
+    const fa = (uri: string) => t.app.inject({ method: 'GET', url: '/ome/forward-auth', headers: { 'x-forwarded-uri': uri, 'x-sa-forward-auth': 'fwd_secret' } });
+    const chunk = `/app/${streamId}/chunklist_0_video_8622854708945751029_llhls.m3u8?_HLS_msn=2&_HLS_part=6`;
+    expect((await fa(`${chunk}&sa=${g.playToken}`)).statusCode).toBe(200);
+    expect((await fa(`/app/${streamId}/part_0_2_6_video_8622854708945751029_llhls.m4s?sa=${g.playToken}`)).statusCode).toBe(200);
+    // Knowing the stream id is not enough.
+    expect((await fa(chunk)).statusCode).toBe(403);
+    expect((await fa(`${chunk}&sa=${'A'.repeat(43)}`)).statusCode).toBe(403);
+    expect((await fa(`/app/${streamId}/llhls.m3u8?sa=${g.playToken}`)).statusCode).toBe(403);
+    // Another stream's live play token does not open this one.
+    const otherStream = createStream(t.ctx.db, t.deviceId, null, 5);
+    const otherPlay = mintToken(t.ctx.db, otherStream, 'play');
+    expect((await fa(`/app/${otherStream.id}/chunklist_0_video_1_llhls.m3u8?sa=${otherPlay}`)).statusCode).toBe(200);
+    expect((await fa(`${chunk}&sa=${otherPlay}`)).statusCode).toBe(403);
+    // A play token stops working when its stream ends.
+    t.ctx.db.prepare('UPDATE streams SET ended_at = ?').run(Date.now());
+    expect((await fa(`${chunk}&sa=${g.playToken}`)).statusCode).toBe(403);
   });
 
   it('viewer: only a bound play token for an alerted contact is admitted, over WebRTC or LL-HLS', async () => {

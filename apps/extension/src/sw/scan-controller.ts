@@ -368,7 +368,7 @@ export async function offscreenStatus(): Promise<OffscreenStatus | null> {
 }
 
 /** M5 arm-time reachability probe: synthetic black track, 30 s token, never fails arm. */
-async function probeLiveView(c: Config): Promise<void> {
+export async function probeLiveView(c: Config): Promise<void> {
   try {
     const device = await store.get('device');
     if (!device?.capabilities.liveView || !c.egress.liveView) return;
@@ -377,6 +377,7 @@ async function probeLiveView(c: Config): Promise<void> {
     const { whipUrl, iceServers } = await backend.probeToken();
     const { candidateType } = await sendToOffscreen<{ candidateType: string }>({ target: 'offscreen', type: 'whip-probe', url: whipUrl, iceServers });
     await backend.reportProbe(candidateType);
+    await store.appendLog(`live-view probe: ${candidateType}`);
     if (candidateType !== 'udp') {
       await raiseNotice('live-view-udp-unavailable', `UDP media is unavailable from this network (${candidateType}); live view will use the TCP relay.`);
     }

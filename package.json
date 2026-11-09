@@ -26,8 +26,12 @@
     "secrets:scan": "gitleaks git --redact --no-banner --config .gitleaks.toml --log-opts=--all .",
     "bench": "node bench/generate-benchmarks.ts",
     "bench:providers": "vitest run -c bench/vitest.config.ts",
+    "bench:provider": "node bench/run.ts",
     "demo": "node demo/serve.ts",
-    "licenses:third-party": "node scripts/gen-third-party.ts"
+    "licenses:third-party": "node scripts/gen-third-party.ts",
+    "sbom": "node scripts/gen-sbom.ts",
+    "release:digests": "node scripts/gen-image-digests.ts",
+    "pack:extension": "node scripts/pack-extension.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.37.0",

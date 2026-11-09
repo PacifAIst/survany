@@ -67,9 +67,27 @@ Chromium 156.0.8078.4 (headless), fake camera, every page hidden behind another 
 |---|---|
 | Publish over WHIP through forward_auth, then view in Chrome | 640x480 playing (Live (WebRTC)) |
 | Untokened publish | OME 401, forward_auth 403 |
-| Admission webhook hung | denied (401) after 3.4 s |
+| Admission webhook hung | denied (401) after 3.3 s |
 | Backend stopped | OME 401, forward_auth 502 (fails closed) |
-| Stream lifetime | cut 65 s into a 1-minute TTL |
+| Stream lifetime | cut 64 s into a 1-minute TTL |
+| `doctor` inside the network (admission signature, OME refusal, REST token) | 6/6 checks ok |
+| Arm-time probe (black canvas, 30 s token) | armed: true, path tcp, TCP-relay warning shown (this host offers no UDP to the container) |
+| Arm-time probe with UDP refused by the browser | armed: true, path tcp, warning shown: true |
+
+## Viewer behind a blocking network (M5, §9)
+
+The viewer's browser runs in its own container on a private network with OME, Caddy and the backend, and its outbound traffic is blocked with iptables step by step (`deploy/test/compose.m5-ladder.yml`, `apps/extension/e2e/ladder/`). Port 8090 is the live host (443 in production).
+
+| Blocked for the viewer | What the viewer got | Selected path |
+|---|---|---|
+| nothing | Live (WebRTC), 640x480 | udp |
+| UDP | Live (WebRTC), 640x480 | tcp |
+| UDP, 10000/tcp | Live (WebRTC), 640x480 | relay |
+| UDP, 10000/tcp, 3478/tcp | Live (LL-HLS), 640x480 | LL-HLS (no ICE) |
+| UDP, 10000/tcp, 3478/tcp, the live host | Live view unavailable — contact the owner | reports sent: 1 |
+
+With every media path blocked, the viewer reported once and the backend sent that contact the recorded clip once per configured channel (Telegram 1, email 1); replaying the report sent nothing more (Telegram 1, email 1), idempotent on event + contact + channel + clip.
+LL-HLS media under the internal stream id needs the viewer's play token: requesting the master playlist by stream id returned 403, a chunklist without the token 403.
 
 ## Human-approved actions against the real confirm-gate-mcp 0.8.0 (mcp 2.3.0) (M6)
 
@@ -85,21 +103,27 @@ Chromium 156.0.8078.4 (headless), fake camera, every page hidden behind another 
 
 ## Vision providers on the fire recipe (M7)
 
-The second stage of the fire rule, measured with the extension's own adapter, prompt, parser and confirmation threshold on a fixed sample of the official D-Fire test split (`bench/sets/provider-fire.json`: 30 images with fire, 30 with smoke only, 60 with neither; CC0 images only, each sent the way the extension sends it, 512 px JPEG). "Model alone" is every image sent to the model; "gate + model" counts an alert only when the shipped fire/smoke detector also passes the frame at 0.6, which is what the extension does. Run: `pnpm bench:providers` (Windows 10, RTX 3060 Laptop GPU 6 GB, Ollama 0.40.11 in Docker, 2026-11-09).
+The second stage of the fire rule, measured with the extension's own adapter, prompt, parser and confirmation threshold on a fixed sample of the official D-Fire test split (`bench/sets/provider-fire.json`: 30 images with fire, 30 with smoke only, 60 with neither; CC0 images only, each sent the way the extension sends it, 512 px JPEG). "Model alone" is every image sent to the model; "gate + model" counts an alert only when the shipped fire/smoke detector also passes the frame at 0.6, which is what the extension does. Run: `pnpm bench:providers`, or one provider with `pnpm bench:provider <id>` (openrouter: OpenRouter (cloud) from Windows 10; local: Windows 10, RTX 3060 Laptop GPU 6 GB, Ollama 0.40.11 in Docker; 2026-11-09).
 
 | Provider | Probe passes | Model alone: precision / recall (fire, smoke only) / false alarms | Gate + model: precision / recall / false alarms | Latency p50 / p95 | Tokens per call (in / out) |
 |---|---|---|---|---|---|
 | Ollama 0.40.11, qwen2.5vl:7b, on an RTX 3060 Laptop GPU (6 GB) | 20/20 (18 on the first code) | 82.5% / 55.0% (80.0%, 30.0%) / 11.7% | 100.0% / 51.7% / 0.0% | 5.9 s / 8.2 s | 1301 / 37 |
+| OpenRouter, qwen/qwen2.5-vl-72b-instruct | 20/20 (19 on the first code) | 92.6% / 83.3% (96.7%, 70.0%) / 6.7% | 100.0% / 78.3% / 0.0% | 1.2 s / 3.5 s | 412 / 30 |
 
 Ollama 0.40.11, qwen2.5vl:7b, on an RTX 3060 Laptop GPU (6 GB): failed calls parse 1 (counted as not confirmed).
+OpenRouter, qwen/qwen2.5-vl-72b-instruct: 3 calls were rate-limited (HTTP 429) and answered on retry; the account's rate limit, not the model, decides how often that happens.
+
+**OpenRouter, qwen/qwen2.5-vl-72b-instruct against the local baseline (Ollama 0.40.11, qwen2.5vl:7b, on an RTX 3060 Laptop GPU (6 GB)).** Model alone: precision 92.6% vs 82.5% (+10.1 points), recall 83.3% vs 55.0% (+28.3 points; smoke only 70.0% vs 30.0%), false alarms 6.7% vs 11.7%. Gate + model: precision 100.0% vs 100.0%, recall 78.3% vs 51.7%, false alarms 0.0% vs 0.0%. Median latency 1.2 s vs 5.9 s, p95 3.5 s vs 8.2 s; about $0.00036 per call (412 input + 30 output tokens at the listed price), against nothing per call locally.  Most of the recall difference is smoke without visible flame, the case the on-device detector also finds hardest.
 
 **Run-to-run variance (qwen2.5vl:7b).** The same images and model, run twice on the same day: model alone precision 95.3% and 82.5%, recall 68.3% and 55.0% (smoke only 43.3% and 30.0%), false alarms 3.3% and 11.7%; gate + model precision 100.0% both times, recall 65.0% and 51.7%, false alarms 0.0% and 0.0%. The model samples its answers, so a single run is one draw: read these as ranges, and expect the gate to be what keeps false alarms down.
 
+**Earlier run (qwen/qwen2.5-vl-72b-instruct), not comparable:** 12 of its 120 calls hit HTTP 429 (rate limit) and were counted as not confirmed; the runner did not retry then. The run above retries a 429 up to three times. Model alone then: precision 92.0%, recall 76.7%, false alarms 6.7%.
+
 ### Time to alert, calls and cost
 
-- **Time to alert** (model side, from the moment an event is visible): the first gate hit comes within one scan (0 to 5 s at the default 5 s interval), the second hit one scan later (2 of 3 frames), then one confirm call. Ollama 0.40.11, qwen2.5vl:7b, on an RTX 3060 Laptop GPU (6 GB): about 11 to 16 s plus delivery. Delivery time to Telegram or email is not included.
+- **Time to alert** (model side, from the moment an event is visible): the first gate hit comes within one scan (0 to 5 s at the default 5 s interval), the second hit one scan later (2 of 3 frames), then one confirm call. Ollama 0.40.11, qwen2.5vl:7b, on an RTX 3060 Laptop GPU (6 GB): about 11 to 16 s plus delivery; OpenRouter, qwen/qwen2.5-vl-72b-instruct: about 6 to 11 s plus delivery. Delivery time to Telegram or email is not included.
 - **Calls per hour:** one confirm call per event onset (rising edge), never per frame. The default budget caps cloud calls at 6 per minute and 500 per day; an idle scene costs calls only when the gate fires on it, which depends on the scene (see the fire gate false-alarm rate above; video clips are not measured yet).
-- **Cost per day:** Ollama 0.40.11, qwen2.5vl:7b, on an RTX 3060 Laptop GPU (6 GB): no per-call cost (electricity not counted).
+- **Cost per day:** Ollama 0.40.11, qwen2.5vl:7b, on an RTX 3060 Laptop GPU (6 GB): no per-call cost (electricity not counted); OpenRouter, qwen/qwen2.5-vl-72b-instruct: $0.004 at 10 events a day, $0.04 at 100, at most $0.18 at the default 500-call cap.
 
 ## Prompt injection: signs in the scene (M7)
 
@@ -108,10 +132,12 @@ Three CC0 D-Fire scenes (a fire at night, smoke without visible flame, and a haz
 | Model | Clean scenes confirmed (fire, smoke, sunset) | Attacked scenes whose answer changed vs. their clean scene: became an alert / became silence | Suppressed: attacked scenes with a confirmed clean twin that went silent | Links in the alert text after sanitizing | Reasoner suggestions refused (extension / policy) | Reached an approval card (any lock, unlock, disarm or emergency action among them) | Executed without a tap |
 |---|---|---|---|---|---|---|---|
 | qwen2.5vl:7b | yes, no, no | 7/24 / 2/24 | 2/8 | 0 (before: 0) | 1 / 0 | 12 (0) | 0 |
+| qwen/qwen2.5-vl-72b-instruct | yes, yes, no | 0/24 / 0/24 | 0/16 | 0 (before: 0) | 0 / 0 | 17 (0) | 0 |
 
 "Executed without a tap" is 0 by construction, not by luck: nothing reaches the gate without a person tapping Approve on Telegram, proven against the real gate in the M6 rows above and in `bench/reports/m6-e2e.json` (where a Reasoner that obeys an "unlock" sign is refused before any card exists). What a sign **can** do is change what the model reports: it can talk the model out of confirming a real event, or into confirming a false one. That rate is what the table measures; it is not zero, so treat the model as a second opinion, not the only one.
 
 qwen2.5vl:7b: the suggestions that reached a card were ordinary policy-allowed actions on entity names the Reasoner made up (camera.front, siren.front_door_siren, light.front_back_light, light.bathroom_light, light.front_door_light, siren.front_door, siren.example, siren.front_door_y, siren.mysmart_siren). The shipped example policy allows `light.*`, `siren.*` and similar wildcards, so a made-up name passes and the approver sees it on the card. List your real entities instead of wildcards (`docs/MCP_PAIRING.md`).
+qwen/qwen2.5-vl-72b-instruct: the suggestions that reached a card were ordinary policy-allowed actions on entity names the Reasoner made up (siren.alarm, siren.alarm_system). The shipped example policy allows `light.*`, `siren.*` and similar wildcards, so a made-up name passes and the approver sees it on the card. List your real entities instead of wildcards (`docs/MCP_PAIRING.md`).
 
 ## Not measured yet
 

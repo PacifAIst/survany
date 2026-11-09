@@ -148,3 +148,36 @@ describe('doctor (deployment check from outside)', () => {
     expect(bad[4]).toMatchObject({ ok: false });
   });
 });
+
+describe('M8 release scripts', () => {
+  it('pack-extension: the zip is byte-identical whatever order the files come in, and carries every file', async () => {
+    const { deterministicZip, crc32 } = await import('./pack-extension.ts');
+    const files = [
+      { name: 'manifest.json', data: Buffer.from('{"manifest_version":3}') },
+      { name: 'assets/a.js', data: Buffer.from('console.info(1)') },
+      { name: 'models/m.onnx', data: Buffer.alloc(5000, 7) },
+    ];
+    const a = deterministicZip(files);
+    const b = deterministicZip([...files].reverse());
+    expect(a.equals(b)).toBe(true);
+    expect(a.readUInt32LE(a.length - 22)).toBe(0x06054b50);
+    expect(a.readUInt16LE(a.length - 12)).toBe(3);
+    expect(crc32(Buffer.from('123456789'))).toBe(0xcbf43926); // the standard CRC-32 check value
+  });
+
+  it('every third-party image the release uses is pinned by digest', async () => {
+    const { pinnedImages } = await import('./gen-image-digests.ts');
+    const images = pinnedImages(join(__dirname, '..'));
+    expect(images.length).toBeGreaterThanOrEqual(5);
+    expect(images.filter((i) => !/@sha256:[0-9a-f]{64}$/.test(i.image))).toEqual([]);
+  });
+
+  it('SBOM serial numbers are stable per commit and npm purls are encoded', async () => {
+    const { npmComponents, uuidFrom } = await import('./gen-sbom.ts');
+    expect(uuidFrom('abc')).toBe(uuidFrom('abc'));
+    expect(uuidFrom('abc')).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-a[0-9a-f]{3}-[0-9a-f]{12}$/);
+    const c = npmComponents({ MIT: [{ name: '@scope/pkg', versions: ['1.2.3'], license: 'MIT' }], '(MIT OR Apache-2.0)': [{ name: 'x', versions: ['2.0.0'], license: '(MIT OR Apache-2.0)' }] });
+    expect(c.map((x) => x.purl)).toEqual(['pkg:npm/%40scope/pkg@1.2.3', 'pkg:npm/x@2.0.0']);
+    expect(c[1]!.licenses).toEqual([{ expression: '(MIT OR Apache-2.0)' }]);
+  });
+});

@@ -1,0 +1,87 @@
+{
+  "startedAt": "2026-11-09T19:06:37.086Z",
+  "ome": "airensoft/ovenmediaengine:v0.21.0",
+  "browser": "Google Chrome in a container (Playwright 1.64.1 run-server)",
+  "steps": {
+    "1-open": {
+      "status": "Live (WebRTC). The link stops working at 7:18:02 PM.",
+      "candidate": "udp",
+      "video": {
+        "w": 640,
+        "h": 480
+      }
+    },
+    "2-udp-blocked": {
+      "status": "Live (WebRTC). The link stops working at 7:18:15 PM.",
+      "candidate": "tcp",
+      "video": {
+        "w": 640,
+        "h": 480
+      }
+    },
+    "3-udp-and-10000-blocked": {
+      "status": "Live (WebRTC). The link stops working at 7:18:25 PM.",
+      "candidate": "relay",
+      "video": {
+        "w": 640,
+        "h": 480
+      }
+    },
+    "4-only-https": {
+      "status": "Live (LL-HLS). The link stops working at 7:18:35 PM.",
+      "video": {
+        "w": 640,
+        "h": 480
+      },
+      "reports": [],
+      "network": [
+        "console error: Loading the font 'data:font/ttf;base64,AAEAAAALAIAAAwAwT1MvMg8SBjMAAAC8AAAAYGNtYXAXVtKQAAABHAAAAFRnYXNwAAAAEAAAAXAAAAAIZ2x5Ztiu3OUAAAF4AAAEAGhlYWQOP/c1AAAFeAAAADZoaGVhCT8FzwAABbAAAAAkaG10eDAABnQAAAXUA",
+        "console error: Loading the font 'data:font/ttf;base64,AAEAAAAPAIAAAwBwR1NVQiCLJXoAAAD8AAAAVE9TLzI/IEqpAAABUAAAAFZjbWFwvM20gQAAAagAAAJgY3Z0IAbV/wQAABq4AAAAIGZwZ22KkZBZAAAa2AAAC3BnYXNwAAAAEAAAGrAAAAAIZ2x5Zin85QoAAAQIA",
+        "console error: Loading the font 'data:font/ttf;base64,AAEAAAAPAIAAAwBwR1NVQiCLJXoAAAD8AAAAVE9TLzI/QEsYAAABUAAAAFZjbWFwjePtyQAAAagAAAF+Y3Z0IAAAAAAAAAh4AAAADmZwZ21iLvl6AAAIiAAADgxnYXNwAAAAEAAACHAAAAAIZ2x5ZuLwowoAAAMoA",
+        "console error: Loading the image 'https://http//caddy:8089/v/' violates the following Content Security Policy directive: \"img-src 'self' data:\". The action has been blocked.",
+        "failed https://http//caddy:8089/v/ csp",
+        "ws ws://caddy:8090/app/<tok>?transport=all",
+        "200 GET http://caddy:8090/app/<tok>/llhls.m3u8?sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>s.m3u8?sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/init_0_video_17072627623026596834_llhls.m4s?sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>.m4s?sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>.m4s?sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>.m4s?sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>.m4s?sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>.m4s?sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>s.m3u8?_HLS_msn=2&_HLS_part=5&sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>.m4s?sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>s.m3u8?_HLS_msn=2&_HLS_part=6&sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>.m4s?sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>s.m3u8?_HLS_msn=2&_HLS_part=7&sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>.m4s?sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>s.m3u8?_HLS_msn=2&_HLS_part=8&sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>.m4s?sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>s.m3u8?_HLS_msn=2&_HLS_part=9&sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>.m4s?sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>s.m3u8?_HLS_msn=2&_HLS_part=10&sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>s.m4s?sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>s.m3u8?_HLS_msn=2&_HLS_part=11&sa=<tok>",
+        "200 GET http://caddy:8090/app/51496d20-3689-4c8f-bfbe-027df4834ef8/<tok>s.m4s?sa=<tok>"
+      ],
+      "masterByStreamId": "403",
+      "forgedChunklist": "403"
+    },
+    "5-all-blocked": {
+      "status": "Live view unavailable — contact the owner. A recorded clip will be sent to you.",
+      "viewerReports": 1,
+      "signalingAttempts": 0,
+      "outbox": [
+        "<event>:viewerA:email:clip",
+        "<event>:viewerA:telegram:clip"
+      ],
+      "telegramClips": 1,
+      "emailClips": 1,
+      "afterReplayedReport": {
+        "telegramClips": 1,
+        "emailClips": 1
+      }
+    }
+  },
+  "finishedAt": "2026-11-09T19:08:21.366Z"
+}

@@ -154,8 +154,55 @@ function m5(r: Record<string, unknown>): string {
     `| Admission webhook hung | denied (${wf?.hungStatus ?? 'n/a'}) after ${wf ? (wf.hungMs / 1000).toFixed(1) : 'n/a'} s |`,
     `| Backend stopped | OME ${wf?.downDirect ?? 'n/a'}, forward_auth ${wf?.downCaddy ?? 'n/a'} (fails closed) |`,
     `| Stream lifetime | cut ${lt ? (lt.cutAfterMs / 1000).toFixed(0) : 'n/a'} s into a ${lt?.ttlMinutes ?? 'n/a'}-minute TTL |`,
+    ...(() => {
+      const d = r['doctorInside'] as { output: string[] } | undefined;
+      if (!d) return [];
+      return [`| \`doctor\` inside the network (admission signature, OME refusal, REST token) | ${d.output.filter((l) => l.startsWith('ok')).length}/${d.output.length} checks ok |`];
+    })(),
+    ...(() => {
+      const a = r['armProbe'] as { normal?: { candidateType: string; armed: boolean; warned: boolean }; udpBlocked?: { candidateType: string; armed: boolean; warned: boolean } } | undefined;
+      if (!a) return [];
+      return [
+        `| Arm-time probe (black canvas, 30 s token) | armed: ${a.normal?.armed ?? 'n/a'}, path ${a.normal?.candidateType ?? 'n/a'}${a.normal?.warned ? ', TCP-relay warning shown (this host offers no UDP to the container)' : ''} |`,
+        `| Arm-time probe with UDP refused by the browser | armed: ${a.udpBlocked?.armed ?? 'n/a'}, path ${a.udpBlocked?.candidateType ?? 'n/a'}, warning shown: ${a.udpBlocked?.warned ?? 'n/a'} |`,
+      ];
+    })(),
     '',
   ].join('\n');
+}
+
+function m5Ladder(r: { steps: Record<string, Record<string, unknown>> }): string {
+  const s = r.steps;
+  const row = (label: string, k: string): string => {
+    const x = s[k];
+    if (!x) return `| ${label} | not run | |`;
+    const status = String(x['status'] ?? '').split('.')[0];
+    const v = x['video'] as { w: number; h: number } | null | undefined;
+    return `| ${label} | ${status}${v ? `, ${v.w}x${v.h}` : ''} | ${x['candidate'] ?? (k === '4-only-https' ? 'LL-HLS (no ICE)' : '')} |`;
+  };
+  const last = s['5-all-blocked'];
+  const four = s['4-only-https'];
+  return [
+    '## Viewer behind a blocking network (M5, §9)',
+    '',
+    "The viewer's browser runs in its own container on a private network with OME, Caddy and the backend, and its outbound traffic is blocked with iptables step by step (`deploy/test/compose.m5-ladder.yml`, `apps/extension/e2e/ladder/`). Port 8090 is the live host (443 in production).",
+    '',
+    '| Blocked for the viewer | What the viewer got | Selected path |',
+    '|---|---|---|',
+    row('nothing', '1-open'),
+    row('UDP', '2-udp-blocked'),
+    row('UDP, 10000/tcp', '3-udp-and-10000-blocked'),
+    row('UDP, 10000/tcp, 3478/tcp', '4-only-https'),
+    `| UDP, 10000/tcp, 3478/tcp, the live host | ${String(last?.['status'] ?? 'not run').split('.')[0]} | reports sent: ${last?.['viewerReports'] ?? 'n/a'} |`,
+    '',
+    last
+      ? `With every media path blocked, the viewer reported once and the backend sent that contact the recorded clip once per configured channel (Telegram ${last['telegramClips']}, email ${last['emailClips']}); replaying the report sent nothing more (Telegram ${(last['afterReplayedReport'] as Record<string, number>)['telegramClips']}, email ${(last['afterReplayedReport'] as Record<string, number>)['emailClips']}), idempotent on event + contact + channel + clip.`
+      : '',
+    four ? `LL-HLS media under the internal stream id needs the viewer's play token: requesting the master playlist by stream id returned ${four['masterByStreamId']}, a chunklist without the token ${four['forgedChunklist']}.` : '',
+    '',
+  ]
+    .filter((l, i, a) => !(l === '' && a[i - 1] === ''))
+    .join('\n');
 }
 
 function m6(r: { gate: string; scenarios: Record<string, Record<string, unknown>> }): string {
@@ -188,6 +235,7 @@ interface ProviderRun {
   modelOnly?: { precision: number | null; recall: number | null; recallFire: number | null; recallSmokeOnly: number | null; falseAlarmRate: number | null };
   pipeline?: { gateThreshold: number; gatePassedPositives: number; gatePassedNone: number; precision: number | null; recall: number | null; falseAlarmRate: number | null };
   errors?: Record<string, number>;
+  rateLimitedThenRetried?: number;
   latencyMs?: { p50: number | null; p95: number | null; max: number | null };
   tokensPerCall?: { input: number; output: number };
   costPerCallUsd?: number | null;
@@ -217,16 +265,19 @@ const frac = (a: number, b: number): string => `${a}/${b}`;
 interface ProviderHistory {
   id: string;
   model: string;
+  /** Why this earlier run is not comparable as plain run-to-run variance (e.g. unretried rate limits). */
+  caveat?: string;
   modelOnly: { precision: number; recall: number; recallSmokeOnly: number; falseAlarmRate: number };
   pipeline: { precision: number; recall: number; falseAlarmRate: number };
 }
 
-function m7Providers(r: { generatedAt: string; host: string | null; providers: ProviderRun[]; history?: ProviderHistory[] }): string {
+function m7Providers(r: { generatedAt: string; host: string | null; hosts?: Record<string, string | null>; providers: ProviderRun[]; history?: ProviderHistory[] }): string {
+  const where = r.hosts && Object.keys(r.hosts).length ? Object.entries(r.hosts).map(([id, h]) => `${id}: ${h ?? 'n/a'}`).join('; ') : (r.host ?? '');
   const measured = r.providers.filter((p) => p.measured);
   const lines = [
     '## Vision providers on the fire recipe (M7)',
     '',
-    `The second stage of the fire rule, measured with the extension's own adapter, prompt, parser and confirmation threshold on a fixed sample of the official D-Fire test split (\`bench/sets/provider-fire.json\`: 30 images with fire, 30 with smoke only, 60 with neither; CC0 images only, each sent the way the extension sends it, 512 px JPEG). "Model alone" is every image sent to the model; "gate + model" counts an alert only when the shipped fire/smoke detector also passes the frame at 0.6, which is what the extension does. Run: \`pnpm bench:providers\`${r.host ? ` (${r.host}, ${r.generatedAt.slice(0, 10)})` : ''}.`,
+    `The second stage of the fire rule, measured with the extension's own adapter, prompt, parser and confirmation threshold on a fixed sample of the official D-Fire test split (\`bench/sets/provider-fire.json\`: 30 images with fire, 30 with smoke only, 60 with neither; CC0 images only, each sent the way the extension sends it, 512 px JPEG). "Model alone" is every image sent to the model; "gate + model" counts an alert only when the shipped fire/smoke detector also passes the frame at 0.6, which is what the extension does. Run: \`pnpm bench:providers\`, or one provider with \`pnpm bench:provider <id>\` (${where}; ${r.generatedAt.slice(0, 10)}).`,
     '',
     '| Provider | Probe passes | Model alone: precision / recall (fire, smoke only) / false alarms | Gate + model: precision / recall / false alarms | Latency p50 / p95 | Tokens per call (in / out) |',
     '|---|---|---|---|---|---|',
@@ -247,12 +298,30 @@ function m7Providers(r: { generatedAt: string; host: string | null; providers: P
   for (const p of measured) {
     const errs = Object.entries(p.errors ?? {});
     if (errs.length) lines.push(`${p.label}: failed calls ${errs.map(([k, v]) => `${k} ${v}`).join(', ')} (counted as not confirmed).`);
+    if (p.rateLimitedThenRetried) lines.push(`${p.label}: ${p.rateLimitedThenRetried} calls were rate-limited (HTTP 429) and answered on retry; the account's rate limit, not the model, decides how often that happens.`);
     const fails = p.probe && 'failures' in p.probe ? p.probe.failures : [];
     if (fails.length) lines.push(`${p.label}: probe misreads (shown -> read): ${fails.join(', ')}.`);
+  }
+  const local = r.providers.find((p) => p.id === 'local' && p.measured);
+  for (const c of r.providers.filter((p) => p.id !== 'local' && p.measured)) {
+    if (!local) break;
+    const d = (a: number | null | undefined, b: number | null | undefined): string => (a === null || a === undefined || b === null || b === undefined ? 'n/a' : `${a >= b ? '+' : ''}${((a - b) * 100).toFixed(1)} points`);
+    lines.push(
+      '',
+      `**${c.label} against the local baseline (${local.label}).** Model alone: precision ${pct(c.modelOnly?.precision)} vs ${pct(local.modelOnly?.precision)} (${d(c.modelOnly?.precision, local.modelOnly?.precision)}), recall ${pct(c.modelOnly?.recall)} vs ${pct(local.modelOnly?.recall)} (${d(c.modelOnly?.recall, local.modelOnly?.recall)}; smoke only ${pct(c.modelOnly?.recallSmokeOnly)} vs ${pct(local.modelOnly?.recallSmokeOnly)}), false alarms ${pct(c.modelOnly?.falseAlarmRate)} vs ${pct(local.modelOnly?.falseAlarmRate)}. Gate + model: precision ${pct(c.pipeline?.precision)} vs ${pct(local.pipeline?.precision)}, recall ${pct(c.pipeline?.recall)} vs ${pct(local.pipeline?.recall)}, false alarms ${pct(c.pipeline?.falseAlarmRate)} vs ${pct(local.pipeline?.falseAlarmRate)}. Median latency ${secs(c.latencyMs?.p50)} vs ${secs(local.latencyMs?.p50)}, p95 ${secs(c.latencyMs?.p95)} vs ${secs(local.latencyMs?.p95)}${c.costPerCallUsd ? `; about $${c.costPerCallUsd.toFixed(5)} per call (${Math.round(c.tokensPerCall?.input ?? 0)} input + ${Math.round(c.tokensPerCall?.output ?? 0)} output tokens at the listed price), against nothing per call locally` : ''}. ${(() => {
+        const fireGap = (c.modelOnly?.recallFire ?? 0) - (local.modelOnly?.recallFire ?? 0);
+        const smokeGap = (c.modelOnly?.recallSmokeOnly ?? 0) - (local.modelOnly?.recallSmokeOnly ?? 0);
+        return Math.abs(smokeGap) > Math.abs(fireGap) ? ' Most of the recall difference is smoke without visible flame, the case the on-device detector also finds hardest.' : ' Most of the recall difference is on images with visible fire.';
+      })()}`,
+    );
   }
   for (const h of r.history ?? []) {
     const cur = r.providers.find((p) => p.id === h.id && p.measured);
     if (!cur) continue;
+    if (h.caveat) {
+      lines.push('', `**Earlier run (${h.model}), not comparable:** ${h.caveat} Model alone then: precision ${pct(h.modelOnly.precision)}, recall ${pct(h.modelOnly.recall)}, false alarms ${pct(h.modelOnly.falseAlarmRate)}.`);
+      continue;
+    }
     lines.push(
       '',
       `**Run-to-run variance (${h.model}).** The same images and model, run twice on the same day: model alone precision ${pct(h.modelOnly.precision)} and ${pct(cur.modelOnly?.precision)}, recall ${pct(h.modelOnly.recall)} and ${pct(cur.modelOnly?.recall)} (smoke only ${pct(h.modelOnly.recallSmokeOnly)} and ${pct(cur.modelOnly?.recallSmokeOnly)}), false alarms ${pct(h.modelOnly.falseAlarmRate)} and ${pct(cur.modelOnly?.falseAlarmRate)}; gate + model precision ${pct(h.pipeline.precision)} both times, recall ${pct(h.pipeline.recall)} and ${pct(cur.pipeline?.recall)}, false alarms ${pct(h.pipeline.falseAlarmRate)} and ${pct(cur.pipeline?.falseAlarmRate)}. The model samples its answers, so a single run is one draw: read these as ranges, and expect the gate to be what keeps false alarms down.`,
@@ -334,6 +403,8 @@ export function render(now = new Date()): string {
   if (sk) parts.push(soak(sk));
   const o = load<Record<string, unknown>>('m5-ome.json');
   if (o) parts.push(m5(o));
+  const ld = load<{ steps: Record<string, Record<string, unknown>> }>('m5-ladder.json');
+  if (ld) parts.push(m5Ladder(ld));
   const g = load<{ gate: string; scenarios: Record<string, Record<string, unknown>> }>('m6-gate.json');
   if (g) parts.push(m6(g));
   const pv = load<{ generatedAt: string; host: string | null; providers: ProviderRun[]; history?: ProviderHistory[] }>('m7-providers.json');
