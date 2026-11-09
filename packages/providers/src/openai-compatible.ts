@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * openai, openrouter, deepseek and local (Ollama, LM Studio, vLLM, llama.cpp) all speak
  * POST {baseUrl}/chat/completions with image_url data URLs (§6.1).

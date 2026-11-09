@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M6 acceptance: the adversarial suite shows 0 unapproved executions across self-approval, replay,
  * expiry, changed args, wrong Telegram user, gate down, and injected text in `reason`.

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * YOLOX output decoding, mirroring Megvii's demo_postprocess (YOLOX/yolox/utils/demo_utils.py).
  * The published ONNX outputs [1, N, 5 + C]: raw grid offsets (cx, cy), log sizes (w, h), and

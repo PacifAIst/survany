@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Defensive parse (§6.1, C12). Garbage output is a provider failure, never "none".
  */

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * §4.3 step 6, extension half. After a confirmed alert has gone out, the Reasoner may suggest one device
  * action. It is a text-only call: it gets the DetectionResult and the tool list the backend's policy

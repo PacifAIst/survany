@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Alert dispatch from the extension (§4.3 step 5, §10).
  * T1+: one POST to the backend, which fans out to every channel in parallel.

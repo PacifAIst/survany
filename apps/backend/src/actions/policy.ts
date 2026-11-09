@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Action policy (§7 SG-06), loaded from deploy/gate/policy.yaml.
  * SECURITY-GATE SG-06: lock, unlock and alarm-disarm are denied unless one exact entity is listed; emergency-service tools are refused in code and no policy file can enable them.

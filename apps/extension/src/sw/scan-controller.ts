@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Arm/disarm and the confirm half of the pipeline (§4.3 steps 2-3, §6.4).
  * SECURITY-GATE SG-24: nothing is captured before the consent and disclosure screen has been accepted.

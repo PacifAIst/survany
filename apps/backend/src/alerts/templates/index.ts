@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Alert message content per channel (§4.3 "Email alert contents"). Built from stored, sanitized fields only. */
 import { type AlertText, buildAlertText, escapeHtml, type Severity } from '@survey-anything/shared';
 

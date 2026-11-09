@@ -1,3 +1,5 @@
+# Copyright (C) 2026 PacifAIst
+# SPDX-License-Identifier: AGPL-3.0-only
 """
 M2 Python reference for YOLOX decode + NMS.
 

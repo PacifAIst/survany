@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Telegram callback data codec (§6.5).
  * SECURITY-GATE SG-08: every callback_data string is asserted to be at most 64 bytes, and decoding is strict.

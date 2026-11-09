@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 import { defineConfig } from 'vitest/config';
 
 // Docker-backed acceptance tests. Not part of the default `pnpm test` projects; run explicitly:

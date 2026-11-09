@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** CSPRNG-backed identifiers (§6.5). Works in Node 24, service workers and pages. */
 import { bytesToBase64Url } from './base64';
 

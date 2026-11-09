@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Watch recipe schema (§6.3). Recipes are data only.
  * SECURITY-GATE SG-18: strict schema plus a deep forbidden-key scan, so an imported recipe cannot change routing, egress or actions.

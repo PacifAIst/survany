@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright (C) 2026 PacifAIst
+# SPDX-License-Identifier: AGPL-3.0-only
 # M7 acceptance "README quickstart run from a clean machine". Runs inside a fresh node:24-bookworm
 # container with nothing cached: clones the public repository and follows README.md "Try it in about
 # five minutes" step 1 verbatim, then drives steps 2-5 with the quickstart test (Chromium's fake camera

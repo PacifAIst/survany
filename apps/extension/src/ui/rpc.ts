@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 import type { ToSw } from '../sw/messages';
 
 type Outgoing = ToSw extends infer T ? (T extends { target: 'sw' } ? Omit<T, 'target'> : never) : never;

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Offscreen document (§4.1): owns the MediaStream, frame grabbing, clip recorders and the WHIP
  * publisher. Only chrome.runtime is available here (S4); everything else goes through the SW.

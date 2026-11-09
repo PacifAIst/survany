@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M3: walks the whole Options page in a real browser, against local model servers:
  *  - per-provider Test Connection runs the C26 vision probe (a model that reads the code passes; a

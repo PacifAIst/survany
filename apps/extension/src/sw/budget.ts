@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Budget engine (§3 principle 4, §10 "Budget exhausted"). Cloud calls only; local providers are
  * free. State is persisted after every change so a service worker restart cannot reset it.

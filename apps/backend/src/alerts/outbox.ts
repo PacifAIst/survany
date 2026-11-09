@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Durable outbox (§4.3, §10). One row per event + contact + channel (+ kind), so retries never
  * duplicate. Each channel retries on its own schedule; none waits for another.

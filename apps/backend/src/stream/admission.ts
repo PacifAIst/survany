@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * OME AdmissionWebhooks handler (§6.5, S11) and the Caddy forward_auth check.
  * SECURITY-GATE SG-11: signature verified, unknown means deny, the event's recipient allowlist is enforced before any viewer is admitted, and forward_auth refuses untokened signaling before OME sees it.

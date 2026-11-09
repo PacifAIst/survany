@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 import type { ProviderErrorKind } from '@survey-anything/shared';
 
 export class ProviderError extends Error {

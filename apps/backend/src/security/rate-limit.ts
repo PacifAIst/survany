@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Fixed-window in-memory rate limiter keyed by caller (SG-16 pairing, viewer and webhook endpoints). */
 export class RateLimiter {
   private readonly hits = new Map<string, number[]>();

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Service worker entry (§4.1). Listeners are registered synchronously at top level so a restarted
  * worker receives the event that woke it. No state lives in memory.

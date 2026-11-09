@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** One-time PIN choice from a pairing link (§6.5). A PIN can only be reset by re-pairing. */
 import { SOURCE_URL } from '@survey-anything/shared';
 import { post } from './api';

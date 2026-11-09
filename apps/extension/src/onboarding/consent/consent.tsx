@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * First-run consent and data disclosure (§3 principle 8, §12, Chrome Web Store S41/S42).
  * SECURITY-GATE SG-24: an affirmative action on this page is required before any capture; arm() checks consentAt.

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 import { base64ToBytes, bytesToBase64 } from '@survey-anything/shared';
 
 export async function blobToBase64(blob: Blob): Promise<string> {

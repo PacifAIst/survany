@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Host classification shared by config validation (§6.2), guardedFetch (SG-14) and the SSRF guard (SG-19). */
 
 export type HostClass = 'loopback' | 'private' | 'link-local' | 'cgnat' | 'unspecified' | 'multicast' | 'public' | 'hostname';

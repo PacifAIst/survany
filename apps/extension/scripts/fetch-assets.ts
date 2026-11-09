@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Fetches the bundled models and ORT WASM into public/ and verifies each SHA-256 against
  * models/checksums.json (SG-26). Run once after install; CI runs it before the build.

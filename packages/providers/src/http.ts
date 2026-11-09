@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 import { PROVIDER_TIMEOUT_MAX_MS } from '@survey-anything/shared';
 import { kindForStatus, ProviderError } from './errors';
 

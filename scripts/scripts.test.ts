@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -179,5 +181,16 @@ describe('M8 release scripts', () => {
     const c = npmComponents({ MIT: [{ name: '@scope/pkg', versions: ['1.2.3'], license: 'MIT' }], '(MIT OR Apache-2.0)': [{ name: 'x', versions: ['2.0.0'], license: '(MIT OR Apache-2.0)' }] });
     expect(c.map((x) => x.purl)).toEqual(['pkg:npm/%40scope/pkg@1.2.3', 'pkg:npm/x@2.0.0']);
     expect(c[1]!.licenses).toEqual([{ expression: '(MIT OR Apache-2.0)' }]);
+  });
+});
+
+describe('copyright headers', () => {
+  it('adds the header after a shebang, keeps CRLF files CRLF, uses # for Python and shell, and is idempotent', async () => {
+    const { withHeader, hasHeader } = await import('./check-headers.ts');
+    const js = withHeader('a.ts', '#!/usr/bin/env node\nconsole.info(1);\n');
+    expect(js).toBe('#!/usr/bin/env node\n// Copyright (C) 2026 PacifAIst\n// SPDX-License-Identifier: AGPL-3.0-only\nconsole.info(1);\n');
+    expect(withHeader('a.ts', js)).toBe(js);
+    expect(withHeader('x.py', 'print(1)\r\n')).toBe('# Copyright (C) 2026 PacifAIst\r\n# SPDX-License-Identifier: AGPL-3.0-only\r\nprint(1)\r\n');
+    expect(hasHeader('// nothing here\n')).toBe(false);
   });
 });

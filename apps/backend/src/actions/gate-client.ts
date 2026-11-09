@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Gate client. The backend is confirm-gate-mcp's paired device; only deterministic backend code
  * talks to the gate, never the model.

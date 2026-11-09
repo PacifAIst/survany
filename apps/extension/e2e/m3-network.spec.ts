@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M3 / §9 "allowCloudProviders:false": a Playwright network log of every http(s) request the extension
  * makes (service worker and offscreen document included) while it detects, confirms and alerts.

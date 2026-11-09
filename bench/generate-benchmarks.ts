@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Renders docs/BENCHMARKS.md from the evidence files in bench/reports/ (PLAN M7: "BENCHMARKS.md generated
  * from one command"). Run: pnpm bench. Never edit BENCHMARKS.md by hand; re-run the measurement instead.

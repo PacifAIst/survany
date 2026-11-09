@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Heartbeat to the backend (C19): after 3 missed heartbeats the backend sends the dead-man alert.
  * 0.5 min is the shortest alarm period a packaged extension gets (C1).

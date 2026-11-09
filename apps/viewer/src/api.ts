@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Backend calls from the viewer. One attempt each, never a retry loop (§10). */
 
 export type ApiResult<T> = { kind: 'ok'; value: T } | { kind: 'rejected'; status: number; reason: string } | { kind: 'unavailable' };

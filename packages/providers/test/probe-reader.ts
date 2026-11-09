@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Reads the code back out of the C26 probe PNG by comparing each glyph cell with the probe font. Used by
  * the unit tests and by the e2e model mock (apps/extension/e2e/model-mock.ts) to play a model that sees.

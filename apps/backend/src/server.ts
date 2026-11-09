@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Survey Anything backend (§4.1).
  * SECURITY-GATE SG-25: every response carries a link to the corresponding source (AGPL-3.0 §13), and /source redirects to it.

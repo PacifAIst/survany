@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Options page for config schema v1 (§6.2). Every key is editable here or in the raw JSON editor. */
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';

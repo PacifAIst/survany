@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Backend configuration from the environment. The backend is the sole holder of the bot token, gate credentials and HMAC keys (§4.1). */
 import { z } from 'zod';
 

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Loads the built extension into Chromium with a fake camera (M1 e2e harness). */
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';

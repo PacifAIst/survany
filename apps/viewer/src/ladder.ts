@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Viewer source ladder (M5): WebRTC, then LL-HLS over 443. OvenPlayer's own timer stays unarmed
  * (timeoutMaxRetry 0), so this page runs its own 10 s watchdog per source. No retry loop.

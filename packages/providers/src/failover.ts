@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Failover chain (§6.1). Advances on timeout, 429, 5xx, 401, 402, 403 and parse errors
  * (and, fail-safe, on any other provider error). Logs which provider answered.

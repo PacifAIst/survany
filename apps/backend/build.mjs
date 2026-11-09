@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 // Bundles the backend into dist/ with workspace packages inlined and npm dependencies external.
 import { copyFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { build } from 'esbuild';

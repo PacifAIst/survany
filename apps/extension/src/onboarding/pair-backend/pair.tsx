@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * C17: the extension authenticates to the backend with a device token obtained from a one-time
  * pairing code (SG-16 is enforced by the backend). The token is stored as a secret, never in config.

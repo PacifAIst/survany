@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** OME AdmissionWebhooks endpoint and the Caddy forward_auth endpoint (SG-11). */
 import type { FastifyInstance } from 'fastify';
 import { appendAudit } from '../actions/audit';

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M4 acceptance: one event yields exactly one message per configured channel per contact, all
  * started together; the three channel configurations each pass the §9 parallel-channels row; and

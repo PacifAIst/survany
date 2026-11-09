@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * T0 email through one HTTP mail API (D7): browsers cannot speak SMTP. Resend's Idempotency-Key
  * makes retries safe (event_id + contact + channel).

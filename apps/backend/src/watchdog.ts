@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Periodic backend duties: outbox retries, ack escalation (§6.4), the 5 s stream start budget
  * (§10), the dead-man alert (C19), approval timeouts (SG-01) and media retention (SG-22).

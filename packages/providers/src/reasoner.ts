@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Reasoner role (§6.1). Text-only is allowed. It receives the DetectionResult and the
  * allowed tool list, never a frame. Its output is untrusted: `parseReasonerOutput` validates it

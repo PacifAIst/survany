@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Bundled detector models and their class labels (§6.3 `detector` gate, §11 licensing). */
 
 export const COCO_CLASSES = [

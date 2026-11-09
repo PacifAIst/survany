@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * SMTP email from the backend (D7). Message-ID is derived from event_id + contact, so a retry
  * carries the same identity and never looks like a second alert.

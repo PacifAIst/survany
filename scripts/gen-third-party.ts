@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Writes THIRD_PARTY_LICENSES.md (PLAN §5, §11): every production npm package (from pnpm's own license
  * data), the bundled models and WASM (models/checksums.json), the container images the deploy stack

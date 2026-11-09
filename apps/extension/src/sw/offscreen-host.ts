@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Creates and talks to the single offscreen document (S4). */
 import type { ToOffscreen } from './messages';
 

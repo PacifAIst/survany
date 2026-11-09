@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 // The quiet scene is drawn, not filmed: a dim loading bay with a slowly drifting light, so the motion
 // gate sees a little movement and the fire detector sees nothing. The incident swaps in a real fire
 // photograph from the D-Fire test split (CC0) with a gentle zoom so consecutive frames differ.

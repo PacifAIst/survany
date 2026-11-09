@@ -1,3 +1,5 @@
+# Copyright (C) 2026 PacifAIst
+# SPDX-License-Identifier: AGPL-3.0-only
 """YOLOX-tiny experiment for D-Fire fire/smoke (PLAN M2). Fine-tuned from Megvii's COCO yolox_tiny.pth."""
 
 import os

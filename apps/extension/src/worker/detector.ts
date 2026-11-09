@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * YOLOX through onnxruntime-web inside the dedicated Worker (§4.1): WebGPU first, then WASM.
  * SECURITY-GATE SG-26: models and WASM load only from the extension package and are checked against bundled SHA-256 sums before use.

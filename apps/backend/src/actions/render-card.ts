@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * SECURITY-GATE SG-03: the approval card is rendered by the backend from the policy template, tool and validated args only; model text never reaches it, and the approval is bound to a params hash.
  */

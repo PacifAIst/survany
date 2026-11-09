@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * chrome.storage access. The service worker keeps no state in memory (§4.1): everything that
  * must survive a restart lives here. Secrets are a separate key that export never reads.

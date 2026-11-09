@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M2: the fire/smoke model the extension ships, run through the extension's own JavaScript path
  * (jpeg-js decode, letterbox, ORT WASM, decodeYolox, NMS) on three CC0 D-Fire test images.

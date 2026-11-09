@@ -8,7 +8,7 @@ calls. Policy references: S41 (user data FAQ), S42 (2026 policy update), S43 (re
 
 - **Name:** Survey Anything
 - **Short description (≤132 chars):** Watch any tab or camera for what you choose and get Telegram or email alerts. Actions need your tap.
-- **Category:** Productivity. **Decide:** "Tools" is the alternative.
+- **Category:** Utilities (owner decision, 2026-11-09).
 - **Language:** English.
 - **Description (draft):**
 
@@ -63,7 +63,7 @@ configures, for the single purpose, after the in-extension consent screen.
 
 | CWS data category | Handled? | What and where |
 |---|---|---|
-| Website content | **Yes** | Frames of the tab the user chooses to watch. Processed on the device; a candidate frame goes to the user's chosen AI provider (none if local), and a snapshot/clip goes to the user's Telegram/email/backend only if the user turns on "Alert media". **Decide:** frames from a **camera** are not website content; consider also ticking the closest category the form offers and describing it. |
+| Website content | **Yes** | Frames of the tab the user chooses to watch. Processed on the device; a candidate frame goes to the user's chosen AI provider (none if local), and a snapshot/clip goes to the user's Telegram/email/backend only if the user turns on "Alert media". Camera frames are disclosed explicitly on the first-run consent screen (owner decision, 2026-11-09). |
 | Personally identifiable information | **Yes** | Contact email addresses and Telegram chat IDs the user enters for alerts (stored locally, sent to the user's mail service/Telegram/backend). Camera frames may show people. |
 | Authentication information | **Yes** | The user's own API keys and bot token, stored locally (`chrome.storage.local`), sent only to the service each key belongs to (or kept on the user's backend in proxy mode). |
 | Personal communications | No | |
@@ -82,8 +82,8 @@ configures, for the single purpose, after the in-extension consent screen.
 captured, where it can go, and requires an affirmative action before any capture (SG-24, tested in
 `e2e/m1.spec.ts`).
 
-**Privacy policy URL:** https://github.com/PacifAIst/survany/blob/main/docs/PRIVACY_POLICY.md
-(**Decide:** a stable `vX.Y.Z` tag URL is safer for review than `main`.)
+**Privacy policy URL:** https://github.com/PacifAIst/survany/blob/main/docs/PRIVACY_POLICY.md (owner decision
+2026-11-09: the repository's file for now).
 
 ## Reviewer notes (draft)
 

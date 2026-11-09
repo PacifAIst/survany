@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Low-resolution, distant, night-time fire: the shipped fire/smoke model must still trip the `fire`
  * gate. Runs the extension's JavaScript path (jpeg-js, letterbox, ORT WASM, decode, NMS) and then the

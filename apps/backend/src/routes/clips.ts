@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Clip upload (§4.3 step 4). The backend holds the latest 10 s clip for every alerted event and
  * sends it only on a §10 failure path (stream not live in 5 s, or a viewer's ladder exhausted).

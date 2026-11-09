@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
 export function sha256Hex(data: string | Buffer): string {

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Turns an untrusted action proposal into a pending, human-approvable card (§4.3 step 6).
  * SECURITY-GATE SG-02: the model only ever produces JSON data that arrives here; it holds no MCP connection, HMAC key, device key or nonce. Only this deterministic code talks to the gate.

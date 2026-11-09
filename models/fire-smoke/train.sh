@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Copyright (C) 2026 PacifAIst
+# SPDX-License-Identifier: AGPL-3.0-only
 # Fire/smoke detector pipeline (PLAN M2): prepare D-Fire -> fine-tune YOLOX-tiny -> evaluate -> export ONNX.
 # Run from the repository root (see models/fire-smoke/README.md):
 #   docker build -t sa-fire-train models/fire-smoke

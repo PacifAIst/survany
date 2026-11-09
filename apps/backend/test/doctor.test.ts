@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M5: the inside half of `doctor` (`node dist/cli.js doctor`) against the real backend app on a port,
  * with a stand-in OME. The real-OME run is in apps/extension/e2e/ome/m5.spec.ts.

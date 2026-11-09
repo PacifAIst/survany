@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M2 acceptance: decode and NMS match the Python reference within 2 px and 0.02 score.
  * The raw output fixture comes from the real bundled model (scripts/gen-yolox-fixture.ts);

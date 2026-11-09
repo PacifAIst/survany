@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The only module in the extension allowed to call fetch (ESLint enforces this, SG-14).
  *

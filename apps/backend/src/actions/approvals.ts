@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Pending approvals (§4.3 step 6).
  * SECURITY-GATE SG-01: no device action without a human tap; a pending approval that times out is denied, and each approval can be decided exactly once.

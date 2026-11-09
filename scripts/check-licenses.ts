@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * §11 license policy:
  *  - production npm dependencies must carry an allowlisted license;

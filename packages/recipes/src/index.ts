@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 import doorLeftOpen from '../recipes/door-left-open.watch.json';
 import fire from '../recipes/fire.watch.json';
 import other from '../recipes/other.watch.json';

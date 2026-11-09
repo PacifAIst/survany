@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Email acknowledge (§4.3): inert on GET; a POST with the contact's PIN acknowledges. */
 import { SOURCE_URL } from '@survey-anything/shared';
 import { post } from './api';

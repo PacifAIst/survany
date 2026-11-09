@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Config schema v1 (PLAN §6.2). Keys from the original spec are unchanged; the
  * optional `backend`, `direct` and `alerts.nonRedundantAck` keys are additions

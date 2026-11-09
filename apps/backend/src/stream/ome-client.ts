@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * OME REST client. The API listens only on the compose network with an AccessToken (SG-20).
  * Used to cut a stream immediately on Stop or /stop; admission `lifetime` cuts it at TTL anyway.

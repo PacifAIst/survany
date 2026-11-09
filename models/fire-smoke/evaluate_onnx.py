@@ -1,3 +1,5 @@
+# Copyright (C) 2026 PacifAIst
+# SPDX-License-Identifier: AGPL-3.0-only
 """
 Evaluate the exported fire/smoke ONNX on the official D-Fire test split (PLAN M2, §9 false positives).
 

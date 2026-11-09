@@ -1,3 +1,5 @@
+# Copyright (C) 2026 PacifAIst
+# SPDX-License-Identifier: AGPL-3.0-only
 """
 Collects the fire/smoke pipeline outputs into one evidence file (bench/reports/m2-fire-smoke.json), the input
 of `pnpm bench`. Run inside the training container after train.sh:

@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M8: writes release/sbom.cdx.json, a CycloneDX 1.5 SBOM of what a release ships and runs: every production
  * npm package (from pnpm's own data), the files bundled in the extension (models and WASM, with SHA-256),

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 // Fake Telegram Bot API for the Docker tests. Records every call; GET /__calls returns them.
 import { createServer } from 'node:http';
 

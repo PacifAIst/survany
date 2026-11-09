@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Deployment check from outside the server (PLAN §8 M5): run it from your laptop or phone hotspot after
  * `docker compose --profile ome up -d`.

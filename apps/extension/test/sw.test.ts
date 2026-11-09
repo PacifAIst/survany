@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 import { beforeEach, describe, expect, it } from 'vitest';
 import { EXAMPLE_CONFIG_JSON, parseConfig } from '@survey-anything/shared';
 import { CAMERA_CONSTRAINTS } from '../src/offscreen/source-camera';

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Environment-neutral base64 helpers (frames cross extension contexts as base64, C4). */
 
 export function bytesToBase64(bytes: Uint8Array): string {

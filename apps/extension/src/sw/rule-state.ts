@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Per-rule state machine (§6.4): idle → candidate (N-of-M, in the Worker) → confirming → alerted
  * → cooldown → idle. Persisted on every transition so a service worker restart never re-alerts.

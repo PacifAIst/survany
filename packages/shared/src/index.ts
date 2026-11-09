@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 export * from './alert-text';
 export * from './api';
 export * from './base64';

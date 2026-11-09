@@ -1,3 +1,5 @@
+# Copyright (C) 2026 PacifAIst
+# SPDX-License-Identifier: AGPL-3.0-only
 """
 Test double for the MCP server that executes actions (stands in for ha-mcp in the M6 test).
 Speaks MCP over stdio (newline-delimited JSON-RPC); confirm-gate-mcp spawns it with --upstream-cmd.

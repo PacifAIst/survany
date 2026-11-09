@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** The e2e model mock passes the vision probe only by actually reading the code (it gets no other hint). */
 import { expect, it } from 'vitest';
 import { randomProbeCode, renderProbeImage } from '@survey-anything/providers';

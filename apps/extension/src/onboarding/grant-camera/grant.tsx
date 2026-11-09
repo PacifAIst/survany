@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * C3: an offscreen document cannot show the camera permission prompt, so the grant happens here,
  * on a visible extension page. Video only (SG-23); the preview tracks are stopped immediately.

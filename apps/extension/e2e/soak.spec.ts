@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M1 soak: ≥95% of ticks within ±1 s of the 5 s target and no more than 1 consecutive missed tick
  * over 30 minutes, with every page hidden behind another tab. Run with SOAK_MINUTES=30.

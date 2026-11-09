@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * SECURITY-GATE SG-21: secrets never appear in config export or in logs.
  * Config holds only `*Ref` names; secret values live in a separate store that export never reads.

@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Runs the provider bench for the providers named on the command line, merging into the existing
  * reports (other providers' results are kept). Cross-platform, unlike an inline environment variable.

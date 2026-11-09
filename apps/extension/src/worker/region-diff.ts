@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * `region-diff` gate (§6.3): change or color shift inside a drawn region, compared with the
  * reference frame captured at arm time. Also hosts the interim flame heuristic (§6.3, logged

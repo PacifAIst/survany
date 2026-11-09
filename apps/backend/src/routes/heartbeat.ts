@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Heartbeat (C19) and operational notices from the extension (§10). */
 import { HeartbeatSchema, NoticeSchema } from '@survey-anything/shared';
 import type { FastifyInstance } from 'fastify';

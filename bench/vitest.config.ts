@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 import { defineConfig } from 'vitest/config';
 
 /** Measurement runs, not unit tests: `pnpm bench:providers`. Not part of `pnpm test`. */

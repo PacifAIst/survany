@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Per-rule gate evaluation and the N-of-M window (§4.3 steps 1-2). Pure logic, unit-tested.
  * The worker feeds it one analysis frame per tick; the service worker owns the rest of the

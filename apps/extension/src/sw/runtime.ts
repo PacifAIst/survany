@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Service-worker-wide helpers: the guarded network boundary and the backend client. */
 import type { Config } from '@survey-anything/shared';
 import { BackendClient } from './backend-client';

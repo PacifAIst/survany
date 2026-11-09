@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Operational notices to the owner (§10): budget exhausted, camera offline (≤ 1 per hour),
  * re-arm needed, offscreen failure. Always a local notification; also the backend (T1+) or the

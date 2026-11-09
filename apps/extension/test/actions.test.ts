@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M6, extension half: after a confirmed alert the Reasoner (text only) may suggest one action, which is
  * validated against the backend's tool list and posted to /api/actions/propose. Nothing else.

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * SECURITY-GATE SG-15: frame egress requires its explicit flag across snapshot, clip, email and OME; without it the bytes are stripped before any request is built.
  * C13: allowCloudProviders:false does not by itself permit alert media; only egress.alertMedia does.

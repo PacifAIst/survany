@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Local durable outbox (§10 "Backend unreachable", "All configured channels fail"). Each item has
  * its own key (event_id + contact + channel), so a retry never duplicates a send that succeeded.

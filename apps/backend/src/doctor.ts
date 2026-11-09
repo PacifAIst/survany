@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Deployment check from inside the compose network (PLAN §8 M5, the inside half of `doctor`).
  * Run in the backend container: `docker compose exec backend node dist/cli.js doctor`.

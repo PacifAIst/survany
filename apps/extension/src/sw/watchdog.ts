@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Watchdog (C1, §10). chrome.alarms only checks that the Worker loop is alive; it never drives it.
  * Packaged extensions get alarms at most every 30 s, so the period is exactly 0.5 min.

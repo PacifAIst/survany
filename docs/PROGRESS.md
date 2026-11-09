@@ -1,8 +1,8 @@
 # Survey Anything: Progress
 
 **Goal:** v1.0 as defined at the end of §8 of docs/PLAN.md
-**Current milestone:** M8 (drafts prepared; held by the owner before any outward-facing step)
-**Last updated:** 2026-11-09 20:30
+**Current milestone:** M8 on hold at 0.1.0: owner manual testing first (`docs/MANUAL_TESTING.md`)
+**Last updated:** 2026-11-09 21:00
 
 ## Milestones
 | ID | Status (todo/doing/done) | Acceptance evidence | Notes |
@@ -71,6 +71,11 @@
 | WebGPU device lost | detector.ts falls back to WASM on device loss or WebGPU inference error; e2e runs WASM with WebGPU disabled | partial: device-loss injection pending |
 | OME admission webhook failing | e2e ome/m5.spec.ts: hung → denied, stopped → denied, forward_auth fails closed | done |
 
+## Known issues (found, not yet fixed)
+| Since | Issue | Effect | Plan |
+|---|---|---|---|
+| 2026-11-09 | The built-in **Person in restricted zone** recipe asks the model about "the marked restricted area", but the confirm image is the whole frame with no marking (the region is applied only by the on-device gate). | The model may answer "no" for a person who is in the region, so real alerts can be missed. | Draw the region on the confirm image (or crop to it) and update the prompt; after manual testing. `docs/MANUAL_TESTING.md` A4 uses an imported "Person in view" recipe meanwhile. |
+
 ## Known compromises
 Accepted for v1.0 by the owner, with the reason; each can be revisited after release.
 
@@ -86,11 +91,12 @@ Accepted for v1.0 by the owner, with the reason; each can be revisited after rel
 - [x] **Fire/smoke weights (M2).** Trained on the local RTX 3060 on 2026-11-09 (see M2 row); no longer needs a human.
 - [ ] **Telegram bot.** Create a bot with @BotFather, set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_BOT_USERNAME` in `deploy/.env`.
 - [ ] **Public deployment (M5).** VPS with DNS for `PUBLIC_HOST` and `LIVE_HOST`, open 80/443, 3478/tcp, 10000/tcp and 10000-10003/udp; `OME_HOST_IP` = public IP. Then the Mini App on real iOS and Android, and one viewer on mobile data (CGNAT); record the reported candidate type for D11.
-- [ ] **Rotate the OpenRouter API key** pasted into the development conversation on 2026-11-09 (used once, via an environment variable, for `pnpm bench:provider openrouter`; it is in no file or commit).
+- [x] **Rotate the OpenRouter API key** (owner revoked it, 2026-11-09) pasted into the development conversation on 2026-11-09 (used once, via an environment variable, for `pnpm bench:provider openrouter`; it is in no file or commit).
 - [ ] **Cloud provider bench (M7), remaining.** OpenRouter is measured. For Anthropic and DeepSeek put `ANTHROPIC_API_KEY` / `DEEPSEEK_API_KEY` in the environment, fill the prices (USD per million tokens, with the date) in `bench/providers.json`, then `pnpm bench:provider anthropic deepseek && pnpm bench`.
 - [ ] **Clip set for false alarms per day (§9).** Short videos of a sunset, orange clothing and a fire on a TV screen, played through the fake camera; not available yet.
 - [ ] **Try the demo with a real tab.** Follow README "Try it in about five minutes" by hand once (Load unpacked, Watch this tab on `pnpm demo`). The automated path uses the camera because the toolbar click is browser UI.
-- [ ] **M8 review** (`docs/release/RELEASE.md`, items 1-12): version number, the CWS **Decide** items, GHCR or build-from-source, CRX or not, release notes. Then the OUTWARD commands.
+- [x] **M8 review** answered 2026-11-09: 0.1.0 preview, CWS Utilities / camera disclosure on the consent screen / repo privacy URL, no GHCR, no CRX, legal deferred, compromises approved.
+- [ ] **Manual testing** with `docs/MANUAL_TESTING.md` (real webcam, OpenRouter, Telegram, live view on a VPS, an approved action); report failures by step number. M8 resumes after.
 - [ ] **Chrome Web Store account (M8).**
 - [x] **Close GitHub secret-scanning alert #1** (Security → Secret scanning) with reason **"Used in tests"**. Closed by the owner on 2026-11-09. The flagged value was a fabricated fixture, never a BotFather-issued token, so there was nothing to revoke. It has been scrubbed from history (verified: no token-shaped literal in any revision; gitleaks clean over all refs).
 
@@ -121,6 +127,8 @@ Accepted for v1.0 by the owner, with the reason; each can be revisited after rel
 | 2026-11-09 | **LL-HLS play token:** the viewer appends its play token (`sa=`) to every LL-HLS request; forward_auth admits a chunklist/part/segment under `/app/<stream id>/` only with a live play token for that stream; the master playlist by stream id is always refused. | Without it LL-HLS could not play behind Caddy, and a Caddy-only bypass would let anyone who learns a stream id watch until its TTL (OME does not check the session id in chunklist names). | Yes |
 | 2026-11-09 | Test infrastructure for the §9 ladder: a separate compose stack on a private network (OME at a fixed address it advertises) with Google Chrome in containers (Playwright browser server, flags set in compose), the viewer with NET_ADMIN for iptables; plain-HTTP test hosts treated as secure contexts by flag. | The only honest way to make "the viewer's network blocks UDP" true; Docker Desktop on Windows cannot firewall one host browser. | Yes |
 | 2026-11-09 | Bench runner: providers are merged into the existing reports (earlier entries move to `history`, with a caveat when not comparable); HTTP 429 is retried up to 3 times and counted. `pnpm bench:provider <id>`. | Measuring one provider must not erase another; rate limits are the account's, not the model's. | Yes |
+| 2026-11-09 | `LICENSE` is the verbatim AGPL-3.0 text from gnu.org (sha256 `0d96a4ff…`); the copyright line "Copyright (C) 2026 PacifAIst" is in README.md and, with `SPDX-License-Identifier: AGPL-3.0-only`, in every first-party source file (`pnpm check:headers`, part of `pnpm check`). | Owner instruction: no edits to the license text. | Yes |
+| 2026-11-09 | The viewer is not hosted on Cloudflare Pages: it calls the backend on its own origin, links point at `PUBLIC_BASE_URL/v/`, its headers come from Caddy, and its tokens would reach the CDN's logs (`docs/release/CLOUDFLARE_PAGES.md`). | Checked on request; no code change made. | Yes |
 | 2026-11-09 | Gate approval window: `deploy/gate/policy.yaml` `pendingTtlSeconds` 300 → **120**. | confirm-gate-mcp 0.8.0 expires a pending call after a fixed 120 s, so a longer Telegram window would let a tap arrive after the gate has forgotten the call. | Yes |
 | 2026-11-09 | The Reasoner runs only after a **model-confirmed** alert has been sent, never for gate-only ("unconfirmed") alerts; it is metered by the same budget ledger. In proxy mode it must be a provider that needs no key (the browser holds none); otherwise proposals are skipped and logged. | §6.1 gives the Reasoner a DetectionResult, which gate-only alerts do not have; a backend reasoner proxy is not in the plan. | Yes |
 | 2026-11-09 | New backend route `GET /api/actions/tools` (device token): the tool list derived from `policy.yaml`. The extension offers the Reasoner only these tools and validates its answer against them before `/api/actions/propose`. | The Reasoner needs "the allowed tool list" (§6.1); the policy lives on the backend. | Yes |
@@ -151,6 +159,11 @@ Accepted for v1.0 by the owner, with the reason; each can be revisited after rel
 | 2026-11-09 | Container images | Docker Hub | Pinned digests: OME v0.21.0 `sha256:172da912…`, caddy 2.10.2-alpine `sha256:4c6e91c6…`, mailpit v1.27 `sha256:e22dce5b…`, node 24-alpine `sha256:a34ab6d7…`, python 3.13-slim `sha256:e48f59cd…`. |
 
 ## Session log (newest first)
+### 2026-11-09 21:00: owner answers; LICENSE; headers; manual-testing checklist
+- Done: owner's M8 answers recorded (hold at 0.1.0); `LICENSE` restored to the verbatim gnu.org AGPL-3.0 text; copyright line in README and SPDX headers in 197 source files with `pnpm check:headers`; Cloudflare Pages assessment (not as-is); `docs/MANUAL_TESTING.md`; found the restricted-zone prompt issue (Known issues).
+- Tests run: `pnpm vitest run`, scripts suite 26, `pnpm typecheck`, `pnpm lint`, `pnpm check` (incl. headers).
+- Next: owner runs `docs/MANUAL_TESTING.md` and reports failures; then fixes, then M8.
+- Blockers: none.
 ### 2026-11-09 20:30: M5 closed; OpenRouter bench; low-res fire test; M8 drafts
 - Decisions recorded: ONNX in history accepted (Known compromises); M8 held before any outward step; GPU freed (`docker stop sa-ollama`).
 - Done: M5 (a) UDP-blocked viewer ladder, (b) doctor inside the network, (c) arm-time probe e2e + unit branches; LL-HLS play-token fix (bug); OpenRouter qwen2.5-vl-72b vs local qwen2.5vl:7b in BENCHMARKS (comparison, variance, red team); low-res night fire regression test; M8 drafts (CWS listing, release commands, release notes, SBOM, image digests, reproducible zip).

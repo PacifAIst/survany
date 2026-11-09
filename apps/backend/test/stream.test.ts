@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M5 backend acceptance (without a real OME, see deploy/ for the Docker tests):
  * SG-09 initData, SG-10 stream tokens, SG-11 admission + forward_auth, SG-12 email PIN flow,

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Class-agnostic NMS, matching Megvii's demo_utils.nms (which uses the +1 pixel area convention).
  */

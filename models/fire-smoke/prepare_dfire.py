@@ -1,3 +1,5 @@
+# Copyright (C) 2026 PacifAIst
+# SPDX-License-Identifier: AGPL-3.0-only
 """
 Prepare D-Fire for YOLOX training (PLAN M2).
 

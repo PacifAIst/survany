@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M6: the Reasoner is text-only and its output is untrusted (§6.1, SG-02, SG-03).
  * - the request carries no image and no sampling parameters;

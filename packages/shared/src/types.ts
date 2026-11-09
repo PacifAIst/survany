@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** §6.1 normalized model result. `event` is a rule id or "none". */
 export interface DetectionResult {
   event: string;

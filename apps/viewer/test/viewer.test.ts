@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 import { describe, expect, it } from 'vitest';
 import { buildSources, runLadder, type PlayerAdapter } from '../src/ladder';
 import { readLink, renderMeta, sessionId } from '../src/meta';

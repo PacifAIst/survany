@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 import type { ProviderId } from '@survey-anything/shared';
 import type { AdapterConfig, VisionProvider } from './adapter';
 import { AnthropicAdapter } from './anthropic';

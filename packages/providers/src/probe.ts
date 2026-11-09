@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Vision probe (C26). An HTTP 200 does not prove a model saw anything, and images under
  * 200 px cause mistakes, so the probe renders a random code into a 256 px image and the

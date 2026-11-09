@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 import type { Features, Env } from './config';
 import type { Db } from './db/migrate';
 import type { Mailer } from './alerts/email';

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * confirm-gate-mcp device request signing (§6.5 "Approval binding", S17). Verified against the
  * project source 2026-11-09 (src/confirm_gate/evidence.py sign_request):

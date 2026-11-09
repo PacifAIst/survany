@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 import type { DetectionResult, ProviderId } from '@survey-anything/shared';
 import type { FetchFn } from './http';
 import { parseDetection } from './parse';

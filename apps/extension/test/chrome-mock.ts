@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Minimal in-memory chrome.* for unit-testing service-worker modules in Node. */
 export function installChromeMock(): { store: Map<string, unknown>; badge: { text: string }; notifications: string[] } {
   const store = new Map<string, unknown>();

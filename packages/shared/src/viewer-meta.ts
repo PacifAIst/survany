@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Viewer-link metadata in the URL query string (§4.3 step 4, §10).
  * SECURITY-GATE SG-27: each field is validated independently, length-capped, and dropped if invalid; never free text.

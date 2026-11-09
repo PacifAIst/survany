@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Parallel redundant dispatch (§4.3 step 5, §10). Every configured channel for every recipient is
  * enqueued in one transaction, then all sends start together. No channel waits for another.

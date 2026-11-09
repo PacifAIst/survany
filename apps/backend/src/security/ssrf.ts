@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * SECURITY-GATE SG-19: proxy mode only reaches allowlisted provider hosts over https, and refuses any host that resolves to a private, loopback, link-local or otherwise non-public address.
  */

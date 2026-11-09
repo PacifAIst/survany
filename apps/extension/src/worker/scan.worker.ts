@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Scan loop (C1): driven by a self-correcting timer in this dedicated Worker, never by chrome.alarms.
  * Per tick: grab the latest frame, run the motion filter, the needed detectors, then each rule's gate

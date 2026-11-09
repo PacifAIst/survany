@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * WHIP publisher for OME (§4.3 step 4, M5). Non-trickle: gather, POST application/sdp, apply answer.
  * URLs carry `direction=whip&transport=all` so OME offers its TcpRelay (D11). H.264 is preferred

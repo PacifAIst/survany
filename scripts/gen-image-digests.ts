@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M8: lists every container image the release uses (deploy/docker-compose.yml and the Dockerfiles' FROM
  * lines) with the digest it is pinned to, and fails if any is not pinned. Writes docs/release/IMAGE_DIGESTS.md.

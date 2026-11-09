@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Popup: arm/disarm, the live indicator banner with Stop (SG-13), and status. */
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';

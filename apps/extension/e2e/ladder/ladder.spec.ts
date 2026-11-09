@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * PLAN §9 "UDP-blocked viewer" / §10 "Viewer cannot establish WebRTC", against the real OME, with the
  * viewer's network really firewalled (iptables in the viewer's container, deploy/test/compose.m5-ladder.yml).

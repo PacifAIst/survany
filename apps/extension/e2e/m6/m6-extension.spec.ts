@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M6 end to end, in one run: the real extension (fake camera) -> motion gate -> vision confirm ->
  * alert -> Reasoner (text only) -> backend policy -> confirm-gate-mcp 0.8.0 holds the call ->

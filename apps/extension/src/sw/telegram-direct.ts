@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * T0 direct Telegram (§4.2): extension only, no backend. No inline buttons, because nothing
  * could receive the callback; acknowledge and live view need T1/T2. Private chats only (D12).

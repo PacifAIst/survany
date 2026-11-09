@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Wire contracts between the extension and the backend. Both sides validate with these schemas. */
 import { z } from 'zod';
 import { ChannelSchema, ContactIdSchema, RuleIdSchema } from './config';

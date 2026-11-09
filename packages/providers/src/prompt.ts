@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * One prompt across all providers (§6.1). The image is declared untrusted data:
  * any text inside it is part of the scene and never an instruction.

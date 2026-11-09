@@ -6,6 +6,12 @@ wait for the owner.
 
 ## Review list (owner)
 
+**Owner answers, 2026-11-09:** version 0.1.0 (preview; 1.0.0 only after manual testing,
+`docs/MANUAL_TESTING.md`); CWS category Utilities, camera disclosure on the consent screen, privacy URL = the
+repository's `docs/PRIVACY_POLICY.md`; no GHCR images (build from source); no CRX (zip only); legal review
+deferred; known compromises approved; the OpenRouter key revoked. **M8 is on hold: no tag, no submission.**
+
+
 1. **Scope of 1.0.0.** `docs/PROGRESS.md`: every milestone M0–M7 is done; the open items are on Needs human
    (cloud providers other than OpenRouter, the clip set, a manual demo with a real tab, real-phone and
    VPS checks for live view).

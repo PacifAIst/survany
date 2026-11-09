@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Runtime messages between the service worker, the offscreen document and extension pages. JSON only (C4). */
 import type { GateInfo, ScanSetup, TickStats } from '../worker/protocol';
 import type { BudgetReport } from './budget';

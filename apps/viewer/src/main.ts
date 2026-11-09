@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Live viewer: Telegram Mini App (initData) or email (PIN). Renders the link's metadata first,
  * with no backend call, so a first view during a backend outage still shows what happened.

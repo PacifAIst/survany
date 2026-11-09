@@ -158,6 +158,9 @@ emergency services on its own. It is not a certified safety device: keep your sm
 
 ## License and source
 
-Survey Anything is licensed under the **GNU Affero General Public License v3.0 only** (`LICENSE`). If you run
+Copyright (C) 2026 PacifAIst
+
+Survey Anything is licensed under the **GNU Affero General Public License v3.0 only** (`LICENSE`, the verbatim
+license text). Every source file carries the copyright line and `SPDX-License-Identifier: AGPL-3.0-only`. If you run
 a modified backend or viewer for others, you must offer them its source; the viewer and backend link to
 the corresponding source. Third-party components and their licenses: `THIRD_PARTY_LICENSES.md`.

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Tick timing statistics for the M1 soak acceptance (≥95% within ±1 s, no gap over 2 intervals). */
 
 export interface TickSnapshot {

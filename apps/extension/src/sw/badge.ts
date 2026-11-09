@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Visible indicators (§3 principle 5).
  * SECURITY-GATE SG-13: a stream cannot start until the LIVE badge and the "Streaming to" banner are set and verified; no config flag exists to hide them.

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M6 acceptance against the real confirm-gate-mcp 0.8.0 container (deploy/test/compose.m6.yml).
  *

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * A local, OpenAI-compatible model server for the end-to-end tests. It answers the three kinds of call
  * the extension makes, told apart by the system prompt the extension sends:

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Alert wording shared by the backend templates and the T0 direct senders, so every channel says
  * the same thing (§4.3 "Email alert contents"). All free text passes through sanitizeReason (SG-17).

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Camera source (C3). Permission must already be granted on a visible extension page
  * (onboarding/grant-camera) because an offscreen document cannot show the prompt.

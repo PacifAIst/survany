@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 import { createHmac, randomUUID } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { createServer, type Server } from 'node:http';

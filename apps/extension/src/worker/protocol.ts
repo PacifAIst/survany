@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Messages between the offscreen document's main thread and the scan Worker. */
 import type { Recipe } from '@survey-anything/recipes';
 import type { ChecksumEntry, ExecutionProvider } from './detector';

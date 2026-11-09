@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The README quickstart (T0, extension only), driven end to end on the built extension (dist/):
  * consent -> Options (direct Telegram, Telegram as the only channel with the one-time acknowledgement,

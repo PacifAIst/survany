@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * C11: a ring of MediaRecorder chunks is not independently playable, so two recorders run
  * staggered by half a segment and each restarts every `seconds`. One complete, playable file

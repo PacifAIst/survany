@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Telegram webhook: contact pairing (/start), /stop, acknowledge, approve and deny.
  * SECURITY-GATE SG-07: every update must carry X-Telegram-Bot-Api-Secret-Token matching our secret, compared in constant time.

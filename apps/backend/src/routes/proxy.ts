@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** proxyMode (§6.2): the backend holds provider keys and calls the provider for the extension. */
 import { base64ToBlob, createProvider, ProviderError } from '@survey-anything/providers';
 import { ProxyAnalyzeRequestSchema, ProxyProbeRequestSchema, PROVIDER_TIMEOUT_DEFAULT_MS, type ProviderId } from '@survey-anything/shared';

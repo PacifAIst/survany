@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M5 acceptance against the real, pinned OvenMediaEngine (deploy/test/compose.m5.yml):
  *  - publish over WHIP (through Caddy forward_auth) then view in a real browser (SG-11, SG-12)

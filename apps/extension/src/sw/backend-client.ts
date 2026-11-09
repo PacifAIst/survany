@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Device-token authenticated client for the T1+ backend (SG-16 is enforced server-side). */
 import {
   type ActionProposal,

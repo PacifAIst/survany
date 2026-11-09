@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * MV3 manifest. No content scripts at all (C2). Host access is optional and requested from a
  * user gesture for each origin the user types (C9). 'wasm-unsafe-eval' is the only CSP relaxation,

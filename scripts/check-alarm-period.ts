@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * C1: packaged extensions get chrome.alarms at most every 30 s. A shorter period
  * works unpacked and silently breaks at release, so CI rejects any alarm period or

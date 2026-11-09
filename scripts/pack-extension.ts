@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M8: packs apps/extension/dist into a reproducible zip (sorted entries, fixed timestamps, no extra
  * metadata), so the same commit always produces the same bytes and anyone can check a release by

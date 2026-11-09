@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Contact PINs (§6.5): 6-8 digits, scrypt with a per-contact salt, per-contact lockout with
  * exponential backoff. Only well-formed submissions count as attempts, so a mail scanner that

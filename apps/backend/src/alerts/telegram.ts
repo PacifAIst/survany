@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Telegram Bot API client (S13). Private chats only (D12): web_app buttons are rejected in groups.
  */

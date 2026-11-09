@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 import { defineConfig } from '@playwright/test';
 
 /** M5 §9 UDP-blocked viewer ladder (deploy/test/compose.m5-ladder.yml). Needs Docker. */

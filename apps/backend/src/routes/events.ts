@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Event API (§4.3 steps 4-5). */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';

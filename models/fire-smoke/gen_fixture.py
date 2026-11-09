@@ -1,3 +1,5 @@
+# Copyright (C) 2026 PacifAIst
+# SPDX-License-Identifier: AGPL-3.0-only
 """
 Writes the fire/smoke fixture the extension's Vitest suite runs the shipped ONNX against
 (apps/extension/test/fire-smoke-model.test.ts). Three CC0 D-Fire test images (not PublicDataset*):

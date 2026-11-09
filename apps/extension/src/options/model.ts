@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Pure helpers for the Options page, unit-tested without a browser. */
 import { assertNoEmbeddedSecrets, parseConfig, type Config } from '@survey-anything/shared';
 

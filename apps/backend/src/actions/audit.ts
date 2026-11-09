@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * SECURITY-GATE SG-22: the audit log is an append-only hash chain; any edited or deleted row breaks verification.
  */

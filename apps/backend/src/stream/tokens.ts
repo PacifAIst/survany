@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Stream identity (§6.5).
  * SECURITY-GATE SG-10: stream tokens are 256-bit, live at most 10 minutes, are stored only as SHA-256, and a viewer token binds to the first valid session; only that session may reconnect.

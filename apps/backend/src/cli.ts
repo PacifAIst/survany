@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Operator CLI, run inside the backend container:
  *   node dist/cli.js pair-device                 -> prints a one-time device pairing code (10 min)

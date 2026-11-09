@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Untrusted model text handling (principle 7).
  * SECURITY-GATE SG-17: `reason` is sanitized, length-capped, URL-stripped and escaped before Telegram or email.

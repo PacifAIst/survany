@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Motion filter (§4.3 step 1, §6.3 `motion` gate). Works on small grayscale frames. */
 import type { Region } from '@survey-anything/recipes';
 

@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Anthropic Messages API (§6.1, C24). Verified 2026-11-09 against S32:
  * anthropic-version 2026-10-21 returns 400 for temperature, top_p or top_k, so none are ever sent.

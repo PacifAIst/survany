@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 import { describe, expect, it } from 'vitest';
 import { builtinRecipe, type Recipe } from '@survey-anything/recipes';
 import { evaluateGate, HitWindow, type FrameAnalysis, type NormalizedDetection } from '../src/worker/gate';

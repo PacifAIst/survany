@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M7 provider bench and prompt-injection red team (PLAN §8 M7, §9). Run: `pnpm bench:providers`.
  *

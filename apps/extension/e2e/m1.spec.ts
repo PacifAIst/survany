@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * M1 acceptance (except the 30-minute soak, see soak.spec.ts) and the M2 browser checks.
  * Runs against the built extension in Chromium with a fake camera.

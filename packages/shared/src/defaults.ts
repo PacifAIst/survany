@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The only place model IDs and vendor defaults may be hardcoded (PLAN §0 rule 7).
  * Verified 2026-11-09 against PLAN §17 sources; see docs/PROGRESS.md "External facts checked".

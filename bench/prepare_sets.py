@@ -1,3 +1,5 @@
+# Copyright (C) 2026 PacifAIst
+# SPDX-License-Identifier: AGPL-3.0-only
 """
 Builds the M7 bench inputs (PLAN §8 M7, §9 "False positives" and "Prompt injection").
 

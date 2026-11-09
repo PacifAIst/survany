@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { AppCtx } from '../context';
 import { tokenHash } from '../security/hmac';

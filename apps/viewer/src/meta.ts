@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Static metadata render (§4.3 step 7, §10 "Viewer backend unreachable").
  * SECURITY-GATE SG-27: link metadata is validated field by field, rendered with textContent only, labelled "unverified" until the backend confirms the token, and removed if the token is rejected.

@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Fetches the models trained in this repository from their GitHub release and verifies each one's
  * SHA-256 against models/fire-smoke/CHECKSUMS.txt in memory, before anything is written to disk

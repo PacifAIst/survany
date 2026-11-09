@@ -1,3 +1,5 @@
+// Copyright (C) 2026 PacifAIst
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Viewer identity (§4.3 step 7, §6.5).
  * SECURITY-GATE SG-09: Telegram initData is validated (HMAC with the WebAppData-derived key) with a freshness window, and its user must be the token's contact.
