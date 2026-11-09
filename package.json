@@ -11,6 +11,8 @@
   },
   "scripts": {
     "prepare": "git config core.hooksPath .githooks || true",
+    "postinstall": "node scripts/fetch-model.ts",
+    "fetch-model": "node scripts/fetch-model.ts",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck && tsc -p scripts/tsconfig.json",
     "lint": "eslint . --max-warnings=0",

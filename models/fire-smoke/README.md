@@ -3,6 +3,15 @@
 YOLOX-tiny fine-tuned on D-Fire. The extension's `fire` recipe uses it through the `fire-smoke-yolox-tiny`
 detector (class 0 = fire, 1 = smoke). Results: `docs/BENCHMARKS.md`. Model card: `MODEL_CARD.md`.
 
+## Where the weights live
+
+The ONNX file is not in git. It is a GitHub release asset
+([`fire-smoke-yolox-tiny-v1`](https://github.com/PacifAIst/survany/releases/tag/fire-smoke-yolox-tiny-v1)),
+pinned by SHA-256 in `CHECKSUMS.txt` (and again in `models/checksums.json` for the extension bundle).
+`scripts/fetch-model.ts` downloads it on `pnpm install` and before `fetch-assets`, hashes it in memory and
+writes it here only if it matches; a file that does not match is never written. Offline:
+`SA_SKIP_MODEL_FETCH=1 pnpm install`, then `node scripts/fetch-model.ts` later.
+
 ## Reproduce
 
 Needs Docker with an NVIDIA GPU (tested: RTX 3060 Laptop, 6 GB, driver 556, CUDA 12.4 image). From the
@@ -18,10 +27,16 @@ docker run --rm -v sa-dfire:/data -v "$PWD/models/fire-smoke:/work:ro" sa-fire-t
   python /work/collect_report.py --out /data/out/m2-fire-smoke.json
 ```
 
-Then copy `/data/out/fire_smoke_yolox_tiny.onnx` to `models/fire-smoke/`, add its SHA-256 to
-`models/checksums.json`, copy `m2-fire-smoke.json` to `bench/reports/` and run `pnpm bench`. For a new model,
-also regenerate the JavaScript-path fixture (`python /work/gen_fixture.py --out /data/out/fixture`, run with
-`-w /work`, then copy the folder's files to `bench/fixtures/dfire/`) and update `MODEL_CARD.md`.
+Then, for a new model:
+
+1. Publish `/data/out/fire_smoke_yolox_tiny.onnx` as a new release asset with a new tag, e.g.
+   `gh release create fire-smoke-yolox-tiny-v2 fire_smoke_yolox_tiny.onnx --latest=false --notes-file notes.md`.
+2. Put its SHA-256 in `CHECKSUMS.txt` and `models/checksums.json`, and the new tag in `MODEL_RELEASES`
+   in `scripts/fetch-model.ts` (`scripts/fetch-model.test.ts` checks that the three agree).
+3. Copy `m2-fire-smoke.json` to `bench/reports/` and run `pnpm bench`. If fire mAP@0.5 is below 0.70,
+   do not ship it (`pnpm bench` fails; see the retrain rule in `docs/BENCHMARKS.md`).
+4. Regenerate the JavaScript-path fixture (`python /work/gen_fixture.py --out /data/out/fixture`, run with
+   `-w /work`, then copy the folder's files to `bench/fixtures/dfire/`) and update `MODEL_CARD.md`.
 
 ## Pipeline
 

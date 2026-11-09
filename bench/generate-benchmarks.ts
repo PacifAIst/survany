@@ -15,6 +15,18 @@ function load<T>(name: string): T | null {
   return existsSync(p) ? (JSON.parse(readFileSync(p, 'utf8')) as T) : null;
 }
 
+/**
+ * Retrain rule (owner decision, 2026-11-09): the shipped fire/smoke model must keep fire mAP@0.5 at or above
+ * this floor on the official D-Fire test split, measured on the exported ONNX. Any run below it means
+ * retrain; `pnpm bench` fails and so does the scripts test suite.
+ */
+export const FIRE_AP50_FLOOR = 0.7;
+
+export function fireFloorVerdict(r: { eval: { coco: Record<string, { mAP50: number } | undefined> } }): { ok: boolean; fireAP50: number | null; margin: number | null } {
+  const v = r.eval.coco['fire']?.mAP50 ?? null;
+  return { ok: v !== null && v >= FIRE_AP50_FLOOR, fireAP50: v, margin: v === null ? null : v - FIRE_AP50_FLOOR };
+}
+
 const pct = (v: number | null | undefined, digits = 1): string => (v === null || v === undefined ? 'n/a' : `${(v * 100).toFixed(digits)}%`);
 const num = (v: number | null | undefined, digits = 3): string => (v === null || v === undefined ? 'n/a' : v.toFixed(digits));
 
@@ -79,6 +91,29 @@ function fireSmoke(r: FireSmoke): string {
     ...r.eval.gate.map((g) => `| ${g.threshold} | ${pct(g.recall_fire_or_smoke_images)} | ${pct(g.recall_images_with_fire)} | ${pct(g.recall_smoke_only_images)} | ${pct(g.false_alarm_rate_none_images)} | ${pct(g.image_precision)} |`),
     '',
     `CPU inference in the evaluator (onnxruntime, single image): ${r.eval.cpu_ms_per_image} ms per image.`,
+    '',
+    '### Retrain rule',
+    '',
+    (() => {
+      const v = fireFloorVerdict(r);
+      return `**Retrain if fire AP (mAP@0.5 on the official D-Fire test split, measured on the shipped ONNX) drops below ${FIRE_AP50_FLOOR.toFixed(2)} on any future run.** This run: ${num(v.fireAP50)}, which is ${v.margin === null ? 'n/a' : `${v.margin >= 0 ? '' : '-'}${Math.abs(v.margin).toFixed(3)}`} ${v.ok ? 'above' : 'BELOW'} the line${v.ok ? ', a thin margin: treat any retraining, data change or export change as a candidate regression and re-measure before shipping' : ': do not ship this model'}. \`pnpm bench\` exits with an error below the line, and the scripts test suite checks the report in \`bench/reports/\` on every CI run.`;
+    })(),
+    '',
+    '### Known weak spot: smoke without visible flame',
+    '',
+    "Smoke-only frames are the hardest case. At the default threshold the model misses about 3 in 10 of them per frame, while it catches fire images reliably. Lowering the recipe's `minConfidence` trades recall for false alarms:",
+    '',
+    '| Threshold | Recall, smoke-only images | False alarms on "none" images | Recall, images with fire |',
+    '|---|---|---|---|',
+    ...r.eval.gate.map((g) => `| ${g.threshold}${g.threshold === 0.6 ? ' (default)' : ''} | ${pct(g.recall_smoke_only_images)} | ${pct(g.false_alarm_rate_none_images)} | ${pct(g.recall_images_with_fire)} |`),
+    '',
+    (() => {
+      const at = (t: number) => r.eval.gate.find((g) => g.threshold === t);
+      const d = at(0.6);
+      const l = at(0.4);
+      if (!d || !l || d.recall_smoke_only_images === null || l.recall_smoke_only_images === null || d.false_alarm_rate_none_images === null || l.false_alarm_rate_none_images === null) return '';
+      return `Going from 0.6 to 0.4 raises smoke-only recall from ${pct(d.recall_smoke_only_images)} to ${pct(l.recall_smoke_only_images)} and multiplies per-frame false alarms by ${(l.false_alarm_rate_none_images / d.false_alarm_rate_none_images).toFixed(1)} (${pct(d.false_alarm_rate_none_images)} to ${pct(l.false_alarm_rate_none_images)}). The 2-of-3 frame rule and the vision-model confirmation absorb part of that; neither is modelled in these per-frame numbers. Where smoke matters most (a kitchen, a server room), consider a copy of the \`fire\` recipe with \`minConfidence\` 0.4.`;
+    })(),
     '',
     '### Training',
     '',
@@ -170,4 +205,13 @@ export function render(now = new Date()): string {
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   writeFileSync(join(root, 'docs', 'BENCHMARKS.md'), render());
   console.info('wrote docs/BENCHMARKS.md');
+  const fs = load<FireSmoke>('m2-fire-smoke.json');
+  if (fs) {
+    const v = fireFloorVerdict(fs);
+    if (!v.ok) {
+      console.error(`RETRAIN: fire mAP@0.5 ${v.fireAP50 ?? 'n/a'} is below the ${FIRE_AP50_FLOOR} floor (docs/BENCHMARKS.md, retrain rule).`);
+      process.exit(1);
+    }
+    console.info(`fire mAP@0.5 ${v.fireAP50?.toFixed(3)} >= ${FIRE_AP50_FLOOR} (margin ${v.margin?.toFixed(3)})`);
+  }
 }

@@ -5,7 +5,7 @@
   "license": "AGPL-3.0-only",
   "type": "module",
   "scripts": {
-    "fetch-assets": "node scripts/fetch-assets.ts",
+    "fetch-assets": "node ../../scripts/fetch-model.ts && node scripts/fetch-assets.ts",
     "build": "tsc -p tsconfig.json && vite build",
     "build:e2e": "vite build --mode e2e",
     "typecheck": "tsc -p tsconfig.json",

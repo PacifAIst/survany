@@ -112,3 +112,16 @@ describe('gen-secrets', () => {
     for (const k of SECRET_KEYS) expect(out).toMatch(new RegExp(`^${k}=.+$`, 'm'));
   });
 });
+
+describe('fire/smoke retrain rule (docs/BENCHMARKS.md)', () => {
+  it('the checked-in model report keeps fire mAP@0.5 at or above the floor; below it fails', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { fireFloorVerdict, FIRE_AP50_FLOOR } = await import('../bench/generate-benchmarks.ts');
+    const report = JSON.parse(readFileSync(join(__dirname, '..', 'bench', 'reports', 'm2-fire-smoke.json'), 'utf8')) as Parameters<typeof fireFloorVerdict>[0];
+    const v = fireFloorVerdict(report);
+    expect(FIRE_AP50_FLOOR).toBe(0.7);
+    expect(v.ok, `fire mAP@0.5 ${v.fireAP50} is below ${FIRE_AP50_FLOOR}: retrain`).toBe(true);
+    expect(fireFloorVerdict({ eval: { coco: { fire: { mAP50: 0.699 } } } }).ok).toBe(false);
+    expect(fireFloorVerdict({ eval: { coco: {} } }).ok).toBe(false);
+  });
+});

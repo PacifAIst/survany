@@ -29,6 +29,23 @@ A frame "fires" when any fire or smoke box reaches the threshold after the exten
 
 CPU inference in the evaluator (onnxruntime, single image): 30.6 ms per image.
 
+### Retrain rule
+
+**Retrain if fire AP (mAP@0.5 on the official D-Fire test split, measured on the shipped ONNX) drops below 0.70 on any future run.** This run: 0.703, which is 0.003 above the line, a thin margin: treat any retraining, data change or export change as a candidate regression and re-measure before shipping. `pnpm bench` exits with an error below the line, and the scripts test suite checks the report in `bench/reports/` on every CI run.
+
+### Known weak spot: smoke without visible flame
+
+Smoke-only frames are the hardest case. At the default threshold the model misses about 3 in 10 of them per frame, while it catches fire images reliably. Lowering the recipe's `minConfidence` trades recall for false alarms:
+
+| Threshold | Recall, smoke-only images | False alarms on "none" images | Recall, images with fire |
+|---|---|---|---|
+| 0.25 | 89.6% | 2.2% | 98.7% |
+| 0.4 | 83.8% | 1.4% | 97.9% |
+| 0.5 | 78.2% | 0.9% | 96.5% |
+| 0.6 (default) | 69.8% | 0.5% | 93.8% |
+
+Going from 0.6 to 0.4 raises smoke-only recall from 69.8% to 83.8% and multiplies per-frame false alarms by 2.8 (0.5% to 1.4%). The 2-of-3 frame rule and the vision-model confirmation absorb part of that; neither is modelled in these per-frame numbers. Where smoke matters most (a kitchen, a server room), consider a copy of the `fire` recipe with `minConfidence` 0.4.
+
 ### Training
 
 - Data: https://huggingface.co/datasets/badsaarow/d-fire/tree/27f81e6f7d32fe3b29d366da9573b6150a3d148f. Verified against every number in the official D-Fire README before training: images 21527, train 17221, test 4306, fire_only 1164, smoke_only 5867, fire_and_smoke 4658, none 9838, fire_boxes 14692, smoke_boxes 11865.

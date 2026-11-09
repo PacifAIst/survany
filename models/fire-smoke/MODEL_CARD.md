@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| File | `models/fire-smoke/fire_smoke_yolox_tiny.onnx`, bundled as `models/fire_smoke_yolox_tiny.onnx` |
-| SHA-256 | `808ce9b61dcc389758893cefd178d12ca60c9dfc0367695a0e1781c260757912` (20,168,323 bytes), pinned in `models/checksums.json` |
+| File | GitHub release asset [`fire-smoke-yolox-tiny-v1`](https://github.com/PacifAIst/survany/releases/tag/fire-smoke-yolox-tiny-v1), fetched to `models/fire-smoke/` by `scripts/fetch-model.ts`, bundled as `models/fire_smoke_yolox_tiny.onnx` |
+| SHA-256 | `808ce9b61dcc389758893cefd178d12ca60c9dfc0367695a0e1781c260757912` (20,168,323 bytes), pinned in `models/fire-smoke/CHECKSUMS.txt` and `models/checksums.json` |
 | Architecture | YOLOX-tiny (depth 0.33, width 0.375), 416×416 input, 2 classes |
 | Used by | the `fire` recipe through the `fire-smoke-yolox-tiny` detector gate |
 | License | Apache-2.0 (see "License and attribution") |

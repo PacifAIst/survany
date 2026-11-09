@@ -29,8 +29,11 @@ function sha256(buf: Buffer): string {
 
 async function obtain(e: Entry): Promise<Buffer> {
   if (e.source.startsWith('repo:')) {
-    // A model trained in this repository (models/fire-smoke): copied from the working tree, then checksum-verified.
-    return readFileSync(join(repoRoot, e.source.slice(5)));
+    // A model trained in this repository: scripts/fetch-model.ts downloads it from its GitHub release and
+    // verifies it against models/fire-smoke/CHECKSUMS.txt (runs on pnpm install and before this script).
+    const p = join(repoRoot, e.source.slice(5));
+    if (!existsSync(p)) throw new Error(`${e.name}: ${e.source.slice(5)} is missing. Run: node scripts/fetch-model.ts`);
+    return readFileSync(p);
   }
   if (e.source.startsWith('npm:')) {
     const spec = e.source.slice(4); // onnxruntime-web@1.30.0/dist/file

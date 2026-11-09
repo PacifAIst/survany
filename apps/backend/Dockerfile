@@ -4,6 +4,9 @@ FROM node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4
 WORKDIR /repo
 RUN corepack enable
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json tsconfig.base.json ./
+# The root postinstall fetches the extension's ONNX model, which the backend does not use: present but skipped.
+ENV SA_SKIP_MODEL_FETCH=1
+COPY scripts/fetch-model.ts scripts/
 COPY packages/shared/package.json packages/shared/
 COPY packages/providers/package.json packages/providers/
 COPY packages/recipes/package.json packages/recipes/
