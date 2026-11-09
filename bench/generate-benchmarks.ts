@@ -214,7 +214,14 @@ interface RedRun {
 const secs = (ms: number | null | undefined): string => (ms === null || ms === undefined ? 'n/a' : `${(ms / 1000).toFixed(1)} s`);
 const frac = (a: number, b: number): string => `${a}/${b}`;
 
-function m7Providers(r: { generatedAt: string; host: string | null; providers: ProviderRun[] }): string {
+interface ProviderHistory {
+  id: string;
+  model: string;
+  modelOnly: { precision: number; recall: number; recallSmokeOnly: number; falseAlarmRate: number };
+  pipeline: { precision: number; recall: number; falseAlarmRate: number };
+}
+
+function m7Providers(r: { generatedAt: string; host: string | null; providers: ProviderRun[]; history?: ProviderHistory[] }): string {
   const measured = r.providers.filter((p) => p.measured);
   const lines = [
     '## Vision providers on the fire recipe (M7)',
@@ -242,6 +249,14 @@ function m7Providers(r: { generatedAt: string; host: string | null; providers: P
     if (errs.length) lines.push(`${p.label}: failed calls ${errs.map(([k, v]) => `${k} ${v}`).join(', ')} (counted as not confirmed).`);
     const fails = p.probe && 'failures' in p.probe ? p.probe.failures : [];
     if (fails.length) lines.push(`${p.label}: probe misreads (shown -> read): ${fails.join(', ')}.`);
+  }
+  for (const h of r.history ?? []) {
+    const cur = r.providers.find((p) => p.id === h.id && p.measured);
+    if (!cur) continue;
+    lines.push(
+      '',
+      `**Run-to-run variance (${h.model}).** The same images and model, run twice on the same day: model alone precision ${pct(h.modelOnly.precision)} and ${pct(cur.modelOnly?.precision)}, recall ${pct(h.modelOnly.recall)} and ${pct(cur.modelOnly?.recall)} (smoke only ${pct(h.modelOnly.recallSmokeOnly)} and ${pct(cur.modelOnly?.recallSmokeOnly)}), false alarms ${pct(h.modelOnly.falseAlarmRate)} and ${pct(cur.modelOnly?.falseAlarmRate)}; gate + model precision ${pct(h.pipeline.precision)} both times, recall ${pct(h.pipeline.recall)} and ${pct(cur.pipeline?.recall)}, false alarms ${pct(h.pipeline.falseAlarmRate)} and ${pct(cur.pipeline?.falseAlarmRate)}. The model samples its answers, so a single run is one draw: read these as ranges, and expect the gate to be what keeps false alarms down.`,
+    );
   }
   lines.push(
     '',
@@ -321,7 +336,7 @@ export function render(now = new Date()): string {
   if (o) parts.push(m5(o));
   const g = load<{ gate: string; scenarios: Record<string, Record<string, unknown>> }>('m6-gate.json');
   if (g) parts.push(m6(g));
-  const pv = load<{ generatedAt: string; host: string | null; providers: ProviderRun[] }>('m7-providers.json');
+  const pv = load<{ generatedAt: string; host: string | null; providers: ProviderRun[]; history?: ProviderHistory[] }>('m7-providers.json');
   if (pv) parts.push(m7Providers(pv));
   const rt = load<{ generatedAt: string; providers: RedRun[] }>('m7-redteam.json');
   if (rt) parts.push(m7RedTeam(rt));

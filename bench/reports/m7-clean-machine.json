@@ -1,0 +1,31 @@
+{
+ "date": "2026-11-09",
+ "image": "node@sha256:8fa96264f302f58bbb13aa7339c541547b56975766ce956c875da149452a3e40",
+ "node": "v24.22.2",
+ "commit": "c85fd3310f04798c93a6f7cf8e2b2b19ff1f6aca",
+ "source": "git clone https://github.com/PacifAIst/survany (public, anonymous)",
+ "readmeSteps": [
+  "git clone",
+  "corepack enable",
+  "pnpm install",
+  "pnpm build"
+ ],
+ "modelFetch": "downloaded models/fire-smoke/fire_smoke_yolox_tiny.onnx (sha256 808ce9b61dcc\u00e2\u20ac\u00a6, from https://github.com/PacifAIst/survany/releases/download/fire-smoke-yolox-tiny-v1/fire_smoke_yolox_tiny.onnx)",
+ "automated": "README steps 2-5 by apps/extension/e2e/quickstart.spec.ts: load the built extension, consent, Options (Direct Telegram, one channel with the acknowledgement, AI confirmation off, Fire or smoke), watch; Chromium's fake camera plays the demo fire scene; Telegram is answered by the test",
+ "notAutomated": "loading the unpacked extension through chrome://extensions and 'Watch this tab' from the toolbar (browser UI); the bot token permission prompt",
+ "result": "pass",
+ "firstAlert": "first alert via sendPhoto after the fire scene; 1 Telegram call(s).",
+ "totalSeconds": 99,
+ "steps": [
+  "[18:20:06] node v24.22.2, Linux x86_64, ref c85fd3310f04798c93a6f7cf8e2b2b19ff1f6aca",
+  "[18:20:06] README step 1: git clone",
+  "[18:20:08] cloned c85fd33",
+  "[18:20:08] README step 1: corepack enable",
+  "[18:20:08] README step 1: pnpm install",
+  "[18:20:17] README step 1: pnpm build",
+  "[18:20:41] built apps/extension/dist (67M)",
+  "[18:20:41] README steps 2-5, automated: install Chromium for Playwright",
+  "[18:21:26] README steps 2-5, automated: quickstart test",
+  "[18:21:45] quickstart exit 0; total 99 s"
+ ]
+}
