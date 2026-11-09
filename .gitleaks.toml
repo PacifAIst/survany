@@ -1,0 +1,15 @@
+# gitleaks configuration for Survey Anything.
+# Used by the pre-commit hook (.githooks/pre-commit) and the `secrets` CI job.
+title = "survey-anything"
+
+[extend]
+useDefault = true
+
+# The default telegram-bot-api-token rule needs the word "telegram" nearby. GitHub secret scanning
+# flags a bare token, so this rule does too. Test fixtures must use obvious placeholders such as
+# TEST_BOT_TOKEN_NOT_REAL, or build token-shaped strings at runtime.
+[[rules]]
+id = "telegram-bot-token-bare"
+description = "Telegram bot token without a nearby keyword"
+regex = '''\b\d{8,10}:[A-Za-z0-9_-]{35}\b'''
+tags = ["telegram", "token"]

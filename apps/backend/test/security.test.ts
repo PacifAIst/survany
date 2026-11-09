@@ -6,7 +6,7 @@ import { createPairingCode } from '../src/routes/pairing';
 import { assertProxyTarget, SsrfError } from '../src/security/ssrf';
 import { checkPin, hashPin } from '../src/security/pin';
 import { applyRetention } from '../src/watchdog';
-import { addContact, clock, eventBody, makeApp, startFakeTelegram, waitUntil } from './helpers';
+import { addContact, clock, eventBody, makeApp, startFakeTelegram, waitUntil, WEBHOOK_SECRET } from './helpers';
 
 let tg: Awaited<ReturnType<typeof startFakeTelegram>>;
 beforeEach(async () => {
@@ -58,7 +58,7 @@ describe('SG-07 Telegram webhook secret', () => {
       t.app.inject({
         method: 'POST',
         url: '/telegram/webhook',
-        headers: { 'x-telegram-bot-api-secret-token': 'whsec_test_not_real' },
+        headers: { 'x-telegram-bot-api-secret-token': WEBHOOK_SECRET },
         payload: { update_id: 2, message: { message_id: 1, from: { id: from }, chat: { id: from, type: chatType }, text: `/start ${code}` } },
       });
     await send('group');

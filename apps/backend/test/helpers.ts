@@ -11,6 +11,8 @@ import { buildApp, type BuildOptions } from '../src/server';
 import { hashPin } from '../src/security/pin';
 import { createPairingCode } from '../src/routes/pairing';
 
+// Obviously fake test values. They must never look like real credentials (no `\d{8,10}:<35 chars>` bot-token shape):
+// GitHub secret scanning and gitleaks (.gitleaks.toml) both run on this repository.
 export const BOT_TOKEN = 'TEST_BOT_TOKEN_NOT_REAL';
 export const WEBHOOK_SECRET = 'whsec_test_not_real';
 export const OME_SECRET = 'ome_secret_test_not_real';

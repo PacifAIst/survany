@@ -92,16 +92,21 @@ describe('SG-27 viewer-link metadata', () => {
 });
 
 describe('SG-21 secrets excluded from logs and import', () => {
+  // Built at runtime so no token-shaped literal ever sits in the source (secret scanners run on this repo).
+  const fakeBotToken = `${'1'.repeat(9)}:${'X'.repeat(35)}`;
+
   it('redacts secret keys and secret-shaped values', () => {
     const out = redact({
       apiKeyRef: 'key_openrouter',
       deviceToken: 'abc',
-      nested: { msg: 'bot TEST_BOT_TOKEN_NOT_REAL used, Bearer abcdefghijklmnopqrstu' },
+      nested: { msg: `bot ${fakeBotToken} used, Bearer abcdefghijklmnopqrstu` },
       url: 'https://x/v?t=AAAAAAAAAAAAAAAAAAAAAAAA&rule=fire',
     }) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
     expect(out.apiKeyRef).toBe('key_openrouter');
     expect(out.deviceToken).toBe('[redacted]');
-    expect(out.nested.msg).not.toMatch(/AAHdq|abcdefghijklmnop/);
+    expect(out.nested.msg).not.toContain(fakeBotToken);
+    expect(out.nested.msg).not.toMatch(/abcdefghijklmnop/);
+    expect(out.nested.msg).toBe('bot [redacted] used, [redacted]');
     expect(out.url).toBe('https://x/v?t=[redacted]&rule=fire');
   });
 
