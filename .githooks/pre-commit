@@ -2,8 +2,25 @@
 # Blocks any commit whose staged changes contain a secret (gitleaks, rules in .gitleaks.toml).
 # Installed automatically by `pnpm install` (the root `prepare` script sets core.hooksPath=.githooks).
 # The `secrets` CI job runs the same scan over the full history, so bypassing this hook does not help.
-GL="${GITLEAKS_BIN:-gitleaks}"
-if ! command -v "$GL" >/dev/null 2>&1; then
+#
+# gitleaks is looked up in this order:
+#   1. $GITLEAKS_BIN, if set
+#   2. `gitleaks` on PATH
+#   3. the default local install, $HOME/.local/bin/gitleaks-8.30.1 (works before PATH is refreshed)
+GL="${GITLEAKS_BIN:-}"
+if [ -z "$GL" ]; then
+  if command -v gitleaks >/dev/null 2>&1; then
+    GL=gitleaks
+  else
+    for candidate in "$HOME/.local/bin/gitleaks-8.30.1/gitleaks.exe" "$HOME/.local/bin/gitleaks-8.30.1/gitleaks"; do
+      if [ -x "$candidate" ]; then
+        GL="$candidate"
+        break
+      fi
+    done
+  fi
+fi
+if [ -z "$GL" ] || ! command -v "$GL" >/dev/null 2>&1; then
   echo "pre-commit: gitleaks is required and was not found." >&2
   echo "  Install v8.30.1 or later: https://github.com/gitleaks/gitleaks#installing" >&2
   echo "  (or set GITLEAKS_BIN to the binary's path). Commit blocked." >&2
