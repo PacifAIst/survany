@@ -28,6 +28,8 @@ python tools/eval.py -f "$WORK/exp_fire_smoke_tiny.py" -c "$RUN/best_ckpt.pth" -
 
 # Export with decode_in_inference off: the extension decodes grids itself (apps/extension/src/worker/yolox-decode.ts).
 python tools/export_onnx.py -f "$WORK/exp_fire_smoke_tiny.py" -c "$RUN/best_ckpt.pth" --output-name "$OUT/fire_smoke_yolox_tiny.onnx" --no-onnxsim 2>&1 | tee "$OUT/export.log"
+# YOLOX's tools wrap main() in @logger.catch, which logs an exception and still exits 0.
+test -s "$OUT/fire_smoke_yolox_tiny.onnx" || { echo "export failed: no ONNX written" >&2; exit 1; }
 
 python "$WORK/evaluate_onnx.py" --model "$OUT/fire_smoke_yolox_tiny.onnx" --data /data/dfire --out "$OUT/eval.json" 2>&1 | tee "$OUT/eval_onnx.log"
 cp /data/dfire/manifest.json "$OUT/dataset_manifest.json"

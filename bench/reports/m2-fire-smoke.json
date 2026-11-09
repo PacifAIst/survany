@@ -1,0 +1,173 @@
+{
+ "model": "fire_smoke_yolox_tiny.onnx",
+ "onnxSha256": "808ce9b61dcc389758893cefd178d12ca60c9dfc0367695a0e1781c260757912",
+ "onnxBytes": 20168323,
+ "training": {
+  "epochs": 40,
+  "batch": 16,
+  "input": 416,
+  "trainImages": 14572,
+  "valImages": 1594,
+  "excludedPublicImages": 1055,
+  "bestValAP50_95": 0.419,
+  "bestValAP50": 0.755,
+  "valCurve": [
+   {
+    "AP50_95": 0.222,
+    "AP50": 0.517
+   },
+   {
+    "AP50_95": 0.329,
+    "AP50": 0.667
+   },
+   {
+    "AP50_95": 0.361,
+    "AP50": 0.703
+   },
+   {
+    "AP50_95": 0.379,
+    "AP50": 0.72
+   },
+   {
+    "AP50_95": 0.387,
+    "AP50": 0.732
+   },
+   {
+    "AP50_95": 0.391,
+    "AP50": 0.737
+   },
+   {
+    "AP50_95": 0.4,
+    "AP50": 0.744
+   },
+   {
+    "AP50_95": 0.406,
+    "AP50": 0.75
+   },
+   {
+    "AP50_95": 0.41,
+    "AP50": 0.75
+   },
+   {
+    "AP50_95": 0.412,
+    "AP50": 0.749
+   },
+   {
+    "AP50_95": 0.415,
+    "AP50": 0.755
+   },
+   {
+    "AP50_95": 0.419,
+    "AP50": 0.755
+   }
+  ],
+  "gpu": "NVIDIA GeForce RTX 3060 Laptop GPU (6 GB)",
+  "minutes": 152.03333333333333,
+  "pretrained": "Megvii YOLOX 0.1.1rc0 yolox_tiny.pth (COCO), sha256 9de513de...",
+  "yoloxCommit": "6ddff4824372906469a7fae2dc3206c7aa4bbaee"
+ },
+ "dataset": {
+  "source": "https://huggingface.co/datasets/badsaarow/d-fire/tree/27f81e6f7d32fe3b29d366da9573b6150a3d148f",
+  "verified": {
+   "images": 21527,
+   "train": 17221,
+   "test": 4306,
+   "fire_only": 1164,
+   "smoke_only": 5867,
+   "fire_and_smoke": 4658,
+   "none": 9838,
+   "fire_boxes": 14692,
+   "smoke_boxes": 11865
+  },
+  "official": {
+   "images": 21527,
+   "train": 17221,
+   "test": 4306,
+   "fire_only": 1164,
+   "smoke_only": 5867,
+   "fire_and_smoke": 4658,
+   "none": 9838,
+   "fire_boxes": 14692,
+   "smoke_boxes": 11865
+  },
+  "splits": {
+   "train": {
+    "images": 14572,
+    "boxes": 18142
+   },
+   "val": {
+    "images": 1594,
+    "boxes": 2011
+   },
+   "test": {
+    "images": 4306,
+    "boxes": 5189
+   }
+  }
+ },
+ "torchTest": {
+  "AP50_95": 0.415,
+  "AP50": 0.752
+ },
+ "eval": {
+  "model": "fire_smoke_yolox_tiny.onnx",
+  "input": 416,
+  "test_images": 4306,
+  "positives": 2301,
+  "none_images": 2005,
+  "coco": {
+   "all": {
+    "mAP50_95": 0.41488119141528484,
+    "mAP50": 0.753126705353704
+   },
+   "fire": {
+    "mAP50_95": 0.3558412553230459,
+    "mAP50": 0.7028421110874635
+   },
+   "smoke": {
+    "mAP50_95": 0.47392112750752385,
+    "mAP50": 0.8034112996199443
+   }
+  },
+  "gate": [
+   {
+    "threshold": 0.25,
+    "recall_fire_or_smoke_images": 0.940026075619296,
+    "recall_images_with_fire": 0.9865470852017937,
+    "recall_smoke_only_images": 0.8962900505902193,
+    "false_alarm_rate_none_images": 0.022443890274314215,
+    "image_precision": 0.9796195652173914,
+    "false_alarm_rate_none_images_excluding_public": 0.019756838905775075
+   },
+   {
+    "threshold": 0.4,
+    "recall_fire_or_smoke_images": 0.9065623641894829,
+    "recall_images_with_fire": 0.979372197309417,
+    "recall_smoke_only_images": 0.8381112984822934,
+    "false_alarm_rate_none_images": 0.013965087281795512,
+    "image_precision": 0.9867549668874173,
+    "false_alarm_rate_none_images_excluding_public": 0.0121580547112462
+   },
+   {
+    "threshold": 0.5,
+    "recall_fire_or_smoke_images": 0.8709256844850065,
+    "recall_images_with_fire": 0.9650224215246637,
+    "recall_smoke_only_images": 0.7824620573355818,
+    "false_alarm_rate_none_images": 0.009476309226932668,
+    "image_precision": 0.990608007909046,
+    "false_alarm_rate_none_images_excluding_public": 0.007598784194528876
+   },
+   {
+    "threshold": 0.6,
+    "recall_fire_or_smoke_images": 0.8144285093437635,
+    "recall_images_with_fire": 0.9381165919282511,
+    "recall_smoke_only_images": 0.6981450252951096,
+    "false_alarm_rate_none_images": 0.004987531172069825,
+    "image_precision": 0.994692144373673,
+    "false_alarm_rate_none_images_excluding_public": 0.0035460992907801418
+   }
+  ],
+  "cpu_ms_per_image": 30.6,
+  "notes": "COCO view: class-aware NMS 0.65, conf 0.001. Gate view: class-agnostic NMS 0.45 as in the extension; a frame fires when any fire/smoke box >= threshold. The extension also requires N-of-M hits, which this per-image number does not model."
+ }
+}

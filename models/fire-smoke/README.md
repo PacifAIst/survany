@@ -19,7 +19,9 @@ docker run --rm -v sa-dfire:/data -v "$PWD/models/fire-smoke:/work:ro" sa-fire-t
 ```
 
 Then copy `/data/out/fire_smoke_yolox_tiny.onnx` to `models/fire-smoke/`, add its SHA-256 to
-`models/checksums.json`, copy `m2-fire-smoke.json` to `bench/reports/` and run `pnpm bench`.
+`models/checksums.json`, copy `m2-fire-smoke.json` to `bench/reports/` and run `pnpm bench`. For a new model,
+also regenerate the JavaScript-path fixture (`python /work/gen_fixture.py --out /data/out/fixture`, run with
+`-w /work`, then copy the folder's files to `bench/fixtures/dfire/`) and update `MODEL_CARD.md`.
 
 ## Pipeline
 
@@ -27,9 +29,10 @@ Then copy `/data/out/fire_smoke_yolox_tiny.onnx` to `models/fire-smoke/`, add it
 |---|---|---|
 | Data | `prepare_dfire.py` | Downloads the D-Fire mirror at a pinned revision, **refuses to continue unless every count in the official README matches**, maps D-Fire's class ids (smoke 0, fire 1) to ours (fire 0, smoke 1), holds out 1 in 10 training images for validation, leaves out `PublicDataset*` images from training (not CC0), and writes COCO annotations. |
 | Train | `exp_fire_smoke_tiny.py`, `train.sh` | YOLOX at commit `6ddff48`, YOLOX-tiny settings, 416 input, from Megvii's COCO `yolox_tiny.pth` (sha256 pinned), fp16. |
-| Export | `train.sh` | `tools/export_onnx.py` with `decode_in_inference` off: raw grids, which `apps/extension/src/worker/yolox-decode.ts` decodes. |
+| Export | `train.sh` | `tools/export_onnx.py` with `decode_in_inference` off: raw grids, which `apps/extension/src/worker/yolox-decode.ts` decodes. The Dockerfile renames that script's `torch.onnx._export` call to `torch.onnx.export` (the private name is gone in torch 2.5), and `train.sh` stops if no ONNX was written, because YOLOX's tools exit 0 after logging an exception. |
 | Evaluate | `evaluate_onnx.py` | On the official test split, with the extension's preprocessing: COCO mAP, plus the per-frame gate view (recall on fire/smoke images, false alarms on "none" images per threshold). |
 | Report | `collect_report.py` | Writes the evidence file that `pnpm bench` renders. |
+| JS fixture | `gen_fixture.py` | Three CC0 test images and the Python path's detections on them; `apps/extension/test/fire-smoke-model.test.ts` checks the extension's JavaScript path gives the same result. |
 
 ## Data source and licensing
 

@@ -1,0 +1,73 @@
+{
+ "source": "D-Fire test split (CC0 1.0; not PublicDataset*), https://github.com/gaiasd/DFireDataset",
+ "scoreThr": 0.25,
+ "nmsThr": 0.45,
+ "images": [
+  {
+   "kind": "fire",
+   "file": "AoF07798.jpg",
+   "width": 1280,
+   "height": 720,
+   "groundTruth": [
+    {
+     "label": "fire",
+     "box": [
+      43.00000000000001,
+      472.0,
+      208.0,
+      614.0
+     ]
+    }
+   ],
+   "pythonDetections": [
+    {
+     "label": "fire",
+     "score": 0.84712,
+     "box": [
+      27.51,
+      476.78,
+      217.09,
+      610.09
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "smoke",
+   "file": "WEB11359.jpg",
+   "width": 980,
+   "height": 552,
+   "groundTruth": [
+    {
+     "label": "smoke",
+     "box": [
+      118.00000000000006,
+      38.000000000000014,
+      977.0000000000002,
+      408.0
+     ]
+    }
+   ],
+   "pythonDetections": [
+    {
+     "label": "smoke",
+     "score": 0.86372,
+     "box": [
+      85.79,
+      13.68,
+      965.59,
+      418.43
+     ]
+    }
+   ]
+  },
+  {
+   "kind": "none",
+   "file": "WEB09870.jpg",
+   "width": 640,
+   "height": 360,
+   "groundTruth": [],
+   "pythonDetections": []
+  }
+ ]
+}

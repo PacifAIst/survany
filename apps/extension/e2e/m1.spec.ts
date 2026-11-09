@@ -84,7 +84,7 @@ test('offscreen document killed: camera restored within 60 s by the watchdog', a
   expect(restored.log.join('\n')).toMatch(/camera restored after/);
 });
 
-test('M2 / SG-26: bundled, checksummed YOLOX loads on CPU (WASM) with WebGPU disabled and every network request blocked', async () => {
+test('M2 / SG-26: bundled, checksummed YOLOX models (COCO and fire/smoke) load on CPU (WASM) with WebGPU disabled and every network request blocked', async () => {
   h = await launch({ blockNetwork: true });
   await acceptConsentAndCamera(h);
   const saved = await h.send<{ ok: boolean; errors: string[] }>({ type: 'save-config', config: localGateOnly(['robbery', 'fire', 'other']) });
@@ -93,14 +93,16 @@ test('M2 / SG-26: bundled, checksummed YOLOX loads on CPU (WASM) with WebGPU dis
   const s = await waitFor(() => h.send<DebugStats>({ type: 'debug-stats' }).then((r) => r.value!), (v) => v.stats?.detector === 'wasm' || (v.stats?.missingModels.includes('yolox-tiny-coco') ?? false), 90_000, 2000);
   expect(s.stats!.detector).toBe('wasm');
   expect(s.stats!.missingModels).not.toContain('yolox-tiny-coco');
-  // No fire/smoke weights are bundled yet: the interim flame heuristic is active (§6.3).
-  expect(s.stats!.missingModels).toContain('fire-smoke-yolox-tiny');
+  // The fire/smoke weights trained in models/fire-smoke are bundled, so the interim flame heuristic is not used.
+  expect(s.stats!.missingModels).not.toContain('fire-smoke-yolox-tiny');
   const logged = await waitFor(
     () => h.send<DebugStats>({ type: 'debug-stats' }).then((r) => r.value!),
-    (v) => /detector yolox-tiny-coco ready on wasm/.test(v.log.join('\n')),
+    (v) => /detector yolox-tiny-coco ready on wasm/.test(v.log.join('\n')) && /detector fire-smoke-yolox-tiny ready on wasm/.test(v.log.join('\n')),
     20_000,
   );
   expect(logged.log.join('\n')).toMatch(/detector yolox-tiny-coco ready on wasm \(416x416\)/);
+  expect(logged.log.join('\n')).toMatch(/detector fire-smoke-yolox-tiny ready on wasm \(416x416\)/);
+  expect(logged.log.join('\n')).not.toMatch(/interim flame heuristic active/);
 });
 
 test('C20: a tab source cannot resume without a gesture; offscreen loss raises "re-arm needed"', async () => {

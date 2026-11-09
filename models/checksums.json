@@ -11,6 +11,15 @@
       "upstream": "Megvii-BaseDetection/YOLOX published ONNX checkpoint (COCO, 416x416)"
     },
     {
+      "name": "fire_smoke_yolox_tiny.onnx",
+      "path": "models/fire_smoke_yolox_tiny.onnx",
+      "license": "Apache-2.0",
+      "sha256": "808ce9b61dcc389758893cefd178d12ca60c9dfc0367695a0e1781c260757912",
+      "bytes": 20168323,
+      "source": "repo:models/fire-smoke/fire_smoke_yolox_tiny.onnx",
+      "upstream": "Trained in this repository (models/fire-smoke, MODEL_CARD.md): YOLOX-tiny fine-tuned from Megvii COCO weights (Apache-2.0) on the CC0 part of D-Fire"
+    },
+    {
       "name": "ort-wasm-simd-threaded.jsep.wasm",
       "path": "ort/ort-wasm-simd-threaded.jsep.wasm",
       "license": "MIT",
