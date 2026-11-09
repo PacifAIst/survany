@@ -24,7 +24,10 @@
     "gen-secrets": "node scripts/gen-secrets.ts",
     "doctor": "node scripts/doctor.ts",
     "secrets:scan": "gitleaks git --redact --no-banner --config .gitleaks.toml --log-opts=--all .",
-    "bench": "node bench/generate-benchmarks.ts"
+    "bench": "node bench/generate-benchmarks.ts",
+    "bench:providers": "vitest run -c bench/vitest.config.ts",
+    "demo": "node demo/serve.ts",
+    "licenses:third-party": "node scripts/gen-third-party.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.37.0",

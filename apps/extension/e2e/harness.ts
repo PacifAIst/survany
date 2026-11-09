@@ -18,7 +18,7 @@ export interface Harness {
   close: () => Promise<void>;
 }
 
-export async function launch(opts: { blockNetwork?: boolean; dist?: string } = {}): Promise<Harness> {
+export async function launch(opts: { blockNetwork?: boolean; dist?: string; extraArgs?: string[] } = {}): Promise<Harness> {
   const userDataDir = mkdtempSync(join(tmpdir(), 'sa-e2e-'));
   const dist = opts.dist ?? DIST;
   const context = await chromium.launchPersistentContext(userDataDir, {
@@ -31,6 +31,7 @@ export async function launch(opts: { blockNetwork?: boolean; dist?: string } = {
       '--use-fake-ui-for-media-stream',
       '--disable-features=WebGPU',
       '--disable-gpu',
+      ...(opts.extraArgs ?? []),
     ],
   });
   if (opts.blockNetwork) {

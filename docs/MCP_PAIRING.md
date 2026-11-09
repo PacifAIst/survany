@@ -95,6 +95,11 @@ tools:
 
 - `args` are closed: an argument that is not declared is refused, and every value is type-checked and
   matched against `enum`, `pattern` or `min`/`max`.
+- **List your real entities, not wildcards.** The Reasoner does not know your devices; given `siren.*` it
+  invents plausible names (`siren.front_door_alert`), and those pass a wildcard and appear on the card.
+  Measured in `docs/BENCHMARKS.md` (prompt-injection section). With exact entities in `allow`, a made-up
+  name is refused before anyone is asked. Nothing runs without a tap either way, but the card should only
+  ever show things that exist.
 - **Keep `pendingTtlSeconds` equal to `mcp.approvalTimeoutSec` in the extension, and at most 120.**
   confirm-gate-mcp 0.8.0 forgets a held call after a fixed 120 s; a longer card would let a tap arrive
   after the gate has dropped the call. The backend denies on its own timer either way.

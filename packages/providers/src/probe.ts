@@ -10,8 +10,11 @@ import { encodeGrayPng } from './image';
 import { parseProbeCode } from './parse';
 import { PROBE_SYSTEM, PROBE_USER } from './prompt';
 
-/** Unambiguous glyphs only (no 0/O, 1/I/L, 2/Z, 5/S, 8/B). */
-export const PROBE_ALPHABET = 'ACDEFHJKMNPRTUVWXY34679';
+/**
+ * Unambiguous glyphs only (no 0/O, 1/I/L, 2/Z, 5/S, 8/B). D and 9 are left out too: measured on
+ * qwen2.5vl:7b (2026-11-09), this font's D was read as O or 0 and its 9 as G.
+ */
+export const PROBE_ALPHABET = 'ACEFHJKMNPRTUVWXY3467';
 
 // 5x7 bitmap font, one string per row, '#' = ink.
 const FONT: Record<string, string[]> = {
@@ -41,8 +44,12 @@ const FONT: Record<string, string[]> = {
 };
 
 export const PROBE_SIZE = 256;
-const SCALE = 6;
-const CODE_LEN = 6;
+export const PROBE_SCALE = 6;
+/** Space between glyphs. Wide enough that a model does not merge two equal neighbours ("JJ" read as "J"). */
+export const PROBE_GAP = 12;
+export const PROBE_CODE_LEN = 6;
+const SCALE = PROBE_SCALE;
+const CODE_LEN = PROBE_CODE_LEN;
 
 export function randomProbeCode(len = CODE_LEN): string {
   const bytes = randomBytes(len * 2);
@@ -59,7 +66,7 @@ export function randomProbeCode(len = CODE_LEN): string {
 export function renderProbeImage(code: string): Uint8Array {
   const pixels = new Uint8Array(PROBE_SIZE * PROBE_SIZE).fill(255);
   const glyphW = 5 * SCALE;
-  const gap = SCALE;
+  const gap = PROBE_GAP;
   const totalW = code.length * glyphW + (code.length - 1) * gap;
   const x0 = Math.floor((PROBE_SIZE - totalW) / 2);
   const y0 = Math.floor((PROBE_SIZE - 7 * SCALE) / 2);
@@ -88,6 +95,12 @@ export interface ProbeOpts {
   /** Used for the Ollama 403 hint (C10). */
   os?: 'mac' | 'windows' | 'linux';
   extensionOrigin?: string;
+  /**
+   * Fresh codes to try when the model answers but misreads (default 2). A model that cannot see the
+   * image has no realistic chance of guessing a code: 21^6 combinations per attempt. Transport errors
+   * (401, 403, timeouts) are not retried.
+   */
+  attempts?: number;
 }
 
 export interface ProbeResult {
@@ -98,6 +111,8 @@ export interface ProbeResult {
   got: string | null;
   error: string | null;
   hint: string | null;
+  /** How many codes were shown before the result (1 or more). */
+  attempts: number;
 }
 
 interface ChatCapable {
@@ -117,7 +132,18 @@ export function ollamaOriginsHint(os: 'mac' | 'windows' | 'linux', origin: strin
 }
 
 export async function runProbe(adapter: ChatCapable, opts: ProbeOpts = {}): Promise<ProbeResult> {
-  const expected = opts.code ?? randomProbeCode();
+  const tries = opts.code ? 1 : Math.max(1, Math.min(opts.attempts ?? 2, 3));
+  let last: ProbeResult | null = null;
+  for (let attempt = 1; attempt <= tries; attempt++) {
+    last = await probeOnce(adapter, opts, opts.code ?? randomProbeCode(), attempt);
+    // Only a wrong reading earns another code; an error (auth, 403, timeout, parse) is final.
+    if (last.ok || last.got === null) return last;
+  }
+  if (!last) throw new Error("probe made no attempt");
+  return last;
+}
+
+async function probeOnce(adapter: ChatCapable, opts: ProbeOpts, expected: string, attempt: number): Promise<ProbeResult> {
   const png = renderProbeImage(expected);
   const started = Date.now();
   try {
@@ -140,6 +166,7 @@ export async function runProbe(adapter: ChatCapable, opts: ProbeOpts = {}): Prom
       got,
       error: ok ? null : 'the model did not read the code in the probe image; it cannot be used as the Vision provider',
       hint: null,
+      attempts: attempt,
     };
   } catch (e) {
     const err = e instanceof ProviderError ? e : null;
@@ -155,6 +182,7 @@ export async function runProbe(adapter: ChatCapable, opts: ProbeOpts = {}): Prom
       got: null,
       error: e instanceof Error ? e.message : String(e),
       hint,
+      attempts: attempt,
     };
   }
 }

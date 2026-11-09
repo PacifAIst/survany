@@ -21,6 +21,15 @@ describe('config schema v1 (§6.2)', () => {
     expect(r.ok ? [] : r.errors).toEqual([]);
   });
 
+  it('T0: one direct channel can be on without mentioning the other (README quickstart)', () => {
+    const r = withPatch((c) => {
+      c['direct'] = { telegram: { botTokenRef: 'key_telegram_bot', chatIds: { owner: '123456789' } } };
+      c['alerts'] = { ...c['alerts'], channels: ['telegram'], nonRedundantAck: true };
+    });
+    expect(r.ok ? [] : r.errors).toEqual([]);
+    if (r.ok) expect(r.config.direct.email).toBeNull();
+  });
+
   it('resolves the chain in order, primary provider included', () => {
     const r = parseConfig(clone(EXAMPLE_CONFIG_JSON));
     if (!r.ok) throw new Error(r.errors.join());

@@ -64,7 +64,7 @@ function osForProbe(os: string): 'mac' | 'windows' | 'linux' {
 }
 
 function failedProbe(error: string, hint: string | null = null): ProbeResult {
-  return { ok: false, supportsVision: false, latencyMs: 0, expected: '', got: null, error, hint };
+  return { ok: false, supportsVision: false, latencyMs: 0, expected: '', got: null, error, hint, attempts: 0 };
 }
 
 /**

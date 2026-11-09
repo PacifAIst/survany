@@ -125,3 +125,26 @@ describe('fire/smoke retrain rule (docs/BENCHMARKS.md)', () => {
     expect(fireFloorVerdict({ eval: { coco: {} } }).ok).toBe(false);
   });
 });
+
+describe('doctor (deployment check from outside)', () => {
+  it('requires both hosts and treats only 401/403 as a refused untokened publish', async () => {
+    const { parseArgs, untokenedVerdict } = await import('./doctor.ts');
+    expect(() => parseArgs(['--live', 'x'])).toThrow(/usage/);
+    expect(parseArgs(['--public', 'a.example', '--live', 'l.example', '--ip', '203.0.113.7'])).toEqual({ pub: 'a.example', live: 'l.example', ip: '203.0.113.7' });
+    expect(untokenedVerdict(403).ok).toBe(true);
+    expect(untokenedVerdict(401).ok).toBe(true);
+    expect(untokenedVerdict(201).ok).toBe(false);
+    expect(untokenedVerdict(404).ok).toBe(false);
+    expect(untokenedVerdict(0).ok).toBe(false);
+  });
+
+  it('runs every check against a stub network and fails on an admitted publish', async () => {
+    const { runDoctor } = await import('./doctor.ts');
+    const stub = (whipStatus: number) => (async (url: string | URL | Request) => new Response('', { status: String(url).endsWith('/healthz') ? 200 : String(url).includes('direction=whip') ? whipStatus : 404 })) as typeof fetch;
+    const ok = await runDoctor('a.invalid', 'l.invalid', '127.0.0.1', stub(403));
+    expect(ok.map((c) => c.name)).toEqual(['backend reachable over TLS', 'OME signaling reachable over TLS', '3478/tcp open: OME TcpRelay (UDP-blocked viewers)', '10000/tcp open: ICE-TCP media', 'untokened WHIP publish refused']);
+    expect(ok[0]!.ok && ok[1]!.ok && ok[4]!.ok).toBe(true);
+    const bad = await runDoctor('a.invalid', 'l.invalid', '127.0.0.1', stub(201));
+    expect(bad[4]).toMatchObject({ ok: false });
+  });
+});

@@ -27,6 +27,8 @@ tools:
         type: string
         pattern: '^[a-z_]+\.[a-z0-9_]+$'
     entities:
+      # Replace these wildcards with your real entity ids. The Reasoner invents plausible names, and a
+      # wildcard lets them reach the approval card (measured: docs/BENCHMARKS.md, prompt injection).
       allow:
         - "light.*"
         - "switch.*"

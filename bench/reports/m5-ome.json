@@ -1,5 +1,5 @@
 {
-  "startedAt": "2026-11-09T12:32:45.069Z",
+  "startedAt": "2026-11-09T17:34:39.305Z",
   "omeImage": "airensoft/ovenmediaengine:v0.21.0@sha256:172da912...",
   "publish": {
     "status": 201,
@@ -14,37 +14,37 @@
     "ws open ws://127.0.0.1:8090/app/<tok>?transport=all",
     "ws sent {\"command\":\"request_offer\"}",
     "ws recv {\"candidates\":[{\"candidate\":\"candidate:4730738461537611471 1 UDP 2130706431 127.0.0.1 10003 typ host\",\"sdpMLineIndex\":0},{\"candidate\":\"candidate:130816752288707",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"answer\",\"sdp\":{\"sdp\":\"v=0\\r\\no=- 5843270639950190389 2 IN IP4 127.0.0.1\\r\\ns=-\\r\\",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"answer\",\"sdp\":{\"sdp\":\"v=0\\r\\no=- 2969067547941011460 2 IN IP4 127.0.0.1\\r\\ns=-\\r\\",
     "ws recv {\"command\":\"notification\",\"message\":{\"auto\":false,\"file_name\":\"webrtc_default\",\"name\":\"webrtc_default\",\"renditions\":[{\"name\":\"default\",\"video_track\":{\"id\":0,\"na",
     "ws recv {\"command\":\"notification\",\"message\":{\"auto\":false,\"rendition_name\":\"default\"},\"type\":\"rendition_changed\"}",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:3284472282 1 udp 2122260223 172.",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:3616850988 1 udp 2122194687 172.",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:2212874476 1 udp 2122129151 172.",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:1060970483 1 udp 2122063615 172.",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:3816495967 1 udp 2121998079 172.",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:1893433611 1 udp 2121932543 192.",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:467334226 1 udp 2121867007 192.1",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:2117942991 1 udp 24780799 1.1.1.",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:2117942991 1 udp 24911871 1.1.1.",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:2117942991 1 udp 25108479 1.1.1.",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:2117942991 1 udp 25042943 1.1.1.",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:2117942991 1 udp 24715263 1.1.1.",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:2117942991 1 udp 24977407 1.1.1.",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:2117942991 1 udp 24846335 1.1.1.",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:2905574627 1 tcp 1518280447 172.",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:1440460264 1 tcp 1518214911 172.",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:2505822654 1 tcp 1518149375 172.",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:592373443 1 tcp 1518083839 172.2",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:3797395094 1 tcp 1518018303 172.",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:512390046 1 tcp 1517952767 192.1",
-    "ws sent {\"id\":339168641,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:3756372684 1 tcp 1517887231 192."
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:98562506 1 udp 2122260223 172.25",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:3237065651 1 udp 2122194687 172.",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:3476369225 1 udp 2122129151 172.",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:3466374529 1 udp 2122063615 172.",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:2943462300 1 udp 2121998079 172.",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:639190959 1 udp 2121932543 192.1",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:4057418061 1 udp 2121867007 192.",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:29158775 1 udp 25108479 1.1.1.1 ",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:29158775 1 udp 24977407 1.1.1.1 ",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:29158775 1 udp 24846335 1.1.1.1 ",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:29158775 1 udp 25042943 1.1.1.1 ",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:29158775 1 udp 24911871 1.1.1.1 ",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:29158775 1 udp 24715263 1.1.1.1 ",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:29158775 1 udp 24780799 1.1.1.1 ",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:2431008052 1 tcp 1518280447 172.",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:2447581475 1 tcp 1518214911 172.",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:186086822 1 tcp 1518149375 172.2",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:2033192038 1 tcp 1518083839 172.",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:1368825510 1 tcp 1518018303 172.",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:835053794 1 tcp 1517952767 192.1",
+    "ws sent {\"id\":850607707,\"peer_id\":0,\"command\":\"candidate\",\"candidates\":[{\"candidate\":\"candidate:4133233406 1 tcp 1517887231 192."
   ],
   "view": {
-    "status": "Live (WebRTC). The link stops working at 1:44:01 PM.",
+    "status": "Live (WebRTC). The link stops working at 6:45:53 PM.",
     "video": {
       "w": 640,
       "h": 480,
-      "t": 0.486979
+      "t": 0.008521
     }
   },
   "untokened": {
@@ -61,14 +61,14 @@
   },
   "webhookFailures": {
     "hungStatus": 401,
-    "hungMs": 3231,
+    "hungMs": 3377,
     "downDirect": 401,
     "downCaddy": 502
   },
   "lifetime": {
     "ttlMinutes": 1,
     "endState": "disconnected",
-    "cutAfterMs": 65143
+    "cutAfterMs": 64570
   },
-  "finishedAt": "2026-11-09T12:34:14.442Z"
+  "finishedAt": "2026-11-09T17:36:08.602Z"
 }

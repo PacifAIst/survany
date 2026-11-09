@@ -192,12 +192,16 @@ function Options() {
     })();
   }, []);
 
+  // The raw JSON view always mirrors the draft.
+  useEffect(() => {
+    if (draft) setRaw(JSON.stringify(draft, null, 2));
+  }, [draft]);
+
   if (!draft) return <p>Loading…</p>;
 
+  // Functional update: several set() calls in one handler (e.g. a rule and its routing) all apply.
   const set = (path: string, v: unknown): void => {
-    const next = setPath(draft, path, v);
-    setDraft(next);
-    setRaw(JSON.stringify(next, null, 2));
+    setDraft((prev) => (prev ? setPath(prev, path, v) : prev));
     setSaved(null);
   };
 

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Survey Anything demo: Loading dock camera</title>
+    <style>
+      :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+      body { margin: 0; background: #0b0d10; color: #d7dde4; }
+      header { padding: 12px 20px; display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; }
+      header h1 { font-size: 18px; margin: 0; }
+      header p { margin: 0; color: #8b96a3; font-size: 14px; }
+      main { padding: 0 20px 20px; }
+      .screen { position: relative; width: min(960px, 100%); aspect-ratio: 16 / 9; background: #000; overflow: hidden; border-radius: 6px; }
+      .screen img, .screen canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+      .hud { position: absolute; left: 12px; top: 10px; font: 600 14px ui-monospace, monospace; color: #fff; text-shadow: 0 1px 2px #000; }
+      .rec { color: #ff4d4d; }
+      .controls { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+      button { font: inherit; padding: 8px 14px; border-radius: 6px; border: 1px solid #3a4553; background: #1a2029; color: inherit; cursor: pointer; }
+      button.primary { background: #2563eb; border-color: #2563eb; color: #fff; }
+      .state { color: #8b96a3; font-size: 14px; }
+      ol { max-width: 960px; color: #aeb7c2; line-height: 1.5; }
+      code { background: #1a2029; padding: 1px 5px; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Loading dock, camera 2</h1>
+      <p>A synthetic incident for trying Survey Anything without pointing a camera at a fire.</p>
+    </header>
+    <main>
+      <div class="screen" id="screen">
+        <canvas id="quiet" width="1280" height="720"></canvas>
+        <img id="incident" alt="Fire at the loading dock (D-Fire test image, CC0)" src="/assets/AoF07798.jpg" hidden />
+        <div class="hud"><span class="rec">● REC</span> CAM 2 · <span id="clock"></span></div>
+      </div>
+      <div class="controls">
+        <button class="primary" id="start">Start incident in 10 s</button>
+        <button id="now">Start incident now</button>
+        <button id="reset">Back to quiet</button>
+        <span class="state" id="state">Quiet scene.</span>
+      </div>
+      <ol>
+        <li>Load the extension, accept the consent screen, and in Options pick the <b>Fire or smoke</b> rule and your alert channel.</li>
+        <li>Keep this tab in front, open the extension's popup and choose <b>Watch this tab</b>.</li>
+        <li>Press <b>Start incident in 10 s</b>. The on-device fire detector sees the flames; your vision model (if configured) confirms; the alert reaches you. With no vision model the alert says <i>unconfirmed</i>.</li>
+      </ol>
+    </main>
+    <script src="./demo.js" type="module"></script>
+  </body>
+</html>

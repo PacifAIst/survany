@@ -50,9 +50,9 @@ test.afterAll(async () => {
 const card = (page: Page, id: string): Locator => page.locator('div.card', { has: page.locator('strong', { hasText: new RegExp(`^${id}$`) }) });
 const storage = async <T,>(page: Page, key: string): Promise<T> => page.evaluate(async (k) => (await chrome.storage.local.get(k))[k], key) as Promise<T>;
 const chainOrder = async (page: Page): Promise<string[]> => page.locator('[data-testid=chain] li').evaluateAll((els) => els.map((e) => e.getAttribute('data-provider') ?? ''));
-const channelsInJson = async (page: Page): Promise<string[]> => {
-  const raw = await page.getByLabel('Configuration JSON').inputValue();
-  return (JSON.parse(raw) as { alerts: { channels: string[] } }).alerts.channels;
+/** Polls the JSON view (it mirrors the draft after render) until it shows `want`. */
+const expectChannels = async (page: Page, want: string[]): Promise<void> => {
+  await expect.poll(async () => (JSON.parse(await page.getByLabel('Configuration JSON').inputValue()) as { alerts: { channels: string[] } }).alerts.channels).toEqual(want);
 };
 
 test('M3: the whole Options page, end to end', async () => {
@@ -86,7 +86,7 @@ test('M3: the whole Options page, end to end', async () => {
   await expect(openai.getByText('(key_openai: set)')).toBeVisible();
   await openai.getByRole('button', { name: 'Test connection: openai' }).click();
   await expect(page.getByTestId('probe-openai')).toContainText(/Failed: .*read ACDEFH/);
-  expect(textOnlyCalls.length).toBe(1);
+  expect(textOnlyCalls.length).toBe(2); // a misread earns one fresh code; a model that cannot see fails both
 
   // --- A second key does not clobber the first or the device token ----------------------------
   await page.getByRole('button', { name: 'openrouter', exact: true }).click();
@@ -117,6 +117,19 @@ test('M3: the whole Options page, end to end', async () => {
   await page.getByRole('button', { name: 'Remove openai from chain' }).click();
   expect(await chainOrder(page)).toEqual(['local']);
 
+  // --- One click, two updates: removing a profile also drops it from the chain; a rule its routing ----
+  await page.getByRole('button', { name: 'Add openrouter to chain' }).click();
+  await openrouter.getByRole('button', { name: 'Remove', exact: true }).click();
+  const draftNow = async () => JSON.parse(await page.getByLabel('Configuration JSON').inputValue()) as { providerProfiles: Record<string, unknown>; failoverChain: string[]; rules: string[]; routing: Record<string, string[]> };
+  // The JSON view mirrors the draft after render, so poll it.
+  await expect.poll(async () => Object.keys((await draftNow()).providerProfiles)).toEqual(['openai']);
+  await expect.poll(async () => (await draftNow()).failoverChain).toEqual(['local']);
+  await page.getByRole('checkbox', { name: /^Fire or smoke/ }).uncheck();
+  await expect.poll(async () => (await draftNow()).rules).toEqual(['other']);
+  await expect.poll(async () => Object.keys((await draftNow()).routing)).toEqual(['other']);
+  await page.getByRole('checkbox', { name: /^Fire or smoke/ }).check();
+  await expect.poll(async () => (await draftNow()).rules).toEqual(['other', 'fire']);
+
   // --- One-time "not redundant" acknowledgement ------------------------------------------------
   // The checkbox is controlled: it stays ticked until the acknowledgement is given, so click, not uncheck().
   const email = page.getByRole('checkbox', { name: 'Email', exact: true });
@@ -126,16 +139,16 @@ test('M3: the whole Options page, end to end', async () => {
   await expect(email).toBeChecked();
   await ack.getByRole('button', { name: 'Keep both' }).click();
   await expect(ack).toBeHidden();
-  expect(await channelsInJson(page)).toEqual(['telegram', 'email']);
+  await expectChannels(page, ['telegram', 'email']);
   await email.click();
   await ack.getByRole('button', { name: 'I understand, use one channel' }).click();
   await expect(email).not.toBeChecked();
-  expect(await channelsInJson(page)).toEqual(['telegram']);
+  await expectChannels(page, ['telegram']);
   await email.check();
-  expect(await channelsInJson(page)).toEqual(['telegram', 'email']);
+  await expectChannels(page, ['telegram', 'email']);
   await email.uncheck();
   await expect(ack).toBeHidden(); // asked once only
-  expect(await channelsInJson(page)).toEqual(['telegram']);
+  await expectChannels(page, ['telegram']);
   await email.check();
 
   // --- Save runs the probe; budget shows usage ------------------------------------------------
@@ -168,7 +181,7 @@ test('M3: the whole Options page, end to end', async () => {
   await importInput.setInputFiles(file('zero-channels.json', { ...base, alerts: { ...base.alerts, channels: [] } }));
   await expect(page.getByTestId('import-status')).toContainText('zero-channels.json: refused, nothing changed.');
   await expect(page.getByTestId('errors')).toContainText('alerts.channels');
-  expect(await channelsInJson(page)).toEqual(['telegram', 'email']);
+  await expectChannels(page, ['telegram', 'email']);
 
   await importInput.setInputFiles(file('with-key.json', JSON.stringify(base).replace('"schemaVersion":1', '"schemaVersion":1,"apiKey":"sk-ant-api03-notarealkeynotarealkeynotarealkey"')));
   await expect(page.getByTestId('import-status')).toContainText('with-key.json: refused');
@@ -177,7 +190,7 @@ test('M3: the whole Options page, end to end', async () => {
   await expect(ack).toBeVisible();
   await ack.getByRole('button', { name: 'I understand, use one channel' }).click();
   await expect(page.getByTestId('import-status')).toContainText('Loaded with one alert channel');
-  expect(await channelsInJson(page)).toEqual(['email']);
+  await expectChannels(page, ['email']);
 
   // --- MCP without Telegram is refused at save --------------------------------------------------
   await page.locator('h2', { hasText: 'Human-approved actions (MCP)' }).locator('xpath=following-sibling::label[1]').getByRole('checkbox').check();

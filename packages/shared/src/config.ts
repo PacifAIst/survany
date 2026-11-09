@@ -137,7 +137,8 @@ export const ConfigSchema = z
       .strict(),
     backend: z.object({ url: HttpUrl.nullable() }).strict().default({ url: null }),
     direct: z
-      .object({ telegram: DirectTelegramSchema.nullable(), email: DirectEmailSchema.nullable() })
+      // Each direct channel defaults to off, so turning on one does not require mentioning the other.
+      .object({ telegram: DirectTelegramSchema.nullable().default(null), email: DirectEmailSchema.nullable().default(null) })
       .strict()
       .default({ telegram: null, email: null }),
   })

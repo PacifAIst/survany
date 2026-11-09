@@ -11,9 +11,13 @@ import {
   parseDetection,
   ProviderError,
   renderProbeImage,
+  PROBE_ALPHABET,
   PROBE_SIZE,
 } from '../src';
 import { anthropicReply, json, type MockServer, openAiReply, startMock } from './mock-server';
+import { readProbeCode } from './probe-reader';
+
+const readCodeFromRequest = (dataUrl: string): string => readProbeCode(Buffer.from(dataUrl.split(',')[1] ?? '', 'base64'));
 
 const fetchFn = (url: string, init: RequestInit): Promise<Response> => fetch(url, init);
 const jpeg = (): Blob => base64ToBlob('/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJ', 'image/jpeg');
@@ -200,7 +204,7 @@ describe('defensive parse (§6.1)', () => {
 
 describe('probe (C26)', () => {
   it('renders a valid 256 px PNG that decodes back to the drawn pixels', () => {
-    const png = renderProbeImage('ACDE34');
+    const png = renderProbeImage('ACEF34');
     expect([...png.slice(0, 8)]).toEqual([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
     const view = new DataView(png.buffer, png.byteOffset);
     expect(view.getUint32(16)).toBe(PROBE_SIZE);
@@ -213,7 +217,7 @@ describe('probe (C26)', () => {
   });
 
   it('a vision mock that receives the exact image passes', async () => {
-    const code = 'XY3947';
+    const code = 'XY3467';
     const expectedB64 = bytesToBase64(renderProbeImage(code));
     mock.setHandler((r, res) => {
       const url: string = r.body.messages[1].content[1].image_url.url;
@@ -241,6 +245,43 @@ describe('probe (C26)', () => {
     mock.setHandler((_r, res) => json(res, 400, { error: { message: 'image input is not supported by this model' } }));
     const r = await provider('openai', '/v1').probe();
     expect(r.ok).toBe(false);
+  });
+
+  it('a misread earns one fresh code; a model that cannot see fails both; errors are not retried', async () => {
+    // Reads correctly only on the second image (a real vision model misreading once).
+    let calls = 0;
+    mock.setHandler((r, res) => {
+      calls++;
+      const url: string = r.body.messages[1].content[1].image_url.url;
+      json(res, 200, openAiReply(calls === 1 ? '{"code":"WRONG1"}' : `{"code":"${readCodeFromRequest(url)}"}`));
+    });
+    const ok = await provider('local', '/v1', { apiKey: null }).probe();
+    expect(ok).toMatchObject({ ok: true, attempts: 2 });
+    expect(calls).toBe(2);
+    // Never sees the image: refused after two different codes.
+    calls = 0;
+    const codes: string[] = [];
+    mock.setHandler((r, res) => {
+      calls++;
+      codes.push(r.body.messages[1].content[1].image_url.url);
+      json(res, 200, openAiReply('{"code":"ACEFHJ"}'));
+    });
+    const bad = await provider('local', '/v1', { apiKey: null }).probe();
+    expect(bad).toMatchObject({ ok: false, attempts: 2 });
+    expect(new Set(codes).size).toBe(2);
+    // A transport error is final.
+    calls = 0;
+    mock.setHandler((_r, res) => {
+      calls++;
+      json(res, 401, { error: 'bad key' });
+    });
+    expect(await provider('openai', '/v1').probe()).toMatchObject({ ok: false, attempts: 1 });
+    expect(calls).toBe(1);
+  });
+
+  it('the alphabet has no glyph a model confuses with another (no D, O, 0, 9, G, 1, I, L, 2, Z, 5, S, 8, B)', () => {
+    expect(PROBE_ALPHABET).not.toMatch(/[DO09G1IL2Z5S8B]/);
+    expect(PROBE_ALPHABET.length ** 6).toBeGreaterThan(50_000_000);
   });
 
   it('C10: Ollama 403 yields the exact OLLAMA_ORIGINS command for the OS', async () => {

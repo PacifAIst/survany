@@ -18,3 +18,6 @@ apps/extension/public/
 bench/reports/*.raw.json
 release/
 deploy/viewer-config.json
+
+# Bench inputs built by bench/prepare_sets.py (manifests with SHA-256 are in bench/sets/)
+bench/.cache/
