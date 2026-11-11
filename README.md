@@ -172,6 +172,10 @@ emergency services on its own. It is not a certified safety device: keep your sm
 
 ## License and source
 
+---
+
+<p align="center">Made with ❤️ for the Local AI Community by PacifAIst</p>
+
 Copyright (C) 2026 PacifAIst
 
 Survey Anything is licensed under the **GNU Affero General Public License v3.0 only** (`LICENSE`, the verbatim
