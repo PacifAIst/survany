@@ -62,8 +62,10 @@ The defaults in the **local** card (`127.0.0.1:11434`, `qwen2.5vl`) are for Olla
 
 ### A3. Telegram, straight from the browser
 
-- [ ] In Telegram, message **@BotFather**, `/newbot`, copy the token. Send any message to your new bot. Open
-  `https://api.telegram.org/bot<TOKEN>/getUpdates` and copy the number after `"chat":{"id":`.
+- [ ] In Telegram, message **@BotFather**, `/newbot`, copy the token. Open your bot, press **Start** and send
+  it any message (for example `hi`); the chat number appears only after that. Open
+  `https://api.telegram.org/bot<TOKEN>/getUpdates` and copy the number after `"chat":{"id":` (if it shows
+  `"result":[]`, send another message and reload). Step-by-step with screenshots: `docs/GUIDE_LEAVE_ALERT.md`.
 - [ ] Options → **Extension-only mode (T0)**: tick **Direct Telegram**, paste the token into **Bot token**,
   **Store** (allow `api.telegram.org`), and enter the number in **Chat ID for owner**.
 - [ ] **Alert channels**: untick **Email**. A box "Alerts will not be redundant" appears: press

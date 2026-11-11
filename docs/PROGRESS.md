@@ -2,7 +2,7 @@
 
 **Goal:** v1.0 as defined at the end of §8 of docs/PLAN.md
 **Current milestone:** M8 on hold at 0.1.0: owner manual testing first (`docs/MANUAL_TESTING.md`)
-**Last updated:** 2026-11-11 12:00
+**Last updated:** 2026-11-11 12:30
 
 ## Milestones
 | ID | Status (todo/doing/done) | Acceptance evidence | Notes |
@@ -166,6 +166,12 @@ Accepted for v1.0 by the owner, with the reason; each can be revisited after rel
 | 2026-11-09 | Container images | Docker Hub | Pinned digests: OME v0.21.0 `sha256:172da912…`, caddy 2.10.2-alpine `sha256:4c6e91c6…`, mailpit v1.27 `sha256:e22dce5b…`, node 24-alpine `sha256:a34ab6d7…`, python 3.13-slim `sha256:e48f59cd…`. |
 
 ## Session log (newest first)
+### 2026-11-11 12:30: beginner guide with screenshots
+- Owner confirmed the "Person left the camera view" setup works on their laptop (Telegram and Resend email). Owner's correction: the chat ID appears in getUpdates only after you send the bot a message; now explicit in README step 3, MANUAL_TESTING A3 and the guide.
+- Done: `docs/GUIDE_LEAVE_ALERT.md` (install, LM Studio, rule, Telegram bot, free Resend email with `onboarding@resend.dev`, save and watch, troubleshooting), linked from README. Six screenshots in `docs/images/guide/`, taken from the extension in a real run (owner's LM Studio, fake camera on a CC0 empty scene, Telegram and Resend answered by the test) with placeholder values only (chat ID 123456789, you@example.com; keys shown masked); the getUpdates image is an illustration with made-up values.
+- Tests run: `pnpm check`; gitleaks pre-commit.
+- Next: owner continues `docs/MANUAL_TESTING.md`.
+- Blockers: none.
 ### 2026-11-11 12:00: "Person left the camera view"
 - Done: `absent` detector option, positive-question confirm for absence rules, built-in `person-left`, field guide, README, MANUAL_TESTING A4b.
 - Tests run: unit (gate: sit/leave/stay/return/leave sequence, backlit 0.45 counts as there, region; recipes: schema, confirm decision); live against the owner's LM Studio: wording comparison (see Decisions); the owner's webcam frame (offered by the owner, kept only in the session scratchpad and deleted after): person 0.92 on the device and "visible" from the model, empty version: no person and "none" (0.98); the extension with a fake camera alternating the two (30 s each): alerts at +36 s and +101 s (6 s and 11 s after leaving), none while present, 2 local AI calls in 150 s. `pnpm vitest run`, extension e2e, typecheck, lint, check, build (see commit).

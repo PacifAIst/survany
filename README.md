@@ -20,6 +20,10 @@ taps Approve.
 No server, no camera, no AI account needed. This sets up the extension-only mode (T0) with Telegram and
 plays a synthetic fire in a local page.
 
+**New to this?** [`docs/GUIDE_LEAVE_ALERT.md`](docs/GUIDE_LEAVE_ALERT.md) walks through a real use case step
+by step, with screenshots: your webcam, a free local AI model (LM Studio), a Telegram bot and free email
+(Resend), and an alert when you walk away from your laptop.
+
 You need Node.js 24 or later, Git, Chrome or Chromium 120 or later, and a Telegram account.
 
 1. **Build the extension.**
@@ -38,9 +42,10 @@ You need Node.js 24 or later, Git, Chrome or Chromium 120 or later, and a Telegr
 2. **Load it.** Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and choose
    `apps/extension/dist`. A consent page opens: read it, tick the boxes, press **I agree**.
 
-3. **Make a Telegram bot.** In Telegram, message **@BotFather**, send `/newbot`, and copy the token. Send any
-   message to your new bot, then open `https://api.telegram.org/bot<TOKEN>/getUpdates` in a browser and copy
-   the number after `"chat":{"id":`.
+3. **Make a Telegram bot.** In Telegram, message **@BotFather**, send `/newbot`, and copy the token. Open your
+   new bot, press **Start** and **send it any message** (for example `hi`): Telegram shows your chat number
+   only after that. Then open `https://api.telegram.org/bot<TOKEN>/getUpdates` in a browser and copy the
+   number after `"chat":{"id":` (if it shows `"result":[]`, send another message and reload).
 
 4. **Configure.** Right-click the extension's icon → **Options**:
    - Under **Extension-only mode**, tick **Direct Telegram**, paste the token into **Bot token**, press
