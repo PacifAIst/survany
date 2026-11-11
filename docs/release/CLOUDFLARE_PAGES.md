@@ -39,3 +39,20 @@ when only the backend is down, because Caddy serves it from disk (§10).
 | Build command | `corepack enable && pnpm install --frozen-lockfile && pnpm --filter @survey-anything/viewer build` |
 | Build output directory | `apps/viewer/dist` |
 | Environment variables | `NODE_VERSION=24`, `SA_SKIP_MODEL_FETCH=1` (the root postinstall otherwise downloads the 20 MB extension model, which the viewer does not use) |
+
+## The project website (survany.pages.dev)
+
+The project's public page is the static site in `site/` (one HTML page, one stylesheet, an SVG icon, two
+screenshots from `docs/images/guide/`, and `site/_headers` with a strict CSP: no scripts, no third-party
+requests, no cookies or analytics). It needs no build step and is unrelated to the viewer above.
+
+Deploy or update it from the repository root (Wrangler asks you to log in to Cloudflare in the browser once):
+
+```bash
+npx wrangler@4 login
+npx wrangler@4 pages project create survany --production-branch main   # first time only
+npx wrangler@4 pages deploy site --project-name survany --branch main
+```
+
+Every number on the page comes from `docs/BENCHMARKS.md` or a session in `docs/PROGRESS.md`; update the page
+when those change. Keep the comparison table generic (kinds of tools, not named products).

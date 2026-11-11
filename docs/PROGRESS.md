@@ -2,7 +2,7 @@
 
 **Goal:** v1.0 as defined at the end of §8 of docs/PLAN.md
 **Current milestone:** M8 on hold at 0.1.0: owner manual testing first (`docs/MANUAL_TESTING.md`)
-**Last updated:** 2026-11-11 12:30
+**Last updated:** 2026-11-11 13:00
 
 ## Milestones
 | ID | Status (todo/doing/done) | Acceptance evidence | Notes |
@@ -166,6 +166,13 @@ Accepted for v1.0 by the owner, with the reason; each can be revisited after rel
 | 2026-11-09 | Container images | Docker Hub | Pinned digests: OME v0.21.0 `sha256:172da912…`, caddy 2.10.2-alpine `sha256:4c6e91c6…`, mailpit v1.27 `sha256:e22dce5b…`, node 24-alpine `sha256:a34ab6d7…`, python 3.13-slim `sha256:e48f59cd…`. |
 
 ## Session log (newest first)
+### 2026-11-11 13:00: project website on Cloudflare Pages
+- Owner request: a minimal dark-and-pink site on the free Cloudflare Pages at survany.pages.dev, with newcomer setup steps, the advantages over typical free monitoring tools, and "Survany stands for Survey Anything".
+- Done: `site/` (one page, stylesheet, SVG icon, two screenshots from the guide, `_headers` with a strict CSP: no scripts, no third-party requests, no cookies or analytics). Numbers on the page come from BENCHMARKS.md and this log; the comparison names kinds of tools, not products. Deploy steps in `docs/release/CLOUDFLARE_PAGES.md`; README links the site.
+- Deployed with Wrangler 4.160.0 after the owner approved the Cloudflare login in the browser: project `survany` created as classic Pages (`--force`, because Wrangler's new delegation to Workers fails at a workspace root and would not give a pages.dev address), then `wrangler pages deploy site`. Live check: https://survany.pages.dev/ and every asset 200, CSP, Referrer-Policy, nosniff and Permissions-Policy headers present.
+- Tests run: local preview in Chromium at 1280, 390 and 360 px: no horizontal overflow, no console or CSP errors, all images load.
+- Next: owner reviews the site; M8 stays on hold (the site says 0.1.0 preview, build from source).
+- Blockers: none.
 ### 2026-11-11 12:30: beginner guide with screenshots
 - Owner confirmed the "Person left the camera view" setup works on their laptop (Telegram and Resend email). Owner's correction: the chat ID appears in getUpdates only after you send the bot a message; now explicit in README step 3, MANUAL_TESTING A3 and the guide.
 - Done: `docs/GUIDE_LEAVE_ALERT.md` (install, LM Studio, rule, Telegram bot, free Resend email with `onboarding@resend.dev`, save and watch, troubleshooting), linked from README. Six screenshots in `docs/images/guide/`, taken from the extension in a real run (owner's LM Studio, fake camera on a CC0 empty scene, Telegram and Resend answered by the test) with placeholder values only (chat ID 123456789, you@example.com; keys shown masked); the getUpdates image is an illustration with made-up values.

@@ -1,5 +1,7 @@
 # Survey Anything
 
+Website: **[survany.pages.dev](https://survany.pages.dev)** (Survany stands for Survey Anything).
+
 **Point it at any browser tab or camera, say what to watch for, and get a Telegram and email alert when
 it happens. Nothing acts without your tap.**
 

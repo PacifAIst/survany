@@ -1,0 +1,165 @@
+<!doctype html>
+<!-- Copyright (C) 2026 PacifAIst. SPDX-License-Identifier: AGPL-3.0-only -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Survany: Survey Anything, free AI monitoring in your browser</title>
+<meta name="description" content="Survany (Survey Anything) is a free, open-source Chrome extension: point it at a webcam or any browser tab, say what to watch for, and get a Telegram or email alert. It can run entirely on your own computer.">
+<meta name="theme-color" content="#0b090e">
+<meta property="og:title" content="Survany: Survey Anything">
+<meta property="og:description" content="Point it at a webcam or any browser tab, say what to watch for, get a Telegram or email alert. Free, open source, local AI.">
+<meta property="og:type" content="website">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="#" aria-label="Survany home">
+      <img src="favicon.svg" alt="" width="26" height="26"> survany
+    </a>
+    <nav aria-label="Sections">
+      <a href="#how">How it works</a>
+      <a href="#why">Why it's different</a>
+      <a href="#numbers">Numbers</a>
+      <a href="#start" class="nav-cta">Get started</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section class="hero wrap">
+  <p class="kicker">Free · open source · runs on your computer</p>
+  <h1>Survany<span class="dot">.</span></h1>
+  <p class="expand">Survany stands for <strong>Survey Anything</strong>.</p>
+  <p class="lead">Point it at a webcam or any browser tab, say what to watch for, and get a Telegram or
+    email alert when it happens. A detector runs on your computer for free, and an AI model you choose
+    confirms what it saw, before anyone is bothered.</p>
+  <div class="actions">
+    <a class="btn primary" href="#start">Get started in 7 steps</a>
+    <a class="btn" href="https://github.com/PacifAIst/survany">Source on GitHub</a>
+  </div>
+  <ul class="badges" aria-label="Facts">
+    <li>Chrome extension</li><li>0.1.0 preview</li><li>AGPL-3.0</li><li>No account, no telemetry</li>
+  </ul>
+</section>
+
+<section id="how" class="wrap section">
+  <p class="label">How it works</p>
+  <h2>Watch, check for free, confirm with AI, alert.</h2>
+  <ol class="pipeline">
+    <li><span class="step">1</span><h3>Watch</h3><p>Your webcam, or any tab: a camera's web page, a dashboard, a 3D printer feed.</p></li>
+    <li><span class="step">2</span><h3>Check, free</h3><p>Every 5 seconds a detector in your browser looks for the rule's trigger: a person, fire or smoke, motion, a change in an area.</p></li>
+    <li><span class="step">3</span><h3>Confirm</h3><p>Only when something looks off, a vision AI model looks at that one picture and answers your rule's question.</p></li>
+    <li><span class="step">4</span><h3>Alert</h3><p>Telegram and email at once, one alert per event, with the model's one-line reason.</p></li>
+  </ol>
+  <p class="note">Example rule, built in: <em>"Person left the camera view"</em>. While you sit at the laptop nothing is
+    sent anywhere. Walk away and, about ten seconds later, your phone gets: <q>Person left the camera view.
+    Confirmed by local, confidence 98%.</q></p>
+</section>
+
+<section id="why" class="wrap section">
+  <p class="label">Why it's different</p>
+  <h2>What it does that free tools usually don't.</h2>
+  <div class="grid">
+    <article class="card"><h3>No server, no new hardware</h3><p>It runs in Chrome. Your laptop's webcam is a camera, and so is any web page you can open: a vendor's camera portal, a Grafana board, a printer feed, a shop queue.</p></article>
+    <article class="card"><h3>Check first, then ask the AI</h3><p>The detector runs on every frame for free; the AI is called once per event, not per frame. Cloud models get per-minute and daily caps with a hard stop.</p></article>
+    <article class="card"><h3>Any AI model, local included</h3><p>Free on your own computer with LM Studio, Ollama, vLLM or llama.cpp, or in the cloud (Anthropic, OpenAI, OpenRouter, DeepSeek) with automatic failover. A built-in test proves a model can actually see before it is used.</p></article>
+    <article class="card"><h3>Rules you can read and share</h3><p>A rule is a small JSON file: what triggers the detector and the question the AI answers. Eleven are built in. Open one, copy it, change the area or the question, add it as your own.</p></article>
+    <article class="card"><h3>Private by default</h3><p>No account and no telemetry. With a local model, pictures never leave your computer, and API keys stay in your browser. Photos in alerts can be switched off.</p></article>
+    <article class="card"><h3>Hard to fool, unable to act alone</h3><p>Text inside the picture is treated as untrusted data and tested with planted instructions. Optional device actions run only after a person taps Approve on Telegram.</p></article>
+    <article class="card"><h3>Never silent</h3><p>If no model answers or the budget is used up, you still get the alert, clearly labelled unconfirmed.</p></article>
+    <article class="card"><h3>Watches events, not identities</h3><p>No face recognition and no identification: rule questions about who someone is are refused.</p></article>
+  </div>
+</section>
+
+<section id="compare" class="wrap section">
+  <p class="label">Compared with the usual free options</p>
+  <h2>Where it fits.</h2>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr><th scope="col"></th><th scope="col">Motion-detection apps</th><th scope="col">Self-hosted NVR with object detection</th><th scope="col">Cloud camera AI</th><th scope="col" class="us">Survany</th></tr>
+      </thead>
+      <tbody>
+        <tr><th scope="row">What you need</th><td>A camera and an app</td><td>An always-on machine and RTSP cameras</td><td>The vendor's cameras and app</td><td class="us">Chrome and a webcam, or any web page</td></tr>
+        <tr><th scope="row">Watches any web page</th><td>No</td><td>No</td><td>No</td><td class="us">Yes</td></tr>
+        <tr><th scope="row">Answers a question you write</th><td>No</td><td>Object classes only</td><td>On some paid plans</td><td class="us">Yes, with any vision model</td></tr>
+        <tr><th scope="row">Shadows, lights, pets</th><td>Frequent false alarms</td><td>Fewer (object classes)</td><td>Fewer</td><td class="us">Detector and AI must agree</td></tr>
+        <tr><th scope="row">Price</th><td>Free</td><td>Free software, your hardware</td><td>Often a subscription</td><td class="us">Free with a local model; cloud calls capped</td></tr>
+        <tr><th scope="row">Video leaves your home</th><td>Depends on the app</td><td>No</td><td>Yes, to the vendor</td><td class="us">No, with a local model</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="fine">Typical of each kind of tool; individual products differ.</p>
+</section>
+
+<section id="numbers" class="wrap section">
+  <p class="label">Measured, not promised</p>
+  <h2>Numbers from the test runs.</h2>
+  <div class="stats">
+    <div class="stat"><strong>6–11 s</strong><span>from walking away to a confirmed alert, with a free 4B model in LM Studio on a laptop.</span></div>
+    <div class="stat"><strong>0.753</strong><span>mAP@0.5 of the bundled fire and smoke detector on the 4,306-image D-Fire test set.</span></div>
+    <div class="stat"><strong>0%</strong><span>false alarms on the fire test images when detector and AI must agree (120 images; some smoke-only scenes are missed).</span></div>
+    <div class="stat"><strong>0</strong><span>device actions run without a human tap: by construction. Planted instructions changed 0 of 24 answers of a 72B model (7 of 24 for a 7B one).</span></div>
+    <div class="stat"><strong>$0</strong><span>per check with a local model; about $0.00036 per check with a 72B cloud model.</span></div>
+  </div>
+  <p class="fine">Method and full results: <a href="https://github.com/PacifAIst/survany/blob/main/docs/BENCHMARKS.md">BENCHMARKS.md</a>.</p>
+</section>
+
+<section id="start" class="wrap section">
+  <p class="label">Get started</p>
+  <h2>Seven steps, about 30 minutes, all free.</h2>
+  <p class="muted">Version 0.1.0 is a preview and not in the Chrome Web Store yet, so you build it once from
+    the source. You need Chrome, <a href="https://nodejs.org">Node.js</a> 24 or later, <a href="https://git-scm.com">Git</a> and Telegram.</p>
+  <ol class="steps">
+    <li><h3>Build it</h3>
+<pre><code>git clone https://github.com/PacifAIst/survany
+cd survany
+corepack enable
+pnpm install
+pnpm build</code></pre></li>
+    <li><h3>Load it into Chrome</h3><p>Open <code>chrome://extensions</code>, turn on <b>Developer mode</b>, press <b>Load unpacked</b> and pick <code>survany/apps/extension/dist</code>. Accept the consent page and allow the camera.</p></li>
+    <li><h3>Free AI on your computer</h3><p>Install <a href="https://lmstudio.ai">LM Studio</a>, download and load <code>qwen3-vl-4b-instruct</code>, and start its server (Developer tab). In the extension's Options, local card, press <b>LM Studio</b> and then <b>Test connection</b>.</p></li>
+    <li><h3>A Telegram bot</h3><p>In Telegram, message <b>@BotFather</b>, send <code>/newbot</code> and copy the token. Open your bot, press <b>Start</b> and <b>send it "hi"</b>. Open <code>https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code> and copy the number after <code>"chat":{"id":</code>. In Options, tick <b>Direct Telegram</b>, paste the token and enter that chat ID.</p></li>
+    <li><h3>Free email (optional)</h3><p>Sign up at <a href="https://resend.com">resend.com</a>, create an API key, and in Options tick <b>Direct email (Resend)</b> with From <code>onboarding@resend.dev</code> and your sign-up address as the recipient.</p></li>
+    <li><h3>Pick a rule</h3><p>Under <b>Watch rules</b>, tick <b>Person left the camera view</b> (or fire, a package at the door, a dashboard turning red…) and press <b>Save</b>.</p></li>
+    <li><h3>Watch</h3><p>Click the extension's icon and press <b>Watch camera</b>, or <b>Watch this tab</b> on any page. Walk away to test.</p></li>
+  </ol>
+  <div class="shots">
+    <figure><img src="img/local-model.png" width="888" height="383" alt="The local model card: LM Studio found qwen3-vl-4b-instruct and the vision test passed"><figcaption>Step 3: the local model, found and tested in two clicks.</figcaption></figure>
+    <figure class="narrow"><img src="img/popup.png" width="380" height="258" alt="The extension popup while watching the camera, showing one local AI call today"><figcaption>Step 7: watching. The AI is asked only when something happens.</figcaption></figure>
+  </div>
+  <div class="actions">
+    <a class="btn primary" href="https://github.com/PacifAIst/survany/blob/main/docs/GUIDE_LEAVE_ALERT.md">Full guide with screenshots</a>
+    <a class="btn" href="https://github.com/PacifAIst/survany#readme">README</a>
+  </div>
+</section>
+
+<section class="wrap section">
+  <p class="label">Ideas</p>
+  <h2>Things people point it at.</h2>
+  <ul class="chips">
+    <li>Tell me when I leave my laptop</li><li>Fire or smoke in the workshop</li><li>A package left at the door</li>
+    <li>The 3D print failed</li><li>The Grafana board turned red</li><li>Water on the floor</li>
+    <li>The door was left open</li><li>Someone in the restricted area</li><li>The queue is too long</li>
+  </ul>
+</section>
+
+<section class="wrap section responsible">
+  <p class="label">Use it responsibly</p>
+  <p>Watch only places you are allowed to watch, tell the people who may be in view, and follow your local
+    law. Survany is built to notice events, never to identify or track people.
+    <a href="https://github.com/PacifAIst/survany/blob/main/docs/RESPONSIBLE_USE.md">Responsible use</a> ·
+    <a href="https://github.com/PacifAIst/survany/blob/main/docs/PRIVACY_POLICY.md">Privacy policy</a></p>
+</section>
+</main>
+
+<footer class="wrap foot">
+  <p><b>Survany</b> = Survey Anything · open source under AGPL-3.0 · © 2026 PacifAIst ·
+    <a href="https://github.com/PacifAIst/survany">GitHub</a></p>
+  <p class="fine">This site has no cookies, analytics or trackers.</p>
+</footer>
+</body>
+</html>
