@@ -4,7 +4,7 @@
  * Service worker entry (§4.1). Listeners are registered synchronously at top level so a restarted
  * worker receives the event that woke it. No state lives in memory.
  */
-import { createProvider, listModels, type ProbeResult } from '@survey-anything/providers';
+import { createProvider, listModels, openAiBase, type ProbeResult } from '@survey-anything/providers';
 import { parseConfig, type ResolvedProfile, ResolvedProfileSchema } from '@survey-anything/shared';
 import { BudgetLedger } from './budget';
 import { createGuardedFetch, type PolicyConfig } from './guarded-fetch';
@@ -98,6 +98,14 @@ async function probeProfile(policy: PolicyConfig, p: ResolvedProfile): Promise<P
   const platform = await chrome.runtime.getPlatformInfo();
   const r = await provider.probe({ os: osForProbe(platform.os), extensionOrigin: `chrome-extension://${chrome.runtime.id}` });
   if (r.ok || r.hint) return r;
+  // Nothing listening: name the address and the usual ports instead of the browser's "Failed to fetch".
+  if (p.id === 'local' && r.got === null && /failed to fetch|networkerror|err_connection/i.test(r.error ?? '')) {
+    return {
+      ...r,
+      error: `nothing answered at ${openAiBase('local', p.baseUrl)}: is the server running?`,
+      hint: 'Start the server and load a vision model, then put its address in Base URL (or press LM Studio / Ollama above it).\nLM Studio: Developer tab → Start server; address http://127.0.0.1:1234\nOllama: address http://127.0.0.1:11434',
+    };
+  }
   if (/HTTP 40[13]\b/.test(r.error ?? '')) return { ...r, hint: 'The provider rejected the API key: check that it was copied completely and is still active, then paste it again.' };
   if (p.id === 'anthropic') return r;
   // On an OpenAI-compatible server, show which model ids it actually serves (LM Studio ids are often not the file name).

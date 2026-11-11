@@ -80,6 +80,17 @@ test('M3: the whole Options page, end to end', async () => {
 
   // --- Vision provider: local model that can read the probe -----------------------------------
   const local = card(page, 'local');
+  // One click fills the usual local server addresses.
+  await local.getByRole('button', { name: /^LM Studio/ }).click();
+  await expect(local.getByLabel('Base URL')).toHaveValue('http://127.0.0.1:1234/v1');
+  await local.getByRole('button', { name: /^Ollama/ }).click();
+  await expect(local.getByLabel('Base URL')).toHaveValue('http://127.0.0.1:11434/v1');
+  // Nothing listening: the page names the address and the usual servers instead of "Failed to fetch".
+  await local.getByLabel('Base URL').fill('http://127.0.0.1:9');
+  await local.getByLabel('Model', { exact: true }).fill('mock-vision');
+  await local.getByRole('button', { name: 'Test connection: local' }).click();
+  await expect(page.getByTestId('probe-local')).toContainText('nothing answered at http://127.0.0.1:9/v1: is the server running?');
+  await expect(page.getByTestId('probe-local')).toContainText('LM Studio: Developer tab → Start server; address http://127.0.0.1:1234');
   // Entered as LM Studio shows it, without /v1: the page says what it will use, and the call goes to /v1.
   await local.getByLabel('Base URL').fill(vision.url);
   await expect(local).toContainText(`this will use ${vision.url}/v1`);

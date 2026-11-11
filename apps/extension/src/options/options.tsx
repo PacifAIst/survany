@@ -46,6 +46,12 @@ function BoolField(p: { label: string; path: string; draft: Draft; set: (path: s
   );
 }
 
+/** Default addresses of the common local servers (their OpenAI-compatible API is under /v1). */
+const LOCAL_SERVERS = [
+  { name: 'LM Studio', url: 'http://127.0.0.1:1234/v1' },
+  { name: 'Ollama', url: 'http://127.0.0.1:11434/v1' },
+] as const;
+
 function TextField(p: { label: string; path: string; draft: Draft; set: (path: string, v: unknown) => void; nullable?: boolean; size?: number }) {
   const v = getPath(p.draft, p.path);
   return (
@@ -136,6 +142,16 @@ function ProviderCard(p: { id: ProviderId; path: string; draft: Draft; set: (pat
         {p.onRemove && <button onClick={p.onRemove}>Remove</button>}
       </div>
       <TextField label="Base URL" path={`${p.path}.baseUrl`} draft={p.draft} set={p.set} size={44} />
+      {p.id === 'local' && (
+        <div class="row">
+          <span class="muted">Your local server:</span>
+          {LOCAL_SERVERS.map((s) => (
+            <button key={s.name} aria-pressed={baseUrl === s.url} onClick={() => p.set(`${p.path}.baseUrl`, s.url)}>
+              {s.name} ({s.url.replace('http://', '').replace('/v1', '')})
+            </button>
+          ))}
+        </div>
+      )}
       {p.id === 'local' && baseUrl && openAiBase('local', baseUrl) !== baseUrl.replace(/\/+$/, '') && (
         <div class="muted">Local servers (LM Studio, Ollama, vLLM, llama.cpp) serve the API under /v1: this will use {openAiBase('local', baseUrl)}</div>
       )}
@@ -158,7 +174,7 @@ function ProviderCard(p: { id: ProviderId; path: string; draft: Draft; set: (pat
       {probe && (
         <div class={probe.ok ? 'ok' : 'error'} data-testid={`probe-${p.id}`} role="status">
           {probe.ok
-            ? `Vision OK: read the code back in ${'latencyMs' in probe ? probe.latencyMs : 0} ms`
+            ? `Vision OK: read the code back in ${'latencyMs' in probe ? probe.latencyMs : 0} ms${'got' in probe && probe.got && probe.got !== probe.expected ? ` (showed ${probe.expected}, read ${probe.got}: one character off, accepted)` : ''}`
             : `Failed: ${probe.error ?? 'unknown error'}${'expected' in probe && probe.expected ? ` (showed ${probe.expected}, read ${probe.got ?? 'nothing'})` : ''}`}
           {'hint' in probe && probe.hint && <pre>{probe.hint}</pre>}
         </div>

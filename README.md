@@ -90,8 +90,9 @@ code in an image and must read it back, so a model that cannot see is refused.
   for your system.
 - **vLLM, LM Studio, llama.cpp:** any OpenAI-compatible `…/v1` endpoint with a vision model; allow the
   extension's origin in the server's CORS settings. A local base URL without a path (LM Studio shows
-  `http://127.0.0.1:1234`) is used under `/v1`. Use the model id exactly as the server lists it; when the
-  probe fails, Test Connection lists the ids the server serves.
+  `http://127.0.0.1:1234`) is used under `/v1`, and the local card has one-click buttons for LM Studio and
+  Ollama. Use the model id exactly as the server lists it; when the probe fails, Test Connection lists the
+  ids the server serves. Tested with LM Studio and `qwen3-vl-4b-instruct`.
 - **Cloud:** paste a key (it is stored when you leave the field), or keep keys on your backend with proxy
   mode.
 

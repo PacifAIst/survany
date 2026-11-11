@@ -44,11 +44,13 @@ Open the settings: right-click the extension icon → **Options**.
 
 - [ ] In LM Studio, load a vision model (for example `qwen3-vl-4b-instruct`) and start the server
   (Developer tab; it shows `http://127.0.0.1:1234`).
-- [ ] Options → **AI providers** → card **local**: **Base URL** `http://127.0.0.1:1234` (with or without `/v1`;
-  the card shows "this will use http://127.0.0.1:1234/v1"), **Model** the id exactly as LM Studio shows it.
-- [ ] **Test connection**: expect "Vision OK". If the model id is wrong, the failure lists the ids the server
-  serves: copy one into **Model**. If it says "the model returned an empty answer", the model is not
-  loaded or cannot read images.
+- [ ] Options → **AI providers** → card **local**: press **LM Studio (127.0.0.1:1234)** (or type
+  `http://127.0.0.1:1234`, with or without `/v1`), and set **Model** to the id exactly as LM Studio shows it.
+- [ ] **Test connection**: expect "Vision OK" in about half a second (qwen3-vl-4b-instruct passed 20 of 20
+  on 2026-11-11). It may add "one character off, accepted": small models sometimes drop a letter. If the
+  model id is wrong, the failure lists the ids the server serves: copy one into **Model**. "nothing answered
+  at …" means no server at that address (the default Ollama address is not LM Studio's). "the model
+  returned an empty answer" means the model is not loaded or cannot read images.
 - [ ] To use it for alerts, set **Vision provider** to `local` and put `local` first in the failover chain.
 
 ### A3. Telegram, straight from the browser

@@ -8,10 +8,13 @@ text-only model can be the **Reasoner** (suggests device actions for approval).
 ## The rule every provider must pass
 
 Before a model can be saved as the Vision provider, **Test Connection** runs a probe: it renders a random
-six-character code into a 256 px image and the model must read it back. An HTTP 200 proves nothing; a
-model that cannot see is refused. If the model answers but misreads, it gets one more image with a fresh
-code. A model that cannot see has no realistic chance of guessing either code (about 86 million
-combinations each). Measured pass rates are in `docs/BENCHMARKS.md`.
+six-character code (24 px tall characters, no character twice in a row) into a 512 x 256 image and the
+model must read it back. A reading that is exact or one character off passes: small vision models see the
+image but sometimes drop or misread a letter. An HTTP 200 proves nothing; a model that cannot see is
+refused. If the model answers but misreads, it gets one more image with a fresh code. A model that cannot
+see has no realistic chance either time (below 2 in a million per code: at most 126 of the 67.2 million
+codes are within one character of any answer). Measured pass rates are in `docs/BENCHMARKS.md` (measured
+before the 2026-11-11 font change, see `docs/PROGRESS.md`).
 
 The same check runs again when you press Save, under the settings you are saving (for example,
 `allowCloudProviders` off refuses a cloud host before any request is made).

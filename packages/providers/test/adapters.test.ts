@@ -14,7 +14,9 @@ import {
   ProviderError,
   renderProbeImage,
   PROBE_ALPHABET,
-  PROBE_SIZE,
+  PROBE_LAYOUT,
+  probeReadingMatches,
+  randomProbeCode,
 } from '../src';
 import { anthropicReply, json, type MockServer, openAiReply, startMock } from './mock-server';
 import { readProbeCode } from './probe-reader';
@@ -205,17 +207,51 @@ describe('defensive parse (§6.1)', () => {
 });
 
 describe('probe (C26)', () => {
-  it('renders a valid 256 px PNG that decodes back to the drawn pixels', () => {
+  it('renders a valid 512 x 256 PNG with anti-aliased, 24 px tall characters', () => {
     const png = renderProbeImage('ACEF34');
     expect([...png.slice(0, 8)]).toEqual([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
     const view = new DataView(png.buffer, png.byteOffset);
-    expect(view.getUint32(16)).toBe(PROBE_SIZE);
-    expect(view.getUint32(20)).toBe(PROBE_SIZE);
+    const { width, height } = PROBE_LAYOUT;
+    expect([width, height]).toEqual([512, 256]);
+    expect(view.getUint32(16)).toBe(width);
+    expect(view.getUint32(20)).toBe(height);
     const idatLen = view.getUint32(33);
     const raw = inflateSync(Buffer.from(png.slice(41, 41 + idatLen)));
-    expect(raw.length).toBe((PROBE_SIZE + 1) * PROBE_SIZE);
-    const ink = [...raw].filter((b) => b === 0).length - PROBE_SIZE; // minus filter bytes
-    expect(ink).toBeGreaterThan(500);
+    expect(raw.length).toBe((width + 1) * height);
+    const px = [...raw].filter((_, i) => i % (width + 1) !== 0); // minus filter bytes
+    const dark = px.filter((b) => b < 128).length;
+    const grey = px.filter((b) => b > 0 && b < 255).length;
+    expect(dark).toBeGreaterThan(800);
+    expect(grey).toBeGreaterThan(200); // smooth edges, not blocky pixels
+    // Ink only in the band of the characters: 24 px tall plus the stroke.
+    const rows = Array.from({ length: height }, (_, y) => px.slice(y * width, (y + 1) * width).some((b) => b < 255));
+    expect(rows.filter(Boolean).length).toBeLessThanOrEqual(24 + PROBE_LAYOUT.stroke + 2);
+  });
+
+  it('codes never repeat a character twice in a row; a reading one character off still proves sight', () => {
+    for (let i = 0; i < 500; i++) {
+      const c = randomProbeCode();
+      expect(c).toMatch(new RegExp(`^[${PROBE_ALPHABET}]{6}$`));
+      expect(c).not.toMatch(/(.)\1/);
+    }
+    expect(probeReadingMatches('VMAFT3', 'VMAFT3')).toBe(true);
+    expect(probeReadingMatches('VMFT3', 'VMAFT3')).toBe(true); // one dropped
+    expect(probeReadingMatches('VMAFFT3', 'VMAFT3')).toBe(true); // one added
+    expect(probeReadingMatches('VNAFT3', 'VMAFT3')).toBe(true); // one misread
+    expect(probeReadingMatches('UNAFT3', 'VMAFT3')).toBe(false); // two misread
+    expect(probeReadingMatches('VMAF', 'VMAFT3')).toBe(false);
+    expect(probeReadingMatches('', 'VMAFT3')).toBe(false);
+    expect(probeReadingMatches(null, 'VMAFT3')).toBe(false);
+  });
+
+  it('a small vision model that drops one character passes; the result keeps what it read', async () => {
+    mock.setHandler((r, res) => {
+      const code = readCodeFromRequest(r.body.messages[1].content[1].image_url.url);
+      json(res, 200, openAiReply(`{"code":"${code.slice(0, 2)}${code.slice(3)}"}`));
+    });
+    const r = await provider('local', '/v1', { apiKey: null }).probe();
+    expect(r).toMatchObject({ ok: true, supportsVision: true, attempts: 1 });
+    expect(r.got).toHaveLength(5);
   });
 
   it('a vision mock that receives the exact image passes', async () => {
