@@ -255,7 +255,9 @@ async function tick(): Promise<void> {
     const motion = prev ? changedFraction(prev.gray, cur.gray, 25) : 1;
     ticksSinceDetector++;
     const detections = new Map<string, NormalizedDetection[]>();
-    if (detectors.size > 0 && (motion >= 0.002 || ticksSinceDetector >= DETECTOR_EVERY_N_TICKS_WITHOUT_MOTION)) {
+    // An absence rule ("someone left") needs a fresh look every tick: an empty room is also a still one.
+    const watchesAbsence = s.recipes.some((r) => r.gate.type === 'detector' && r.gate.absent === true);
+    if (detectors.size > 0 && (watchesAbsence || motion >= 0.002 || ticksSinceDetector >= DETECTOR_EVERY_N_TICKS_WITHOUT_MOTION)) {
       ticksSinceDetector = 0;
       for (const [id, det] of detectors) {
         const info = DETECTOR_MODELS[id];

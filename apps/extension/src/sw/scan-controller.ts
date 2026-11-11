@@ -5,7 +5,7 @@
  * SECURITY-GATE SG-24: nothing is captured before the consent and disclosure screen has been accepted.
  * SECURITY-GATE SG-13: the visible "watching" indicator is set before capture starts.
  */
-import { BUILTIN_RECIPES, confirmQuestion, type Recipe } from '@survey-anything/recipes';
+import { BUILTIN_RECIPES, confirmDecision, confirmEvents, confirmQuestion, type Recipe } from '@survey-anything/recipes';
 import {
   AllProvidersFailedError,
   analyzeWithFailover,
@@ -251,15 +251,16 @@ async function confirm(recipe: Recipe, msg: CandidateMsg, c: Config): Promise<Co
   };
   try {
     const out = await analyzeWithFailover(chain, base64ToBlob(msg.confirmImageB64, 'image/jpeg'), confirmQuestion(recipe), {
-      allowedEvents: [recipe.id],
+      allowedEvents: confirmEvents(recipe),
       maxOutputTokens: c.vision.maxOutputTokens,
       framesPerCheck: msg.framesPerCheck,
       allowCall: (e) => ledger.allow(meteredOf(e)),
     });
     await store.appendLog(`confirm ${recipe.id}: ${out.providerId} answered ${out.result.event} (${out.result.confidence.toFixed(2)}); attempts ${out.attempts.map((a) => `${a.providerId}:${a.errorKind ?? a.outcome}`).join(',')}`);
     const model = resolveProfile(c, out.providerId as ProviderId)?.model ?? '';
-    if (out.result.event === recipe.id && out.result.confidence >= modelConfirmThreshold(model)) {
-      return { kind: 'alert', confirmed: true, confidence: out.result.confidence, provider: out.providerId, reason: out.result.reason };
+    const decision = confirmDecision(recipe, out.result, modelConfirmThreshold(model));
+    if (decision.alert) {
+      return { kind: 'alert', confirmed: true, confidence: decision.confidence, provider: out.providerId, reason: out.result.reason };
     }
     return { kind: 'none' };
   } catch (e) {

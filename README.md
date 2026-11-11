@@ -144,7 +144,8 @@ vulnerabilities privately: `SECURITY.md`.
 A rule is a small JSON recipe: what triggers the on-device gate (a detector class, motion, a change in a
 region, or a timer) and the question the model is asked. Built in: Fire or smoke, Robbery or break-in,
 Anything unusual, Package left at the door, 3D print failure, Dashboard turns red, Queue too long, Water
-leak, Door left open, Person in restricted zone. In Options → Watch rules, click a rule's name to see its
+leak, Door left open, Person in restricted zone, Person left the camera view (alerts when nobody is in front
+of the camera any more). In Options → Watch rules, click a rule's name to see its
 JSON, copy it in one click, or use it as a template; add your own by typing or pasting into the editor or by
 importing a file (a field guide is under the editor). Added recipes cannot change who is alerted, what
 leaves your computer, or which actions exist. When a rule watches only a region, the image the model sees

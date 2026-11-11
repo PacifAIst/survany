@@ -1,0 +1,11 @@
+{
+  "id": "person-left",
+  "title": "Person left the camera view",
+  "description": "Alerts when nobody is seen in front of the camera any more, e.g. when the person at the laptop walks away. Start watching while the person is there. The AI is asked whether a person is still visible; the alert goes out when it says no. Detection only; nobody is identified.",
+  "gate": { "type": "detector", "model": "yolox-tiny-coco", "classes": ["person"], "minConfidence": 0.4, "absent": true },
+  "confirm": {
+    "prompt": "Is any person visible in the image?",
+    "framesPerCheck": 1
+  },
+  "severity": "warning"
+}

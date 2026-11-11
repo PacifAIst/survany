@@ -51,6 +51,8 @@ export function evaluateGate(recipe: Recipe, frame: FrameAnalysis, ctx: GateCont
   const gate = recipe.gate;
   switch (gate.type) {
     case 'detector': {
+      // An absence rule never fires on a model that did not run: "nothing seen" would be meaningless.
+      if (gate.absent && (frame.missingModels.has(gate.model) || !frame.detections.has(gate.model))) return { hit: false, score: 0, labels: [], via: 'detector' };
       if (frame.missingModels.has(gate.model)) {
         // §6.3 interim fire gate: motion plus flame-color heuristic.
         const s = flameScore(ctx.prev?.rgba ?? null, frame.rgba);
@@ -58,7 +60,9 @@ export function evaluateGate(recipe: Recipe, frame: FrameAnalysis, ctx: GateCont
         return { hit: s.confidence >= thr, score: s.confidence, labels: s.confidence > 0 ? ['fire?'] : [], via: 'flame-heuristic' };
       }
       const all = frame.detections.get(gate.model) ?? [];
-      const thr = Math.max(gate.minConfidence, ctx.minYoloConfidence);
+      // The global minimum guards against false "someone is there" candidates. For an absence rule a weak
+      // detection must still count as "there" (a backlit person at a desk scores lower), so it uses its own.
+      const thr = gate.absent ? gate.minConfidence : Math.max(gate.minConfidence, ctx.minYoloConfidence);
       const wanted = new Set(gate.classes);
       const dets = all.filter((d) => wanted.has(d.label) && d.score >= thr && inRegion(d, gate));
       const labels = [...new Set(dets.map((d) => d.label))];
@@ -68,6 +72,11 @@ export function evaluateGate(recipe: Recipe, frame: FrameAnalysis, ctx: GateCont
       let motionOk = true;
       if (gate.requireMotion) motionOk = ctx.prev ? changedFraction(ctx.prev.gray, frame.gray, 25) >= 0.01 : false;
       const top = dets.reduce((m, d) => Math.max(m, d.score), 0);
+      if (gate.absent) {
+        // "Someone left": hit while fewer than minCount (default 1) of the classes are seen in the region.
+        const present = dets.length >= (gate.minCount ?? 1) && haveRequired;
+        return { hit: !present, score: present ? 0 : 1 - top, labels: present ? [] : gate.classes.map((c) => `no ${c}`), via: 'detector' };
+      }
       return { hit: dets.length > 0 && haveRequired && countOk && motionOk, score: top, labels, via: 'detector' };
     }
     case 'motion': {

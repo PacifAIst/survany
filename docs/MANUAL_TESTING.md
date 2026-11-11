@@ -89,6 +89,16 @@ copy with the zone where you want it.
   Telegram alert includes a snapshot.
 - [ ] Press **Save**. Saving runs the probe again. Expect "Saved at …"; any error lists the exact field.
 
+### A4b. Or: alert when you leave the laptop
+
+- [ ] **Watch rules**: tick only **Person left the camera view** (untick the others). Press **Save**.
+- [ ] Sit in front of the camera, click the extension icon → **Watch camera**, then walk out of view. Expect
+  a Telegram message "Person left the camera view … Confirmed by local" about 10–15 s later (measured on
+  2026-11-11 with the owner's room and LM Studio: 6–11 s, confidence 98%). Stay away: no second message.
+  Come back, sit for 20 s, leave again: a new message.
+- [ ] Sitting still, backlit by a window, must **not** alert (the owner's backlit frame: person 0.92 on the
+  device, "visible" from the model).
+
 ### A5. Point it at your webcam
 
 Do at least one of these. The camera path is the simplest.

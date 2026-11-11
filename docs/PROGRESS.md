@@ -2,7 +2,7 @@
 
 **Goal:** v1.0 as defined at the end of §8 of docs/PLAN.md
 **Current milestone:** M8 on hold at 0.1.0: owner manual testing first (`docs/MANUAL_TESTING.md`)
-**Last updated:** 2026-11-11 11:15
+**Last updated:** 2026-11-11 12:00
 
 ## Milestones
 | ID | Status (todo/doing/done) | Acceptance evidence | Notes |
@@ -139,6 +139,7 @@ Accepted for v1.0 by the owner, with the reason; each can be revisited after rel
 | 2026-11-09 | `deploy/test/compose.m6.yml` builds the backend image from the working tree on `up --build`; `gen-secrets` now also fills `GATE_AGENT_TOKEN`; `.env.example` shows the ha-mcp URL form. | A stale `survey-anything/backend:local` image would test old code. | Yes |
 | 2026-11-09 | Test Connection and the save-time probe use the **policy of the configuration being edited** with a dedicated `synthetic-probe` frame kind (purpose `probe` only, never captured pixels; `allowCloudProviders` still applies). New backend route `POST /api/proxy/probe` for proxy mode. | The stored policy may not exist yet or may forbid the host being set up; the probe image is synthetic. | Yes |
 | 2026-11-09 | CI gains an `e2e` job (Playwright Chromium, fake camera, local model mocks): M1, M2, M3 browser tests. Docker-backed suites (OME, confirm-gate) stay local. | They need Docker images and minutes of setup; the browser suites do not. | Yes |
+| 2026-11-11 | **Absence rules:** detector gates take `"absent": true` (hit while fewer than minCount, default 1, of the classes are seen in the region; uses the rule's own minConfidence, not the global minimum; runs the detector every tick; never fires when the model did not run). The confirm step asks the positive question and alerts when the answer is no (`confirmEvents` → `"visible"`, `confirmDecision`). New built-in **Person left the camera view** (`person-left`, threshold 0.4); 11 built-ins instead of PLAN's ten. | Owner's use case: alert when the person at the laptop leaves. qwen3-vl-4b-instruct answered "none" to "is the area empty, with no person?" for an empty scene 16/16 (its reason said nobody was there); clearer wordings inverted answers for scenes with people; the positive question was right 18/18 on D-Fire images and 6/6 on the owner's own room. | Yes |
 | 2026-11-11 | **C26 probe redrawn:** smooth stroke font, 24 px characters on 512 x 256 (PLAN says a 256 px image), no character twice in a row, and a reading one character off passes. | qwen3-vl-4b-instruct (LM Studio) could not read the pixel font (1/10) and read the new one 20/20 as a full probe. Blind-guess odds stay below 2 in a million per code. Bench probe rates were measured with the old probe. | Yes |
 | 2026-11-11 | Rules with a region: the model sees the whole frame with the region outlined (black-and-white dashes) rather than a crop. | The model keeps the context around the zone (a door's frame, where a person is heading); black and white cannot be mistaken for a color a recipe checks (Dashboard turns red). The gate is unchanged. | Yes |
 | 2026-11-11 | Options → Watch rules is a recipe library: click a rule to see its description and JSON, Copy JSON (one click), Use as template (fresh id `<id>-custom`, title "(custom)"), an editor to type or paste a rule (validated by `importRecipe`, SG-18; built-in ids refused), file import, and Remove for added rules; field guide below the editor. | Owner request: make the examples usable as guidance for writing a new rule. | Yes |
@@ -165,6 +166,11 @@ Accepted for v1.0 by the owner, with the reason; each can be revisited after rel
 | 2026-11-09 | Container images | Docker Hub | Pinned digests: OME v0.21.0 `sha256:172da912…`, caddy 2.10.2-alpine `sha256:4c6e91c6…`, mailpit v1.27 `sha256:e22dce5b…`, node 24-alpine `sha256:a34ab6d7…`, python 3.13-slim `sha256:e48f59cd…`. |
 
 ## Session log (newest first)
+### 2026-11-11 12:00: "Person left the camera view"
+- Done: `absent` detector option, positive-question confirm for absence rules, built-in `person-left`, field guide, README, MANUAL_TESTING A4b.
+- Tests run: unit (gate: sit/leave/stay/return/leave sequence, backlit 0.45 counts as there, region; recipes: schema, confirm decision); live against the owner's LM Studio: wording comparison (see Decisions); the owner's webcam frame (offered by the owner, kept only in the session scratchpad and deleted after): person 0.92 on the device and "visible" from the model, empty version: no person and "none" (0.98); the extension with a fake camera alternating the two (30 s each): alerts at +36 s and +101 s (6 s and 11 s after leaving), none while present, 2 local AI calls in 150 s. `pnpm vitest run`, extension e2e, typecheck, lint, check, build (see commit).
+- Next: owner sets up Telegram (and optionally Resend email) and runs MANUAL_TESTING A4b with the real camera.
+- Blockers: none.
 ### 2026-11-11 11:15: LM Studio end to end; local AI calls visible
 - Done: found Chrome running an old Desktop copy (owner then copied the new build in); served-model report and "Use …" button; LM Studio model detection (`/api/v0/models`); local AI call counter in popup and Options; "Press Save" after a passed test; intro text no longer says 256 px; README (no CORS setting needed for LM Studio), MANUAL_TESTING A2b and A6.
 - Tests run: `pnpm vitest run` → 270 passed; extension e2e 9 passed + soak skipped; live against the owner's LM Studio: detection, probe, Save, watch → confirmed alert by local (95%), local counter 1; `pnpm typecheck`, `pnpm lint`, `pnpm check`, `pnpm build`.

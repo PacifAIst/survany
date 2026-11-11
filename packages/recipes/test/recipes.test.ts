@@ -8,13 +8,20 @@ import { BUILTIN_RECIPES, importRecipe, RecipeImportError } from '../src';
 const fire = BUILTIN_RECIPES.find((r) => r.id === 'fire')!;
 
 describe('built-in recipes (§6.3)', () => {
-  it('ships exactly the ten launch recipes, each valid', () => {
+  it('ships the ten launch recipes plus "Person left the camera view" (2026-11-11), each valid', () => {
     expect(BUILTIN_RECIPES.map((r) => r.id).sort()).toEqual(
       [
         'fire', 'robbery', 'other', 'package-at-door', '3d-print-failure', 'dashboard-turns-red',
-        'queue-too-long', 'water-leak', 'door-left-open', 'person-in-restricted-zone',
+        'queue-too-long', 'water-leak', 'door-left-open', 'person-in-restricted-zone', 'person-left',
       ].sort(),
     );
+  });
+
+  it('absent inverts a detector gate and cannot be combined with requireMotion', () => {
+    const base = { id: 'gone', title: 'Gone', confirm: { prompt: 'Is the room empty of people?', framesPerCheck: 1 }, severity: 'info' };
+    const gate = { type: 'detector', model: 'yolox-tiny-coco', classes: ['person'], minConfidence: 0.6, absent: true };
+    expect(importRecipe({ ...base, gate }).gate).toMatchObject({ absent: true });
+    expect(() => importRecipe({ ...base, gate: { ...gate, requireMotion: true } })).toThrow(/absent and requireMotion/);
   });
 
   it('every file in recipes/ is a built-in and named after its id', () => {
@@ -82,5 +89,25 @@ describe('region outline for the vision model', () => {
     expect(confirmQuestion(fire)).toBe(fire.confirm.prompt);
     // The outline is neutral: never described with a color a recipe might check for.
     expect(OUTLINE_NOTE).not.toMatch(/\b(red|green|blue|yellow|orange)\b/i);
+  });
+});
+
+describe('absence rules ask the positive question (2026-11-11)', () => {
+  it('the model may answer only "visible" or "none", and the alert goes out when it does not see the person', async () => {
+    const { builtinRecipe, confirmDecision, confirmEvents, confirmQuestion, STILL_VISIBLE_EVENT } = await import('../src/index');
+    const left = builtinRecipe('person-left')!;
+    const fire = builtinRecipe('fire')!;
+    expect(confirmEvents(left)).toEqual([STILL_VISIBLE_EVENT]);
+    expect(confirmEvents(fire)).toEqual(['fire']);
+    expect(confirmQuestion(left)).toBe('Is any person visible in the image?');
+    // Nobody visible: alert, with the model's confidence that nobody is there.
+    expect(confirmDecision(left, { event: 'none', confidence: 0.95 }, 0.6)).toEqual({ alert: true, confidence: 0.95 });
+    // The model still sees someone: veto, at any confidence.
+    expect(confirmDecision(left, { event: 'visible', confidence: 0.3 }, 0.6).alert).toBe(false);
+    expect(confirmDecision(left, { event: 'visible', confidence: 0.99 }, 0.6).alert).toBe(false);
+    // Presence rules are unchanged.
+    expect(confirmDecision(fire, { event: 'fire', confidence: 0.7 }, 0.6).alert).toBe(true);
+    expect(confirmDecision(fire, { event: 'fire', confidence: 0.5 }, 0.6).alert).toBe(false);
+    expect(confirmDecision(fire, { event: 'none', confidence: 0.99 }, 0.6).alert).toBe(false);
   });
 });

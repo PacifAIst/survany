@@ -28,8 +28,14 @@ const DetectorGate = z
     requireMotion: z.boolean().optional(),
     minConfidence: z.number().min(0.05).max(0.99),
     region: RegionSchema.optional(),
+    /**
+     * Inverts the gate: it hits when the classes are NOT seen (fewer than minCount, default 1, inside the
+     * region), for "someone left" rules. requireMotion does not apply to it.
+     */
+    absent: z.boolean().optional(),
   })
-  .strict();
+  .strict()
+  .refine((g) => !(g.absent && g.requireMotion), 'absent and requireMotion cannot be combined');
 
 const MotionGate = z
   .object({

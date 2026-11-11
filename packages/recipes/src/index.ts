@@ -5,6 +5,7 @@ import fire from '../recipes/fire.watch.json';
 import other from '../recipes/other.watch.json';
 import packageAtDoor from '../recipes/package-at-door.watch.json';
 import personInRestrictedZone from '../recipes/person-in-restricted-zone.watch.json';
+import personLeft from '../recipes/person-left.watch.json';
 import printFailure from '../recipes/3d-print-failure.watch.json';
 import queueTooLong from '../recipes/queue-too-long.watch.json';
 import robbery from '../recipes/robbery.watch.json';
@@ -53,6 +54,7 @@ const RAW_BUILTINS: unknown[] = [
   waterLeak,
   doorLeftOpen,
   personInRestrictedZone,
+  personLeft,
 ];
 
 export const BUILTIN_RECIPES: readonly Recipe[] = Object.freeze(RAW_BUILTINS.map((r) => importRecipe(r)));

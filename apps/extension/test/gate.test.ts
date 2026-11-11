@@ -78,6 +78,34 @@ describe('gates', () => {
     expect(evaluateGate(zone, frame(solid(1, 1, 1), { 'yolox-tiny-coco': [det('person', 0.55, 0.8)] }), ctxStill).hit).toBe(false);
   });
 
+  it('"Person left the camera view": hits only while nobody is seen, and the window alerts once per absence', () => {
+    const left = builtinRecipe('person-left')!;
+    expect(left.gate).toMatchObject({ type: 'detector', classes: ['person'], absent: true });
+    const ctx = { prev: null, ref: null, minYoloConfidence: 0.6 };
+    const seen = frame(solid(1, 1, 1), { 'yolox-tiny-coco': [det('person', 0.9)] });
+    const empty = frame(solid(1, 1, 1), { 'yolox-tiny-coco': [] });
+    // The rule's own 0.4 applies, not the global 0.6: a backlit person at 0.45 still counts as there.
+    const backlit = frame(solid(1, 1, 1), { 'yolox-tiny-coco': [det('person', 0.45)] });
+    const weak = frame(solid(1, 1, 1), { 'yolox-tiny-coco': [det('person', 0.3)] }); // below 0.4: not seen
+    const chairOnly = frame(solid(1, 1, 1), { 'yolox-tiny-coco': [det('chair', 0.9)] });
+    expect(evaluateGate(left, seen, ctx).hit).toBe(false);
+    expect(evaluateGate(left, empty, ctx)).toMatchObject({ hit: true, score: 1, labels: ['no person'] });
+    expect(evaluateGate(left, backlit, ctx).hit).toBe(false);
+    expect(evaluateGate(left, weak, ctx).hit).toBe(true);
+    expect(evaluateGate(left, chairOnly, ctx).hit).toBe(true);
+    // The model did not run (or its weights are missing): never "nobody there".
+    expect(evaluateGate(left, frame(solid(1, 1, 1)), ctx).hit).toBe(false);
+    expect(evaluateGate(left, frame(solid(1, 1, 1), {}, ['yolox-tiny-coco']), ctx).hit).toBe(false);
+    // With a region, a person outside it counts as gone.
+    const atDesk = { ...left, gate: { ...left.gate, region: { x: 0, y: 0, w: 0.5, h: 1 } } } as Recipe;
+    expect(evaluateGate(atDesk, frame(solid(1, 1, 1), { 'yolox-tiny-coco': [det('person', 0.9, 0.2)] }), ctx).hit).toBe(false);
+    expect(evaluateGate(atDesk, frame(solid(1, 1, 1), { 'yolox-tiny-coco': [det('person', 0.9, 0.8)] }), ctx).hit).toBe(true);
+    // Sit, leave (alert once), stay away (no repeat), come back (clears), leave again (alerts again).
+    const w = new HitWindow(2, 3);
+    const seq = [seen, seen, empty, empty, empty, empty, seen, seen, seen, empty, empty].map((f) => w.push(evaluateGate(left, f, ctx).hit));
+    expect(seq).toEqual([null, null, null, 'rise', null, null, null, null, 'fall', null, 'rise']);
+  });
+
   it('fire falls back to the interim flame heuristic when its weights are missing (§6.3)', () => {
     const fire = builtinRecipe('fire')!;
     const prev = frame(solid(250, 120, 20));
