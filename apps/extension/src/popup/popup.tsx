@@ -110,7 +110,7 @@ function Popup() {
         </div>
       )}
       <p class="muted">
-        AI calls today: {s.budget ? `${s.budget.dayCalls} / ${s.budget.dailyMaxApiCalls}` : 'n/a'}
+        AI calls today: {s.budget ? `${s.budget.localDayCalls} local (free) · ${s.budget.dayCalls} / ${s.budget.dailyMaxApiCalls} cloud` : 'n/a'}
         {s.budget?.exhausted ? ' (budget reached: unconfirmed alerts only)' : ''}
       </p>
       {s.notices.length > 0 && (

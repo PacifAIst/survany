@@ -19,10 +19,10 @@ import {
 import { openAiBase, type ProbeResult } from '@survey-anything/providers';
 import type { ActionToolsResponse } from '@survey-anything/shared';
 import type { BudgetReport } from '../sw/budget';
-import type { PopupStatus } from '../sw/messages';
+import type { LocalDetect, PopupStatus } from '../sw/messages';
 import { requestHost, sw } from '../ui/rpc';
 import { RecipeLibrary } from './recipes';
-import { type Draft, getPath, importConfigJson, moveInList, needsNonRedundantAck, omit, setPath, toggleChannel } from './model';
+import { type Draft, getPath, importConfigJson, moveInList, needsNonRedundantAck, omit, pickLocalModel, setPath, toggleChannel } from './model';
 
 type Secrets = Record<string, string>;
 
@@ -116,6 +116,19 @@ function ProviderCard(p: { id: ProviderId; path: string; draft: Draft; set: (pat
   const keyRef = getPath(p.draft, `${p.path}.apiKeyRef`) as string | null;
 
   const proxyMode = getPath(p.draft, 'proxyMode') === true;
+  // Local card: ask the server which models it has and fill in one that can see images.
+  const [found, setFound] = useState<{ ok: boolean; message: string } | null>(null);
+  const detect = async (url: string): Promise<void> => {
+    setFound(null);
+    try {
+      if (!(await requestHost(url))) throw new Error('permission to reach this host was not granted');
+      const r = pickLocalModel(await sw<LocalDetect>({ type: 'detect-local', baseUrl: url }), model);
+      if (r.model && r.model !== model) p.set(`${p.path}.model`, r.model);
+      setFound({ ok: r.ok, message: r.message });
+    } catch (e) {
+      setFound({ ok: false, message: e instanceof Error ? e.message : String(e) });
+    }
+  };
   const test = async (): Promise<void> => {
     setBusy(true);
     setProbe(null);
@@ -146,7 +159,14 @@ function ProviderCard(p: { id: ProviderId; path: string; draft: Draft; set: (pat
         <div class="row">
           <span class="muted">Your local server:</span>
           {LOCAL_SERVERS.map((s) => (
-            <button key={s.name} aria-pressed={baseUrl === s.url} onClick={() => p.set(`${p.path}.baseUrl`, s.url)}>
+            <button
+              key={s.name}
+              aria-pressed={baseUrl === s.url}
+              onClick={() => {
+                p.set(`${p.path}.baseUrl`, s.url);
+                void detect(s.url);
+              }}
+            >
               {s.name} ({s.url.replace('http://', '').replace('/v1', '')})
             </button>
           ))}
@@ -156,6 +176,16 @@ function ProviderCard(p: { id: ProviderId; path: string; draft: Draft; set: (pat
         <div class="muted">Local servers (LM Studio, Ollama, vLLM, llama.cpp) serve the API under /v1: this will use {openAiBase('local', baseUrl)}</div>
       )}
       <TextField label="Model" path={`${p.path}.model`} draft={p.draft} set={p.set} nullable />
+      {p.id === 'local' && (
+        <button onClick={() => void detect(baseUrl)} aria-label="Find the vision model on this server">
+          Find the vision model on this server
+        </button>
+      )}
+      {p.id === 'local' && found && (
+        <div class={found.ok ? 'ok' : 'error'} data-testid="detect-local" role="status">
+          {found.message}
+        </div>
+      )}
       {model && <div class="muted">License: {MODEL_LICENSES[model] ?? 'unknown: read the model card before use'}</div>}
       {p.id === 'openrouter' && (
         <div class="muted">
@@ -174,9 +204,15 @@ function ProviderCard(p: { id: ProviderId; path: string; draft: Draft; set: (pat
       {probe && (
         <div class={probe.ok ? 'ok' : 'error'} data-testid={`probe-${p.id}`} role="status">
           {probe.ok
-            ? `Vision OK: read the code back in ${'latencyMs' in probe ? probe.latencyMs : 0} ms${'got' in probe && probe.got && probe.got !== probe.expected ? ` (showed ${probe.expected}, read ${probe.got}: one character off, accepted)` : ''}`
+            ? `Vision OK: read the code back in ${'latencyMs' in probe ? probe.latencyMs : 0} ms${'got' in probe && probe.got && probe.got !== probe.expected ? ` (showed ${probe.expected}, read ${probe.got}: one character off, accepted)` : ''}. Press Save at the bottom of the page to use it.`
             : `Failed: ${probe.error ?? 'unknown error'}${'expected' in probe && probe.expected ? ` (showed ${probe.expected}, read ${probe.got ?? 'nothing'})` : ''}`}
           {'hint' in probe && probe.hint && <pre>{probe.hint}</pre>}
+          {p.id === 'local' && probe.ok && 'servedModel' in probe && probe.servedModel && probe.servedModel !== model && (
+            <div class="warn" data-testid="served-model">
+              The server answered with <strong>{probe.servedModel}</strong>, not "{model}" (LM Studio answers with its loaded model whatever the name says).{' '}
+              <button onClick={() => p.set(`${p.path}.model`, probe.servedModel)}>Use {probe.servedModel}</button>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -353,7 +389,7 @@ function Options() {
       )}
 
       <h2>AI providers</h2>
-      <p class="muted">The Vision provider must read back a code from a 256 px test image before it can be saved. Keys stay in this browser unless proxy mode is on (recommended with a backend).</p>
+      <p class="muted">The Vision provider must read back a code from a test image before it can be saved. Keys stay in this browser unless proxy mode is on (recommended with a backend).</p>
       <label>
         Vision provider{' '}
         <select value={primaryId} onChange={(e) => {
@@ -459,7 +495,7 @@ function Options() {
         {budget ? (
           <>
             <div>
-              Today (UTC {budget.day}): <strong>{budget.dayCalls}</strong> of {budget.dailyMaxApiCalls} cloud AI calls, <strong>{budget.dayTokens}</strong> of {budget.dailyTokenCap} tokens; {budget.minuteCalls} of {budget.maxCallsPerMinute} in the last minute. Local models are not counted.
+              Today (UTC {budget.day}): <strong>{budget.dayCalls}</strong> of {budget.dailyMaxApiCalls} cloud AI calls, <strong>{budget.dayTokens}</strong> of {budget.dailyTokenCap} tokens; {budget.minuteCalls} of {budget.maxCallsPerMinute} in the last minute. Local model calls today: <strong>{budget.localDayCalls}</strong> (free, not limited).
             </div>
             {budget.exhausted && (
               <div class="error" role="alert">

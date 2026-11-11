@@ -64,10 +64,20 @@ export type ToSw =
   | { target: 'sw'; type: 'stop-stream' }
   | { target: 'sw'; type: 'test-provider'; profile: unknown; allowCloudProviders: boolean; proxyMode: boolean }
   | { target: 'sw'; type: 'action-tools' }
+  | { target: 'sw'; type: 'detect-local'; baseUrl: string }
   | { target: 'sw'; type: 'save-config'; config: unknown }
   | { target: 'sw'; type: 'send-test-alert'; contactId: string }
   | { target: 'sw'; type: 'debug-stats' }
   | FromOffscreen;
+
+/** What a local model server reports about its models (LM Studio says which can see and which are loaded). */
+export interface LocalDetect {
+  reachable: boolean;
+  /** 'lmstudio' when the server answered LM Studio's /api/v0/models with model types. */
+  server: 'lmstudio' | 'openai-compatible' | null;
+  models: { id: string; vision: boolean | null; loaded: boolean | null }[];
+  error: string | null;
+}
 
 export interface PopupStatus {
   consented: boolean;

@@ -55,6 +55,9 @@ function imageOf(content: unknown): string | null {
   return null;
 }
 
+/** The model the mock "has loaded". */
+export const SERVED_MODEL = 'mock-vision';
+
 export async function startModelMock(answers: MockAnswers): Promise<ModelMock> {
   const calls: MockCall[] = [];
   const server: Server = createServer((req, res) => {
@@ -70,6 +73,15 @@ export async function startModelMock(answers: MockAnswers): Promise<ModelMock> {
         return;
       }
       res.setHeader('content-type', 'application/json');
+      // Model listings, as LM Studio serves them (/api/v0 says which models can see and which are loaded).
+      if (req.method === 'GET' && req.url === '/api/v0/models') {
+        res.end(JSON.stringify({ data: [{ id: 'mock-text', type: 'llm', state: 'not-loaded' }, { id: SERVED_MODEL, type: 'vlm', state: 'loaded' }, { id: 'mock-embed', type: 'embeddings', state: 'not-loaded' }] }));
+        return;
+      }
+      if (req.method === 'GET' && req.url === '/v1/models') {
+        res.end(JSON.stringify({ data: [{ id: 'mock-text' }, { id: SERVED_MODEL }] }));
+        return;
+      }
       let body: { model?: string; messages?: { role: string; content: unknown }[] } = {};
       try {
         body = JSON.parse(Buffer.concat(chunks).toString('utf8')) as typeof body;
@@ -95,7 +107,8 @@ export async function startModelMock(answers: MockAnswers): Promise<ModelMock> {
         res.end(JSON.stringify({ error: String(e) }));
         return;
       }
-      res.end(JSON.stringify({ choices: [{ message: { role: 'assistant', content: text } }], usage: { prompt_tokens: kind === 'confirm' ? 400 : 120, completion_tokens: 20 } }));
+      // Like LM Studio: the answer always comes from the loaded model, whatever id was asked for.
+      res.end(JSON.stringify({ model: SERVED_MODEL, choices: [{ message: { role: 'assistant', content: text } }], usage: { prompt_tokens: kind === 'confirm' ? 400 : 120, completion_tokens: 20 } }));
     });
   });
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));

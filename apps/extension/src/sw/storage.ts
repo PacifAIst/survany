@@ -60,7 +60,7 @@ const DEFAULTS: { [K in keyof StoreShape]: () => StoreShape[K] } = {
   secrets: () => ({}),
   armed: () => ({ armed: false, source: null, armedAt: null }),
   rules: () => ({}),
-  budget: () => ({ day: '', dayCalls: 0, dayTokens: 0, minute: [], noticeDay: null, freeDayCalls: 0 }),
+  budget: () => ({ day: '', dayCalls: 0, dayTokens: 0, minute: [], noticeDay: null, freeDayCalls: 0, localDayCalls: 0 }),
   outbox: () => [],
   consentAt: () => null,
   cameraGranted: () => false,

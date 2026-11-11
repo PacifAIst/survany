@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Budget engine (§3 principle 4, §10 "Budget exhausted"). Cloud calls only; local providers are
- * free. State is persisted after every change so a service worker restart cannot reset it.
+ * free and never limited, but they are counted (localDayCalls) so the popup can show the AI at work.
+ * State is persisted after every change so a service worker restart cannot reset it.
  * hardStopOnBudget is literal true: when a limit is hit, metered calls stop.
  */
 import type { Config } from '@survey-anything/shared';
@@ -18,6 +19,8 @@ export interface BudgetState {
   noticeDay: string | null;
   /** Calls to OpenRouter `:free` models today (C27). */
   freeDayCalls: number;
+  /** Calls to local models today: shown, never limited. Absent in state saved before 2026-11-11. */
+  localDayCalls?: number;
 }
 
 export type BudgetBlock = 'minute' | 'day-calls' | 'day-tokens' | 'openrouter-free-minute' | 'openrouter-free-day';
@@ -56,7 +59,7 @@ export class BudgetLedger {
   private roll(): void {
     const t = this.now();
     const day = utcDay(t);
-    if (this.state.day !== day) this.state = { ...this.state, day, dayCalls: 0, dayTokens: 0, freeDayCalls: 0 };
+    if (this.state.day !== day) this.state = { ...this.state, day, dayCalls: 0, dayTokens: 0, freeDayCalls: 0, localDayCalls: 0 };
     this.state.minute = this.state.minute.filter((x) => t - x < 60_000);
   }
 
@@ -86,8 +89,12 @@ export class BudgetLedger {
 
   /** Records a metered call before it is made, so a crash mid-call still counts it. */
   async begin(c: MeteredCall): Promise<void> {
-    if (!c.cloud) return;
     this.roll();
+    if (!c.cloud) {
+      this.state.localDayCalls = (this.state.localDayCalls ?? 0) + 1;
+      await this.save(this.state);
+      return;
+    }
     this.state.minute.push(this.now());
     this.state.dayCalls++;
     if (this.isOpenRouterFree(c)) this.state.freeDayCalls++;
@@ -128,6 +135,7 @@ export class BudgetLedger {
     return {
       day: this.state.day,
       dayCalls: this.state.dayCalls,
+      localDayCalls: this.state.localDayCalls ?? 0,
       dailyMaxApiCalls: this.limits.dailyMaxApiCalls,
       dayTokens: this.state.dayTokens,
       dailyTokenCap: this.limits.dailyTokenCap,
@@ -143,6 +151,8 @@ export class BudgetLedger {
 export interface BudgetReport {
   day: string;
   dayCalls: number;
+  /** Local model calls today (free, not limited). */
+  localDayCalls: number;
   dailyMaxApiCalls: number;
   dayTokens: number;
   dailyTokenCap: number;

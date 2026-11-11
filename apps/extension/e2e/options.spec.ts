@@ -80,11 +80,15 @@ test('M3: the whole Options page, end to end', async () => {
 
   // --- Vision provider: local model that can read the probe -----------------------------------
   const local = card(page, 'local');
-  // One click fills the usual local server addresses.
+  // One click fills the usual local server addresses and asks the server for its vision model. Whatever runs
+  // on this machine's 1234 and 11434, wait for each answer before going on.
+  const detected = page.getByTestId('detect-local');
   await local.getByRole('button', { name: /^LM Studio/ }).click();
   await expect(local.getByLabel('Base URL')).toHaveValue('http://127.0.0.1:1234/v1');
+  await expect(detected).toContainText(/nothing answered at http:\/\/127\.0\.0\.1:1234\/v1|Model set to|LM Studio is running/);
   await local.getByRole('button', { name: /^Ollama/ }).click();
   await expect(local.getByLabel('Base URL')).toHaveValue('http://127.0.0.1:11434/v1');
+  await expect(detected).toContainText(/nothing answered at http:\/\/127\.0\.0\.1:11434\/v1|This server has|lists no models/);
   // Nothing listening: the page names the address and the usual servers instead of "Failed to fetch".
   await local.getByLabel('Base URL').fill('http://127.0.0.1:9');
   await local.getByLabel('Model', { exact: true }).fill('mock-vision');
@@ -94,9 +98,18 @@ test('M3: the whole Options page, end to end', async () => {
   // Entered as LM Studio shows it, without /v1: the page says what it will use, and the call goes to /v1.
   await local.getByLabel('Base URL').fill(vision.url);
   await expect(local).toContainText(`this will use ${vision.url}/v1`);
-  await local.getByLabel('Model', { exact: true }).fill('mock-vision');
+  // "Find the vision model" reads LM Studio's model list and picks the loaded model that can see.
+  await local.getByLabel('Model', { exact: true }).fill('qwen2.5vl');
+  await local.getByRole('button', { name: 'Find the vision model on this server' }).click();
+  await expect(detected).toContainText('Model set to mock-vision: it can see images and is loaded in LM Studio.');
+  await expect(local.getByLabel('Model', { exact: true })).toHaveValue('mock-vision');
+  // A wrong model name still passes on LM Studio (it answers with its loaded model): the page says so.
+  await local.getByLabel('Model', { exact: true }).fill('qwen2.5vl');
   await local.getByRole('button', { name: 'Test connection: local' }).click();
-  await expect(page.getByTestId('probe-local')).toContainText(/Vision OK: read the code back in \d+ ms/);
+  await expect(page.getByTestId('probe-local')).toContainText(/Vision OK: read the code back in \d+ ms.*Press Save at the bottom of the page to use it\./);
+  await expect(page.getByTestId('served-model')).toContainText('The server answered with mock-vision, not "qwen2.5vl"');
+  await page.getByTestId('served-model').getByRole('button', { name: 'Use mock-vision' }).click();
+  await expect(local.getByLabel('Model', { exact: true })).toHaveValue('mock-vision');
   expect(vision.calls.filter((c) => c.kind === 'probe').map((c) => c.path)).toEqual(['/v1/chat/completions']);
   // Testing did not save anything.
   expect(await storage(page, 'config')).toBeUndefined();

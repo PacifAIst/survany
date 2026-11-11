@@ -25,6 +25,8 @@ export interface ChatImageRequest {
 export interface ChatImageResponse {
   text: string;
   usage: Usage;
+  /** The model id the server says answered (LM Studio answers with its loaded model whatever id was asked). */
+  model?: string | null;
 }
 
 export interface AnalyzeOpts {

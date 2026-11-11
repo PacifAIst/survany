@@ -63,8 +63,14 @@ describe('budget report for the Options page (M3)', () => {
     expect(l.report()).toMatchObject({ day: '2026-11-09', dayCalls: 1, dayTokens: 1200, minuteCalls: 1, exhausted: false, blockedBy: null, resetsAt: '2026-11-10T00:00:00.000Z' });
     await l.begin(call);
     expect(l.report()).toMatchObject({ dayCalls: 2, exhausted: true, blockedBy: 'day-calls' });
-    await l.begin({ cloud: false, providerId: 'local', model: 'x' });
-    expect(l.report().dayCalls).toBe(2); // local calls are free and uncounted
+    // Local calls are free and never blocked, but they are counted separately so the popup shows them,
+    // also on top of state saved before localDayCalls existed.
+    const local = { cloud: false, providerId: 'local', model: 'x' };
+    expect(l.allow(local)).toBe(true);
+    await l.begin(local);
+    await l.begin(local);
+    expect(l.report()).toMatchObject({ dayCalls: 2, localDayCalls: 2 });
+    expect(st.localDayCalls).toBe(2);
   });
 });
 
@@ -230,6 +236,35 @@ describe('Options page model', () => {
     expect(importConfigJson(JSON.stringify({ ...EXAMPLE_CONFIG_JSON, alerts: { ...EXAMPLE_CONFIG_JSON.alerts, channels: [] } })).ok).toBe(false);
     const withKey = importConfigJson(JSON.stringify({ ...EXAMPLE_CONFIG_JSON, note: 'sk-abcdefghijklmnopqrstuvwxyz012345' }));
     expect(withKey.ok).toBe(false);
+  });
+
+  it('local card: picks the loaded vision model LM Studio reports, and says what is missing otherwise', async () => {
+    const { pickLocalModel } = await import('../src/options/model');
+    const lm = (models: { id: string; vision: boolean; loaded: boolean }[]) => ({ reachable: true, server: 'lmstudio' as const, models, error: null });
+    // The owner's LM Studio on 2026-11-11: one vision model, loaded; text models not loaded.
+    const owner = lm([
+      { id: 'qwen3-vl-4b-instruct', vision: true, loaded: true },
+      { id: 'llama-3.2-3b-instruct', vision: false, loaded: false },
+      { id: 'gemma-4-e4b-it', vision: false, loaded: false },
+    ]);
+    expect(pickLocalModel(owner, 'qwen2.5vl')).toMatchObject({ model: 'qwen3-vl-4b-instruct', ok: true });
+    expect(pickLocalModel(owner, 'qwen2.5vl').message).toMatch(/can see images and is loaded in LM Studio/);
+    // A loaded vision model wins over a downloaded one; the current one is kept when it fits.
+    const two = lm([{ id: 'vl-a', vision: true, loaded: false }, { id: 'vl-b', vision: true, loaded: true }]);
+    expect(pickLocalModel(two, null).model).toBe('vl-b');
+    expect(pickLocalModel(lm([{ id: 'vl-a', vision: true, loaded: false }]), null).message).toMatch(/not loaded yet/);
+    // No vision model: nothing is filled in and the message says what to do.
+    const none = pickLocalModel(lm([{ id: 'llama-3.2-3b-instruct', vision: false, loaded: true }]), 'qwen2.5vl');
+    expect(none).toMatchObject({ model: null, ok: false });
+    expect(none.message).toMatch(/no model that can see images \(it has: llama-3.2-3b-instruct\)/);
+    // Other servers only list ids.
+    const plain = { reachable: true, server: 'openai-compatible' as const, models: [{ id: 'qwen2.5vl:7b', vision: null, loaded: null }], error: null };
+    expect(pickLocalModel(plain, 'qwen2.5vl:7b')).toMatchObject({ model: 'qwen2.5vl:7b', ok: true });
+    expect(pickLocalModel(plain, 'qwen2.5vl')).toMatchObject({ model: null, ok: false, message: expect.stringMatching(/This server has: qwen2.5vl:7b/) });
+    // Nothing running.
+    const down = pickLocalModel({ reachable: false, server: null, models: [], error: 'nothing answered at http://127.0.0.1:11434/v1: is the server running?' }, 'qwen2.5vl');
+    expect(down).toMatchObject({ model: null, ok: false });
+    expect(down.message).toMatch(/LM Studio: Developer tab → Start server \(address http:\/\/127.0.0.1:1234\)/);
   });
 
   it('recipe library: a template is a valid recipe with a fresh id; the editor validates like an import and refuses built-in ids', async () => {

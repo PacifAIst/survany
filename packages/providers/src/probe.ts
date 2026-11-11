@@ -188,6 +188,8 @@ export interface ProbeResult {
   hint: string | null;
   /** How many codes were shown before the result (1 or more). */
   attempts: number;
+  /** The model id the server reported for its answer, when it reported one. */
+  servedModel?: string | null;
 }
 
 interface ChatCapable {
@@ -254,6 +256,7 @@ async function probeOnce(adapter: ChatCapable, opts: ProbeOpts, expected: string
       error: ok ? null : 'the model did not read the code in the probe image; it cannot be used as the Vision provider',
       hint: null,
       attempts: attempt,
+      servedModel: out.model ?? null,
     };
   } catch (e) {
     const err = e instanceof ProviderError ? e : null;

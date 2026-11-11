@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /** Pure helpers for the Options page, unit-tested without a browser. */
 import { assertNoEmbeddedSecrets, parseConfig, type Config } from '@survey-anything/shared';
+import type { LocalDetect } from '../sw/messages';
 
 export type Draft = Record<string, unknown>;
 
@@ -113,4 +114,42 @@ export function checkNewRecipe<R extends { id: string }>(
   }
   if (builtinIds.includes(recipe.id)) return { ok: false, errors: [`id "${recipe.id}" is a built-in rule: choose another id (for example "${recipe.id}-custom")`] };
   return { ok: true, recipe };
+}
+
+/**
+ * Chooses the Model for the local card from what the server reports (LM Studio says which models can see
+ * and which are loaded). Prefers the current model when it fits, then a loaded vision model.
+ */
+export function pickLocalModel(d: LocalDetect, current: string | null): { model: string | null; ok: boolean; message: string } {
+  if (!d.reachable) {
+    return {
+      model: null,
+      ok: false,
+      message: `${d.error ?? 'nothing answered'}. LM Studio: Developer tab → Start server (address http://127.0.0.1:1234). Ollama: address http://127.0.0.1:11434.`,
+    };
+  }
+  if (d.server === 'lmstudio') {
+    const vision = d.models.filter((m) => m.vision === true);
+    const loaded = vision.filter((m) => m.loaded === true);
+    const pool = loaded.length > 0 ? loaded : vision;
+    const pick = pool.find((m) => m.id === current) ?? pool[0];
+    if (!pick) {
+      const others = d.models.map((m) => m.id).slice(0, 8);
+      return {
+        model: null,
+        ok: false,
+        message: `LM Studio is running but has no model that can see images${others.length ? ` (it has: ${others.join(', ')})` : ''}. In LM Studio, download a vision model (for example search "qwen3-vl"), load it, then press LM Studio again.`,
+      };
+    }
+    const more = vision.filter((m) => m.id !== pick.id).map((m) => m.id);
+    return {
+      model: pick.id,
+      ok: true,
+      message: `Model set to ${pick.id}: it can see images${pick.loaded ? ' and is loaded in LM Studio' : ', but is not loaded yet: load it in LM Studio (or turn on just-in-time loading)'}.${more.length ? ` Other vision models: ${more.join(', ')}.` : ''} Now press Test connection, then Save.`,
+    };
+  }
+  const ids = d.models.map((m) => m.id);
+  if (current && ids.includes(current)) return { model: current, ok: true, message: `This server has ${current}. Now press Test connection, then Save.` };
+  if (ids.length === 0) return { model: null, ok: false, message: 'The server answered but lists no models: load a model that can see images.' };
+  return { model: null, ok: false, message: `This server has: ${ids.slice(0, 20).join(', ')}. Put the id of the one that can see images in Model.` };
 }

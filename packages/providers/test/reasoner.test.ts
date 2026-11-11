@@ -81,7 +81,7 @@ describe('reasonText request shape', () => {
       { id: 'local', baseUrl: `${mock.url}/v1`, model: 'm', apiKey: null, timeoutMs: 5000, fetchFn: (u, i) => fetch(u, i) },
       { detection, rule: 'fire', tools: TOOLS, maxOutputTokens: 200 },
     );
-    expect(out).toEqual({ text: '{"tool":"none"}', usage: { inputTokens: 120, outputTokens: 6 } });
+    expect(out).toEqual({ text: '{"tool":"none"}', usage: { inputTokens: 120, outputTokens: 6 }, model: null });
     const [first, second] = mock.requests;
     expect(first!.body.max_completion_tokens).toBe(200);
     expect(second!.body.max_tokens).toBe(200);

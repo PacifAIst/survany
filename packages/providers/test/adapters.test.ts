@@ -244,6 +244,15 @@ describe('probe (C26)', () => {
     expect(probeReadingMatches(null, 'VMAFT3')).toBe(false);
   });
 
+  it('the probe reports which model the server says answered (LM Studio answers with its loaded model)', async () => {
+    mock.setHandler((r, res) => {
+      const code = readCodeFromRequest(r.body.messages[1].content[1].image_url.url);
+      json(res, 200, { ...(openAiReply(`{"code":"${code}"}`) as object), model: 'qwen3-vl-4b-instruct' });
+    });
+    const r = await provider('local', '/v1', { apiKey: null }).probe();
+    expect(r).toMatchObject({ ok: true, servedModel: 'qwen3-vl-4b-instruct' });
+  });
+
   it('a small vision model that drops one character passes; the result keeps what it read', async () => {
     mock.setHandler((r, res) => {
       const code = readCodeFromRequest(r.body.messages[1].content[1].image_url.url);

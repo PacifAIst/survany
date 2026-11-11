@@ -9,6 +9,7 @@ import { ProviderError } from './errors';
 import { postJson } from './http';
 
 interface ChatCompletion {
+  model?: unknown;
   choices?: { message?: { content?: unknown } }[];
   usage?: { prompt_tokens?: number; completion_tokens?: number };
   error?: unknown;
@@ -35,7 +36,7 @@ export function openAiBase(id: string, baseUrl: string): string {
  * The text of a chat completion, or a clear error when the server answered without one (some servers
  * reply 200 with {"error": ...} to a wrong path or model). Never an empty string passed off as an answer.
  */
-export function completionText(json: unknown, providerId: string): { text: string; usage: { inputTokens: number; outputTokens: number } } {
+export function completionText(json: unknown, providerId: string): { text: string; usage: { inputTokens: number; outputTokens: number }; model: string | null } {
   const c = (json ?? {}) as ChatCompletion;
   if (!Array.isArray(c.choices) || c.choices.length === 0) {
     const err = typeof c.error === 'string' ? c.error : c.error && typeof c.error === 'object' && 'message' in c.error ? String((c.error as { message: unknown }).message) : null;
@@ -51,6 +52,7 @@ export function completionText(json: unknown, providerId: string): { text: strin
   return {
     text: contentText(c.choices[0]?.message?.content),
     usage: { inputTokens: c.usage?.prompt_tokens ?? 0, outputTokens: c.usage?.completion_tokens ?? 0 },
+    model: typeof c.model === 'string' && c.model ? c.model : null,
   };
 }
 

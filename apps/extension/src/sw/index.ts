@@ -9,7 +9,7 @@ import { parseConfig, type ResolvedProfile, ResolvedProfileSchema } from '@surve
 import { BudgetLedger } from './budget';
 import { createGuardedFetch, type PolicyConfig } from './guarded-fetch';
 import { HEARTBEAT_ALARM, ensureHeartbeatAlarm, sendHeartbeat } from './heartbeat';
-import { isFromExtension, type PopupStatus, type ToSw } from './messages';
+import { isFromExtension, type LocalDetect, type PopupStatus, type ToSw } from './messages';
 import { backendClient } from './runtime';
 import {
   arm,
@@ -116,6 +116,39 @@ async function probeProfile(policy: PolicyConfig, p: ResolvedProfile): Promise<P
   return r;
 }
 
+/**
+ * Asks a local model server which models it has. LM Studio's /api/v0/models also says which models can
+ * see ("vlm") and which are loaded; other servers only list ids (GET /v1/models). Loopback and private
+ * hosts only (allowCloudProviders is false for this request), and nothing but a GET is sent.
+ */
+async function detectLocal(baseUrl: string): Promise<LocalDetect> {
+  const { config } = await store.loadConfig();
+  const gf = createGuardedFetch(async () => ({ allowCloudProviders: false, proxyMode: false, egress: { alertMedia: false, liveView: false }, backend: config?.backend ?? { url: null } }));
+  const get = (url: string): Promise<Response> => gf(url, { method: 'GET', signal: AbortSignal.timeout(5000) }, { purpose: 'probe', frames: 'none' });
+  const base = openAiBase('local', baseUrl);
+  let origin: string;
+  try {
+    origin = new URL(base).origin;
+  } catch {
+    return { reachable: false, server: null, models: [], error: 'Base URL is not a valid address' };
+  }
+  try {
+    const res = await get(`${origin}/api/v0/models`);
+    const body = res.ok ? ((await res.json().catch(() => null)) as { data?: { id?: unknown; type?: unknown; state?: unknown }[] } | null) : null;
+    const typed = Array.isArray(body?.data) && body.data.some((m) => typeof m.type === 'string');
+    if (typed && body?.data) {
+      const models = body.data
+        .filter((m) => typeof m.id === 'string' && m.type !== 'embeddings')
+        .map((m) => ({ id: m.id as string, vision: m.type === 'vlm', loaded: m.state === 'loaded' }));
+      return { reachable: true, server: 'lmstudio', models, error: null };
+    }
+    const ids = await listModels({ id: 'local', baseUrl, apiKey: null, fetchFn: (url, init) => gf(url, { ...init, signal: AbortSignal.timeout(5000) }, { purpose: 'probe', frames: 'none' }) });
+    return { reachable: true, server: 'openai-compatible', models: ids.map((id) => ({ id, vision: null, loaded: null })), error: null };
+  } catch (e) {
+    return { reachable: false, server: null, models: [], error: `nothing answered at ${base}: is the server running? (${e instanceof Error ? e.message : String(e)})` };
+  }
+}
+
 async function status(): Promise<PopupStatus> {
   const [consentAt, cameraGranted, armed, streaming, notices, device] = await Promise.all([
     store.get('consentAt'),
@@ -162,6 +195,8 @@ async function handle(msg: ToSw): Promise<unknown> {
       const { config } = await store.loadConfig();
       return probeProfile({ allowCloudProviders: msg.allowCloudProviders, proxyMode: msg.proxyMode, egress: { alertMedia: false, liveView: false }, backend: config?.backend ?? { url: null } }, p.data);
     }
+    case 'detect-local':
+      return detectLocal(msg.baseUrl);
     case 'action-tools': {
       const backend = await backendClient();
       return backend ? backend.actionTools() : null;

@@ -42,16 +42,23 @@ Open the settings: right-click the extension icon → **Options**.
 
 ### A2b. Or a local model in LM Studio (optional, no API key)
 
-- [ ] In LM Studio, load a vision model (for example `qwen3-vl-4b-instruct`) and start the server
-  (Developer tab; it shows `http://127.0.0.1:1234`).
-- [ ] Options → **AI providers** → card **local**: press **LM Studio (127.0.0.1:1234)** (or type
-  `http://127.0.0.1:1234`, with or without `/v1`), and set **Model** to the id exactly as LM Studio shows it.
+You need a model that can see images (LM Studio marks them as vision models; `qwen3-vl-4b-instruct` works).
+The defaults in the **local** card (`127.0.0.1:11434`, `qwen2.5vl`) are for Ollama; the steps below replace them.
+
+- [ ] In LM Studio, load the vision model and start the server (Developer tab; "Reachable at
+  `http://127.0.0.1:1234`"). Nothing else to change in LM Studio.
+- [ ] Options → **AI providers** → **Vision provider** `local` → card **local**: press **LM Studio
+  (127.0.0.1:1234)**. Base URL becomes `http://127.0.0.1:1234/v1` and **Model** fills itself with the loaded
+  vision model; expect "Model set to qwen3-vl-4b-instruct: it can see images and is loaded in LM Studio".
+  (If it says LM Studio has no model that can see images, load one and press the button again.)
 - [ ] **Test connection**: expect "Vision OK" in about half a second (qwen3-vl-4b-instruct passed 20 of 20
-  on 2026-11-11). It may add "one character off, accepted": small models sometimes drop a letter. If the
-  model id is wrong, the failure lists the ids the server serves: copy one into **Model**. "nothing answered
-  at …" means no server at that address (the default Ollama address is not LM Studio's). "the model
-  returned an empty answer" means the model is not loaded or cannot read images.
-- [ ] To use it for alerts, set **Vision provider** to `local` and put `local` first in the failover chain.
+  on 2026-11-11). It may add "one character off, accepted": small models sometimes drop a letter. If it
+  warns "The server answered with …, not …", press **Use …**: LM Studio answers with its loaded model
+  whatever the Model field says, so the field should name it. "nothing answered at …" means no server at
+  that address.
+- [ ] Under **Failover chain**, `local` must be first (it is by default).
+- [ ] Press **Save** at the bottom of the page. Test connection never saves; until you Save, watching uses
+  the previous settings.
 
 ### A3. Telegram, straight from the browser
 
@@ -101,7 +108,10 @@ Do at least one of these. The camera path is the simplest.
 - [ ] Stand only in the other part of the frame: **no** alert.
 - [ ] Stay in view for a minute: **no** second alert (one alert per event; cooldown 60 s).
 - [ ] Leave, wait 30 s, come back: a new alert.
-- [ ] Popup: "AI calls today: N / 500" counts one call per alert, not per frame.
+- [ ] Popup: "AI calls today: N local (free) · M / 500 cloud" counts one call per alert, not per frame (local
+  for LM Studio, cloud for OpenRouter). The AI is asked only after the on-device check flags something
+  (fire or smoke seen, a person in the zone, large motion for "Anything unusual"), so a quiet scene stays
+  at 0: that is the design, not a fault.
 - [ ] Cover the camera with your hand for a minute: expect a "camera offline"-style notice at most once
   an hour, and no alert for the darkness.
 - [ ] **Disarm**. The badge clears and no further alerts arrive.
