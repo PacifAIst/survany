@@ -24,6 +24,10 @@ export interface MockCall {
   model: string;
   hasImage: boolean;
   user: string;
+  /** The request path, e.g. /v1/chat/completions. */
+  path: string;
+  /** The image data URL, kept for confirm calls so tests can look at what the model saw. */
+  image?: string;
 }
 
 export interface ModelMock {
@@ -79,7 +83,7 @@ export async function startModelMock(answers: MockAnswers): Promise<ModelMock> {
       const user = textOf(userMsg);
       const image = imageOf(userMsg);
       const kind: CallKind = system === PROBE_SYSTEM ? 'probe' : system === REASONER_SYSTEM ? 'reasoner' : image ? 'confirm' : 'other';
-      calls.push({ kind, at: Date.now(), model: body.model ?? '', hasImage: image !== null, user });
+      calls.push({ kind, at: Date.now(), model: body.model ?? '', hasImage: image !== null, user, path: req.url ?? '', ...(kind === 'confirm' && image ? { image } : {}) });
       let text = '';
       try {
         if (kind === 'probe') text = JSON.stringify({ code: readProbeCode(Buffer.from(image!.split(',')[1] ?? '', 'base64')) });

@@ -1,10 +1,10 @@
 {
   "id": "person-in-restricted-zone",
   "title": "Person in restricted zone",
-  "description": "Draw the region over the zone. Detection only; nobody is identified.",
+  "description": "The zone is the region in the gate (fractions of the frame: x, y, width, height; here the right half). To move it, copy this recipe, change the numbers and add it as your own. Detection only; nobody is identified.",
   "gate": { "type": "detector", "model": "yolox-tiny-coco", "classes": ["person"], "minConfidence": 0.6, "region": { "x": 0.5, "y": 0, "w": 0.5, "h": 1 } },
   "confirm": {
-    "prompt": "Is any person standing or moving inside the marked restricted area of this scene?",
+    "prompt": "Is any person standing or moving inside the outlined restricted area?",
     "framesPerCheck": 1
   },
   "severity": "warning"

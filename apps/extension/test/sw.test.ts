@@ -231,6 +231,34 @@ describe('Options page model', () => {
     const withKey = importConfigJson(JSON.stringify({ ...EXAMPLE_CONFIG_JSON, note: 'sk-abcdefghijklmnopqrstuvwxyz012345' }));
     expect(withKey.ok).toBe(false);
   });
+
+  it('recipe library: a template is a valid recipe with a fresh id; the editor validates like an import and refuses built-in ids', async () => {
+    const { BUILTIN_RECIPES, importRecipe } = await import('@survey-anything/recipes');
+    const { checkNewRecipe, recipeTemplate } = await import('../src/options/model');
+    const builtinIds = BUILTIN_RECIPES.map((r) => r.id);
+    const zone = BUILTIN_RECIPES.find((r) => r.id === 'person-in-restricted-zone')!;
+    // Every built-in, copied as a template, is accepted as-is and does not collide with anything.
+    for (const r of BUILTIN_RECIPES) {
+      const t = checkNewRecipe(recipeTemplate(r as never, builtinIds), builtinIds, importRecipe);
+      expect(t.ok, r.id).toBe(true);
+      if (t.ok) expect(builtinIds).not.toContain(t.recipe.id);
+    }
+    const first = JSON.parse(recipeTemplate(zone as never, builtinIds)) as { id: string; title: string; gate: unknown };
+    expect(first).toMatchObject({ id: 'person-in-restricted-zone-custom', title: `${zone.title} (custom)`, gate: zone.gate });
+    // A second template from the same rule gets the next free id.
+    expect(JSON.parse(recipeTemplate(zone as never, [...builtinIds, first.id])).id).toBe('person-in-restricted-zone-custom-2');
+    // A built-in id is refused with a suggestion; empty text and invalid recipes list what is wrong.
+    const dup = checkNewRecipe(JSON.stringify(zone), builtinIds, importRecipe);
+    expect(dup.ok).toBe(false);
+    if (!dup.ok) expect(dup.errors[0]).toMatch(/built-in rule: choose another id \(for example "person-in-restricted-zone-custom"\)/);
+    const empty = checkNewRecipe('  ', builtinIds, importRecipe);
+    expect(empty).toEqual({ ok: false, errors: ['paste or type a recipe first'] });
+    const bad = checkNewRecipe(JSON.stringify({ ...first, severity: 'apocalyptic', webhook: 'https://example.invalid' }), builtinIds, importRecipe);
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) expect(bad.errors.length).toBeGreaterThan(0);
+    const notJson = checkNewRecipe('{ "id": ', builtinIds, importRecipe);
+    expect(notJson.ok).toBe(false);
+  });
 });
 
 describe('clips and WHIP URLs', () => {

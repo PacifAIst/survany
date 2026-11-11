@@ -45,6 +45,12 @@ label.inline { display: inline-flex; gap: 6px; align-items: center; margin-right
 .error { color: var(--danger); white-space: pre-wrap; }
 .ok { color: var(--ok); }
 code { font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+pre { font-family: ui-monospace, Consolas, monospace; font-size: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; overflow: auto; max-height: 360px; margin: 8px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+button.link { background: none; border: none; padding: 2px 4px; color: var(--accent); text-align: left; }
+button.link:hover { text-decoration: underline; }
+.recipe { padding: 2px 0; }
+.recipe > label.inline { margin-right: 2px; }
+ul.ok, ul.error { padding-left: 18px; }
 table { border-collapse: collapse; width: 100%; }
 td, th { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .popup { width: 340px; padding: 12px; }

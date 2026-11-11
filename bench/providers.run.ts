@@ -19,7 +19,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it } from 'vitest';
 import { type ActionTool, modelConfirmThreshold, type ProviderId, sanitizeReason } from '../packages/shared/src/index';
-import { builtinRecipe } from '../packages/recipes/src/index';
+import { builtinRecipe, confirmQuestion } from '../packages/recipes/src/index';
 import { createProvider, parseReasonerOutput, ProviderError, reasonText } from '../packages/providers/src/index';
 import { checkProposal, loadPolicy, type Policy } from '../apps/backend/src/actions/policy';
 
@@ -113,7 +113,7 @@ describe('M7 provider bench and red team', () => {
           let tokensOut = 0;
           const t0 = performance.now();
           try {
-            const r = await provider.analyze(new Blob([bytes], { type: 'image/jpeg' }), recipe.confirm.prompt, {
+            const r = await provider.analyze(new Blob([bytes], { type: 'image/jpeg' }), confirmQuestion(recipe), {
               allowedEvents: [recipe.id],
               maxOutputTokens: 200,
               onUsage: (u) => {

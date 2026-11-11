@@ -59,6 +59,12 @@ Point the base URL at the server's OpenAI-compatible endpoint (`…/v1`) and pic
 server must accept requests from the extension's origin (`chrome-extension://<extension id>`); if it does
 not, Test Connection shows the error. Each of these servers has a CORS or allowed-origins setting.
 
+A base URL without a path, as LM Studio displays it (`http://127.0.0.1:1234`), is used under `/v1`. Some
+servers (LM Studio among them) answer an unknown path or model with HTTP 200 and an error body instead of a
+completion; the adapters report that error instead of treating it as an empty answer. When the probe
+fails, Test Connection asks the server for its model list (`GET …/v1/models`) and shows the ids it serves
+if the configured one is not among them. LM Studio ids are often not the file name: copy the id exactly.
+
 ### Licenses
 
 The Options page shows a model's license before you use it. Qwen2.5-VL: 7B and 32B are Apache-2.0, 72B is

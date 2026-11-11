@@ -11,6 +11,7 @@ import { z } from 'zod';
 import type { AdapterConfig, Usage } from './adapter';
 import { ProviderError } from './errors';
 import { postJson } from './http';
+import { completionText, openAiBase } from './openai-compatible';
 import { firstJsonObject, stripCodeFences } from './parse';
 
 export type { ActionTool };
@@ -72,18 +73,15 @@ export async function reasonText(cfg: AdapterConfig, req: ReasonerRequest): Prom
   let tokenParam: 'max_completion_tokens' | 'max_tokens' = 'max_completion_tokens';
   for (;;) {
     try {
-      const json = (await postJson(
+      const json = await postJson(
         cfg.fetchFn,
-        `${cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`,
+        `${openAiBase(cfg.id, cfg.baseUrl)}/chat/completions`,
         headers,
         { model: cfg.model, messages, [tokenParam]: req.maxOutputTokens },
         cfg.timeoutMs,
         cfg.id,
-      )) as { choices?: { message?: { content?: string } }[]; usage?: { prompt_tokens?: number; completion_tokens?: number } };
-      return {
-        text: json.choices?.[0]?.message?.content ?? '',
-        usage: { inputTokens: json.usage?.prompt_tokens ?? 0, outputTokens: json.usage?.completion_tokens ?? 0 },
-      };
+      );
+      return completionText(json, cfg.id);
     } catch (e) {
       if (e instanceof ProviderError && e.status === 400 && tokenParam === 'max_completion_tokens' && e.bodySnippet.includes('max_completion_tokens')) {
         tokenParam = 'max_tokens';

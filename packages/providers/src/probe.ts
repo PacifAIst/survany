@@ -160,6 +160,18 @@ async function probeOnce(adapter: ChatCapable, opts: ProbeOpts, expected: string
     });
     const got = parseProbeCode(out.text);
     const ok = got === expected;
+    if (!ok && out.text.trim() === '') {
+      return {
+        ok: false,
+        supportsVision: false,
+        latencyMs: Date.now() - started,
+        expected,
+        got: null,
+        error: 'the model returned an empty answer: is the model loaded, and does it accept images?',
+        hint: null,
+        attempts: attempt,
+      };
+    }
     return {
       ok,
       supportsVision: ok,

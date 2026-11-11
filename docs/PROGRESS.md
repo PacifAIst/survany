@@ -2,7 +2,7 @@
 
 **Goal:** v1.0 as defined at the end of §8 of docs/PLAN.md
 **Current milestone:** M8 on hold at 0.1.0: owner manual testing first (`docs/MANUAL_TESTING.md`)
-**Last updated:** 2026-11-09 21:00
+**Last updated:** 2026-11-11 08:30
 
 ## Milestones
 | ID | Status (todo/doing/done) | Acceptance evidence | Notes |
@@ -71,10 +71,11 @@
 | WebGPU device lost | detector.ts falls back to WASM on device loss or WebGPU inference error; e2e runs WASM with WebGPU disabled | partial: device-loss injection pending |
 | OME admission webhook failing | e2e ome/m5.spec.ts: hung → denied, stopped → denied, forward_auth fails closed | done |
 
-## Known issues (found, not yet fixed)
-| Since | Issue | Effect | Plan |
+## Known issues
+| Since | Issue | Effect | Status |
 |---|---|---|---|
-| 2026-11-09 | The built-in **Person in restricted zone** recipe asks the model about "the marked restricted area", but the confirm image is the whole frame with no marking (the region is applied only by the on-device gate). | The model may answer "no" for a person who is in the region, so real alerts can be missed. | Draw the region on the confirm image (or crop to it) and update the prompt; after manual testing. `docs/MANUAL_TESTING.md` A4 uses an imported "Person in view" recipe meanwhile. |
+| 2026-11-09 | The built-in **Person in restricted zone** recipe asks the model about "the marked restricted area", but the confirm image is the whole frame with no marking (the region is applied only by the on-device gate). | The model may answer "no" for a person who is in the region, so real alerts can be missed. | **Fixed 2026-11-11.** Any rule with a region (not covering the whole frame) gets that region drawn on the confirm image and snapshot as a black-and-white dashed rectangle (`apps/extension/src/worker/outline.ts`), and the question gains a sentence saying what the rectangle is (`packages/recipes/src/confirm.ts`, `confirmQuestion`). The gate still runs on raw frames. Prompts of Person in restricted zone and Door left open now say "outlined". Evidence: `e2e/region-outline.spec.ts` (the image the model receives has the dashed pixels at the region's edge and none elsewhere; the question carries the note); unit tests in recipes and gate. `docs/MANUAL_TESTING.md` A4 now uses the built-in rule via the recipe library. |
+| 2026-11-11 | Owner's manual test: LM Studio (`http://127.0.0.1:1234`, `qwen3-vl-4b-instruct`) failed the probe with "read nothing"; OpenRouter failed with HTTP 401 while the card said "key_openrouter: not set". | No local model through LM Studio; no cloud provider whose key was pasted without pressing Store. | **Fixed 2026-11-11.** LM Studio: the base URL had no `/v1`, the server answered 200 with an error body and no completion, which read as an empty answer. Now a local base URL without a path is used under `/v1` (the card says so), a 200 without a completion is reported with the server's error, an empty answer is named, and a failed probe lists the server's model ids when the configured one is not among them. Keys: the key had been typed but never stored (only the Store button saved it). Now a key is stored when the field is left or Enter is pressed, Test connection and Save wait for pending key writes, a missing key is named before any request ("no API key is stored under key_openrouter"), and a 401/403 gets a hint about the key. Applies to every cloud provider. Evidence: providers `adapters.test.ts` (2 new cases), `e2e/options.spec.ts` (base URL without /v1 → request to `/v1/chat/completions`; missing key named with no request sent; key stored on Tab without Store; model-id list shown). |
 
 ## Known compromises
 Accepted for v1.0 by the owner, with the reason; each can be revisited after release.
@@ -136,6 +137,8 @@ Accepted for v1.0 by the owner, with the reason; each can be revisited after rel
 | 2026-11-09 | `deploy/test/compose.m6.yml` builds the backend image from the working tree on `up --build`; `gen-secrets` now also fills `GATE_AGENT_TOKEN`; `.env.example` shows the ha-mcp URL form. | A stale `survey-anything/backend:local` image would test old code. | Yes |
 | 2026-11-09 | Test Connection and the save-time probe use the **policy of the configuration being edited** with a dedicated `synthetic-probe` frame kind (purpose `probe` only, never captured pixels; `allowCloudProviders` still applies). New backend route `POST /api/proxy/probe` for proxy mode. | The stored policy may not exist yet or may forbid the host being set up; the probe image is synthetic. | Yes |
 | 2026-11-09 | CI gains an `e2e` job (Playwright Chromium, fake camera, local model mocks): M1, M2, M3 browser tests. Docker-backed suites (OME, confirm-gate) stay local. | They need Docker images and minutes of setup; the browser suites do not. | Yes |
+| 2026-11-11 | Rules with a region: the model sees the whole frame with the region outlined (black-and-white dashes) rather than a crop. | The model keeps the context around the zone (a door's frame, where a person is heading); black and white cannot be mistaken for a color a recipe checks (Dashboard turns red). The gate is unchanged. | Yes |
+| 2026-11-11 | Options → Watch rules is a recipe library: click a rule to see its description and JSON, Copy JSON (one click), Use as template (fresh id `<id>-custom`, title "(custom)"), an editor to type or paste a rule (validated by `importRecipe`, SG-18; built-in ids refused), file import, and Remove for added rules; field guide below the editor. | Owner request: make the examples usable as guidance for writing a new rule. | Yes |
 | 2026-11-09 | Backend data lives in named Docker volumes (`backend-data`, `caddy-data`, `gate-data`) and the image creates `/data` owned by `node`. | A root-owned bind mount made the backend fail to reopen its database after a restart (found in M5). | Yes |
 
 ## External facts checked
@@ -159,6 +162,11 @@ Accepted for v1.0 by the owner, with the reason; each can be revisited after rel
 | 2026-11-09 | Container images | Docker Hub | Pinned digests: OME v0.21.0 `sha256:172da912…`, caddy 2.10.2-alpine `sha256:4c6e91c6…`, mailpit v1.27 `sha256:e22dce5b…`, node 24-alpine `sha256:a34ab6d7…`, python 3.13-slim `sha256:e48f59cd…`. |
 
 ## Session log (newest first)
+### 2026-11-11 08:30: three fixes from the owner's first manual test
+- Done: (1) LM Studio and cloud keys (see Known issues: `/v1` for local base URLs without a path, error bodies with HTTP 200 reported, empty answers named, served model ids listed; keys stored on leaving the field, waited for by Test and Save, missing key and 401/403 named). (2) Restricted-zone fix: region outlined on the confirm image and snapshot, question explains it. (3) Recipe library in Options (`apps/extension/src/options/recipes.tsx`, helpers `recipeTemplate` / `checkNewRecipe` in `options/model.ts`). Docs: MANUAL_TESTING A2 (keys), new A2b (LM Studio), A4/A6 (custom zone via the library, outline in the snapshot); README recipes and model setup; PROVIDERS local servers.
+- Tests run: `pnpm vitest run` → 266 passed (20 files); extension e2e 9 passed + soak skipped (incl. new `region-outline.spec.ts` and the extended `options.spec.ts`); `pnpm typecheck`, `pnpm lint`, `pnpm check` (201 files with headers), `pnpm build`.
+- Next: owner continues `docs/MANUAL_TESTING.md`; M8 stays on hold.
+- Blockers: none.
 ### 2026-11-09 21:00: owner answers; LICENSE; headers; manual-testing checklist
 - Done: owner's M8 answers recorded (hold at 0.1.0); `LICENSE` restored to the verbatim gnu.org AGPL-3.0 text; copyright line in README and SPDX headers in 197 source files with `pnpm check:headers`; Cloudflare Pages assessment (not as-is); `docs/MANUAL_TESTING.md`; found the restricted-zone prompt issue (Known issues).
 - Tests run: `pnpm vitest run`, scripts suite 26, `pnpm typecheck`, `pnpm lint`, `pnpm check` (incl. headers).

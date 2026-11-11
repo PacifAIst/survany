@@ -4,7 +4,7 @@
  * Service worker entry (§4.1). Listeners are registered synchronously at top level so a restarted
  * worker receives the event that woke it. No state lives in memory.
  */
-import { createProvider, type ProbeResult } from '@survey-anything/providers';
+import { createProvider, listModels, type ProbeResult } from '@survey-anything/providers';
 import { parseConfig, type ResolvedProfile, ResolvedProfileSchema } from '@survey-anything/shared';
 import { BudgetLedger } from './budget';
 import { createGuardedFetch, type PolicyConfig } from './guarded-fetch';
@@ -81,18 +81,31 @@ async function probeProfile(policy: PolicyConfig, p: ResolvedProfile): Promise<P
     if (!backend) return failedProbe('proxy mode needs a paired backend');
     return backend.proxyProbe({ providerId: p.id, baseUrl: p.baseUrl, model: p.model }).catch((e: unknown) => failedProbe(e instanceof Error ? e.message : String(e)));
   }
+  // Say what is missing instead of letting the provider answer 401.
+  const apiKey = await store.secret(p.apiKeyRef);
+  if (p.id !== 'local' && !p.apiKeyRef) return failedProbe(`${p.id} needs an API key: set "API key reference" (for example key_${p.id}) and paste the key`);
+  if (p.apiKeyRef && !apiKey) return failedProbe(`no API key is stored under ${p.apiKeyRef}: paste the key into "API key" (it is saved when you leave the field or press Store)`);
   const gf = createGuardedFetch(async () => policy);
   const provider = createProvider({
     id: p.id,
     baseUrl: p.baseUrl,
     model: p.model,
-    apiKey: await store.secret(p.apiKeyRef),
+    apiKey,
     timeoutMs: p.timeoutMs,
     fetchFn: (url, init) => gf(url, init, { purpose: 'probe', frames: 'synthetic-probe' }),
     directBrowser: true,
   });
   const platform = await chrome.runtime.getPlatformInfo();
-  return provider.probe({ os: osForProbe(platform.os), extensionOrigin: `chrome-extension://${chrome.runtime.id}` });
+  const r = await provider.probe({ os: osForProbe(platform.os), extensionOrigin: `chrome-extension://${chrome.runtime.id}` });
+  if (r.ok || r.hint) return r;
+  if (/HTTP 40[13]\b/.test(r.error ?? '')) return { ...r, hint: 'The provider rejected the API key: check that it was copied completely and is still active, then paste it again.' };
+  if (p.id === 'anthropic') return r;
+  // On an OpenAI-compatible server, show which model ids it actually serves (LM Studio ids are often not the file name).
+  const ids = await listModels({ id: p.id, baseUrl: p.baseUrl, apiKey, fetchFn: (url, init) => gf(url, init, { purpose: 'probe', frames: 'none' }) }).catch((): string[] => []);
+  if (ids.length > 0 && !ids.includes(p.model)) {
+    return { ...r, hint: `This server serves: ${ids.slice(0, 20).join(', ')}${ids.length > 20 ? ', …' : ''}. Copy one of these ids into Model exactly.` };
+  }
+  return r;
 }
 
 async function status(): Promise<PopupStatus> {

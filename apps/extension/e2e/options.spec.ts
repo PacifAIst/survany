@@ -4,13 +4,18 @@
  * M3: walks the whole Options page in a real browser, against local model servers:
  *  - per-provider Test Connection runs the C26 vision probe (a model that reads the code passes; a
  *    text-only model that cannot see the image fails, showing what it read), without saving the draft;
+ *  - a local server entered without /v1 (as LM Studio shows it) is called under /v1;
+ *  - a missing API key is named instead of sending a request the provider would answer with 401, and a
+ *    key typed into the field is stored when the field is left, without pressing Store;
  *  - API keys are stored without clobbering each other or the backend device token;
  *  - failover chain editor: add, reorder with the move buttons, remove;
  *  - the one-time "not redundant" acknowledgement when one alert channel remains (asked once);
  *  - Save runs the probe; budget usage and the hard-stop banner are shown;
  *  - export never contains keys and re-imports; import refuses zero channels and embedded keys, and
  *    asks for the acknowledgement for a single-channel file;
- *  - mcp.enabled without Telegram is refused at save.
+ *  - mcp.enabled without Telegram is refused at save;
+ *  - watch rules: open a rule to see its JSON, copy it in one click, use it as a template, add a rule
+ *    typed into the editor (a built-in id is refused), and remove it again.
  * Needs `pnpm build:e2e` (loopback hosts pre-granted, see manifest.config.ts).
  */
 import { readFileSync } from 'node:fs';
@@ -36,6 +41,11 @@ test.beforeAll(async () => {
       textOnlyCalls.push(req.url ?? '');
       res.setHeader('access-control-allow-origin', '*');
       res.setHeader('content-type', 'application/json');
+      // The ids it serves, which the page lists when the probe fails with a model id it does not serve.
+      if (req.url === '/v1/models') {
+        res.end(JSON.stringify({ data: [{ id: 'qwen3-vl-4b-instruct' }, { id: 'text-embed' }] }));
+        return;
+      }
       res.end(JSON.stringify({ choices: [{ message: { content: '{"code":"ACDEFH"}' } }], usage: { prompt_tokens: 10, completion_tokens: 5 } }));
     });
   });
@@ -66,15 +76,17 @@ test('M3: the whole Options page, end to end', async () => {
   const page = await h.context.newPage();
   await page.goto(`chrome-extension://${h.extId}/src/options/index.html`);
   await expect(page.getByRole('heading', { name: 'Survey Anything settings' })).toBeVisible();
-  await page.locator('details').first().evaluate((d) => ((d as HTMLDetailsElement).open = true));
+  await page.locator('details', { hasText: 'Edit every key as JSON' }).evaluate((d) => ((d as HTMLDetailsElement).open = true));
 
   // --- Vision provider: local model that can read the probe -----------------------------------
   const local = card(page, 'local');
-  await local.getByLabel('Base URL').fill(`${vision.url}/v1`);
+  // Entered as LM Studio shows it, without /v1: the page says what it will use, and the call goes to /v1.
+  await local.getByLabel('Base URL').fill(vision.url);
+  await expect(local).toContainText(`this will use ${vision.url}/v1`);
   await local.getByLabel('Model', { exact: true }).fill('mock-vision');
   await local.getByRole('button', { name: 'Test connection: local' }).click();
   await expect(page.getByTestId('probe-local')).toContainText(/Vision OK: read the code back in \d+ ms/);
-  expect(vision.calls.filter((c) => c.kind === 'probe')).toHaveLength(1);
+  expect(vision.calls.filter((c) => c.kind === 'probe').map((c) => c.path)).toEqual(['/v1/chat/completions']);
   // Testing did not save anything.
   expect(await storage(page, 'config')).toBeUndefined();
 
@@ -88,13 +100,22 @@ test('M3: the whole Options page, end to end', async () => {
   await expect(openai.getByText('(key_openai: set)')).toBeVisible();
   await openai.getByRole('button', { name: 'Test connection: openai' }).click();
   await expect(page.getByTestId('probe-openai')).toContainText(/Failed: .*read ACDEFH/);
-  expect(textOnlyCalls.length).toBe(2); // a misread earns one fresh code; a model that cannot see fails both
+  // A misread earns one fresh code; a model that cannot see fails both. Then the page asks which models the server has.
+  expect(textOnlyCalls).toEqual(['/v1/chat/completions', '/v1/chat/completions', '/v1/models']);
+  await expect(page.getByTestId('probe-openai')).toContainText('This server serves: qwen3-vl-4b-instruct, text-embed. Copy one of these ids into Model exactly.');
 
   // --- A second key does not clobber the first or the device token ----------------------------
   await page.getByRole('button', { name: 'openrouter', exact: true }).click();
   const openrouter = card(page, 'openrouter');
+  // No key yet: the test names what is missing and sends nothing.
+  await openrouter.getByLabel('Base URL').fill(`${textOnlyUrl}/v1`);
+  await openrouter.getByLabel('Model', { exact: true }).fill('text-only-model');
+  await openrouter.getByRole('button', { name: 'Test connection: openrouter' }).click();
+  await expect(page.getByTestId('probe-openrouter')).toContainText('no API key is stored under key_openrouter');
+  expect(textOnlyCalls).toHaveLength(3);
+  // Typed and left (Tab), not stored with the button: it is saved anyway.
   await openrouter.getByPlaceholder('paste key').fill('test_openrouter_key_not_real');
-  await openrouter.getByRole('button', { name: 'Store' }).click();
+  await openrouter.getByPlaceholder('paste key').press('Tab');
   await expect(openrouter.getByText('(key_openrouter: set)')).toBeVisible();
   expect(await storage(page, 'secrets')).toEqual({
     key_device_token: 'device_token_test_not_real',
@@ -130,6 +151,57 @@ test('M3: the whole Options page, end to end', async () => {
   await expect.poll(async () => (await draftNow()).rules).toEqual(['other']);
   await expect.poll(async () => Object.keys((await draftNow()).routing)).toEqual(['other']);
   await page.getByRole('checkbox', { name: /^Fire or smoke/ }).check();
+  await expect.poll(async () => (await draftNow()).rules).toEqual(['other', 'fire']);
+
+  // --- Watch rules: see a rule's JSON, copy it, start a new rule from it ----------------------
+  // Record what the page copies; the real clipboard write still runs (and must succeed for "Copied").
+  await page.evaluate(() => {
+    const w = window as unknown as { copied: string[] };
+    w.copied = [];
+    const real = navigator.clipboard.writeText.bind(navigator.clipboard);
+    navigator.clipboard.writeText = async (t: string) => {
+      w.copied.push(t);
+      return real(t);
+    };
+  });
+  const zoneTitle = page.getByRole('button', { name: 'Person in restricted zone', exact: true });
+  await expect(zoneTitle).toHaveAttribute('aria-expanded', 'false');
+  await zoneTitle.click();
+  await expect(zoneTitle).toHaveAttribute('aria-expanded', 'true');
+  const zoneJson = page.getByTestId('recipe-json-person-in-restricted-zone');
+  await expect(zoneJson).toContainText('"region"');
+  await expect(zoneJson).toContainText('outlined restricted area');
+  const recipes = page.getByTestId('recipes');
+  await recipes.getByRole('button', { name: 'Copy JSON' }).click();
+  await expect(recipes.getByRole('button', { name: 'Copied' })).toBeVisible();
+  const clip = (await page.evaluate(() => (window as unknown as { copied: string[] }).copied))[0] ?? '';
+  expect(JSON.parse(clip)).toMatchObject({ id: 'person-in-restricted-zone', gate: { type: 'detector', region: { x: 0.5 } } });
+  await recipes.getByRole('button', { name: 'Use as template' }).click();
+  const editor = page.getByLabel('New rule JSON');
+  await expect(editor).toHaveValue(/"id": "person-in-restricted-zone-custom"/);
+  await expect(editor).toHaveValue(/"title": "Person in restricted zone \(custom\)"/);
+  await recipes.getByRole('button', { name: 'Add rule' }).click();
+  await expect(page.getByTestId('recipe-result')).toContainText('Added "Person in restricted zone (custom)" (person-in-restricted-zone-custom)');
+  await expect(editor).toHaveValue('');
+  expect((await storage<{ id: string }[]>(page, 'importedRecipes')).map((r) => r.id)).toEqual(['person-in-restricted-zone-custom']);
+  const custom = page.getByRole('checkbox', { name: 'Person in restricted zone (custom)', exact: true });
+  await expect(custom).not.toBeChecked();
+  await custom.check();
+  await expect.poll(async () => (await draftNow()).rules).toEqual(['other', 'fire', 'person-in-restricted-zone-custom']);
+
+  // A rule typed into the editor is validated like a file; a built-in id is refused.
+  await editor.fill(clip);
+  await recipes.getByRole('button', { name: 'Add rule' }).click();
+  await expect(page.getByTestId('recipe-result')).toContainText('is a built-in rule: choose another id');
+  await editor.fill(JSON.stringify({ id: 'typed-rule', title: 'Typed rule', gate: { type: 'sampled', everyMinutes: 10 }, confirm: { prompt: 'Is anything unusual happening?' }, severity: 'catastrophic' }));
+  await recipes.getByRole('button', { name: 'Add rule' }).click();
+  await expect(page.getByTestId('recipe-result')).toContainText('Editor: not added');
+  await expect(page.getByTestId('recipe-result')).toContainText('severity');
+
+  // Removing an added rule also takes it out of the draft's rules.
+  await page.getByRole('button', { name: 'Remove rule: Person in restricted zone (custom)' }).click();
+  await expect(custom).toHaveCount(0);
+  expect(await storage<unknown[]>(page, 'importedRecipes')).toEqual([]);
   await expect.poll(async () => (await draftNow()).rules).toEqual(['other', 'fire']);
 
   // --- One-time "not redundant" acknowledgement ------------------------------------------------

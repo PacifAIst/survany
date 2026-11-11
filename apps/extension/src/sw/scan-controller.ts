@@ -5,7 +5,7 @@
  * SECURITY-GATE SG-24: nothing is captured before the consent and disclosure screen has been accepted.
  * SECURITY-GATE SG-13: the visible "watching" indicator is set before capture starts.
  */
-import { BUILTIN_RECIPES, type Recipe } from '@survey-anything/recipes';
+import { BUILTIN_RECIPES, confirmQuestion, type Recipe } from '@survey-anything/recipes';
 import {
   AllProvidersFailedError,
   analyzeWithFailover,
@@ -250,7 +250,7 @@ async function confirm(recipe: Recipe, msg: CandidateMsg, c: Config): Promise<Co
     return { cloud: e.cloud, providerId: e.provider.id, model: p?.model ?? '' };
   };
   try {
-    const out = await analyzeWithFailover(chain, base64ToBlob(msg.confirmImageB64, 'image/jpeg'), recipe.confirm.prompt, {
+    const out = await analyzeWithFailover(chain, base64ToBlob(msg.confirmImageB64, 'image/jpeg'), confirmQuestion(recipe), {
       allowedEvents: [recipe.id],
       maxOutputTokens: c.vision.maxOutputTokens,
       framesPerCheck: msg.framesPerCheck,

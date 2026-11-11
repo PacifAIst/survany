@@ -11,6 +11,61 @@ import { postJson } from './http';
 interface ChatCompletion {
   choices?: { message?: { content?: unknown } }[];
   usage?: { prompt_tokens?: number; completion_tokens?: number };
+  error?: unknown;
+}
+
+/**
+ * The API base for an OpenAI-compatible server. Local servers (LM Studio, Ollama, vLLM, llama.cpp) serve
+ * the API under /v1; a base URL typed without any path ("http://127.0.0.1:1234") gets /v1 added, because
+ * LM Studio answers an unknown path with HTTP 200 and an error message, which would look like a reply.
+ */
+export function openAiBase(id: string, baseUrl: string): string {
+  const trimmed = baseUrl.replace(/\/+$/, '');
+  if (id !== 'local') return trimmed;
+  try {
+    const u = new URL(trimmed);
+    if (u.pathname === '' || u.pathname === '/') return `${trimmed}/v1`;
+  } catch {
+    // leave invalid URLs to the caller's validation
+  }
+  return trimmed;
+}
+
+/**
+ * The text of a chat completion, or a clear error when the server answered without one (some servers
+ * reply 200 with {"error": ...} to a wrong path or model). Never an empty string passed off as an answer.
+ */
+export function completionText(json: unknown, providerId: string): { text: string; usage: { inputTokens: number; outputTokens: number } } {
+  const c = (json ?? {}) as ChatCompletion;
+  if (!Array.isArray(c.choices) || c.choices.length === 0) {
+    const err = typeof c.error === 'string' ? c.error : c.error && typeof c.error === 'object' && 'message' in c.error ? String((c.error as { message: unknown }).message) : null;
+    throw new ProviderError(
+      'parse',
+      `${providerId}: the server answered without a chat completion${err ? `: "${err.slice(0, 200)}"` : ''}. Check the base URL (local servers use .../v1) and the model id.`,
+      null,
+      providerId,
+      null,
+      JSON.stringify(json ?? null).slice(0, 500),
+    );
+  }
+  return {
+    text: contentText(c.choices[0]?.message?.content),
+    usage: { inputTokens: c.usage?.prompt_tokens ?? 0, outputTokens: c.usage?.completion_tokens ?? 0 },
+  };
+}
+
+/** GET {base}/models on an OpenAI-compatible server: the model ids it serves, to help pick the exact one. */
+export async function listModels(cfg: { id: string; baseUrl: string; apiKey: string | null; fetchFn: (url: string, init: RequestInit) => Promise<Response> }): Promise<string[]> {
+  const res = await cfg.fetchFn(`${openAiBase(cfg.id, cfg.baseUrl)}/models`, {
+    method: 'GET',
+    headers: cfg.apiKey ? { authorization: `Bearer ${cfg.apiKey}` } : {},
+    credentials: 'omit',
+    referrerPolicy: 'no-referrer',
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!res.ok) return [];
+  const json = (await res.json().catch(() => null)) as { data?: { id?: unknown }[] } | null;
+  return (json?.data ?? []).map((m) => (typeof m.id === 'string' ? m.id : '')).filter(Boolean).slice(0, 200);
 }
 
 function contentText(content: unknown): string {
@@ -25,7 +80,7 @@ function contentText(content: unknown): string {
 
 export class OpenAICompatibleAdapter extends BaseAdapter {
   protected endpoint(): string {
-    return `${this.cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+    return `${openAiBase(this.cfg.id, this.cfg.baseUrl)}/chat/completions`;
   }
 
   protected headers(): Record<string, string> {
@@ -67,11 +122,7 @@ export class OpenAICompatibleAdapter extends BaseAdapter {
           this.cfg.id,
           req.signal,
         )) as ChatCompletion;
-        const text = contentText(json.choices?.[0]?.message?.content);
-        return {
-          text,
-          usage: { inputTokens: json.usage?.prompt_tokens ?? 0, outputTokens: json.usage?.completion_tokens ?? 0 },
-        };
+        return completionText(json, this.cfg.id);
       } catch (e) {
         if (!(e instanceof ProviderError) || e.kind !== 'bad-request') throw e;
         const body400 = e.bodySnippet.toLowerCase();

@@ -129,3 +129,19 @@ describe('tick recorder (M1 soak metric)', () => {
     expect(s.gapsOver2x).toBe(0);
   });
 });
+
+describe('region outline geometry', () => {
+  it('maps a fractional region to pixels inside its cell, keeping the stroke visible at the frame edge', async () => {
+    const { outlineRect } = await import('../src/worker/outline');
+    const r = outlineRect({ x: 0.5, y: 0, w: 0.5, h: 1 }, 0, 0, 512, 288);
+    expect(r.lineWidth).toBe(2);
+    expect(r.x).toBe(256);
+    expect(r.y).toBe(1); // half the stroke inside the top edge
+    expect(r.x + r.w).toBe(511);
+    expect(r.y + r.h).toBe(287);
+    // A montage cell: same region, offset into the second column.
+    const c = outlineRect({ x: 0.3, y: 0.1, w: 0.4, h: 0.8 }, 256, 0, 256, 144);
+    expect(c.x).toBeCloseTo(256 + 0.3 * 256);
+    expect(c.w).toBeCloseTo(0.4 * 256);
+  });
+});

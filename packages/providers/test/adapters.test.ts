@@ -286,6 +286,33 @@ describe('probe (C26)', () => {
     expect(PROBE_ALPHABET.length ** 6).toBeGreaterThan(50_000_000);
   });
 
+  it('LM Studio-style servers: a base URL without a path gets /v1, and a 200 without a completion is an error, not an empty answer', async () => {
+    // LM Studio answers an unknown path with HTTP 200 and an error text instead of a 404.
+    mock.setHandler((r, res) => {
+      if (r.path !== '/v1/chat/completions') return json(res, 200, { error: `Unexpected endpoint or method. (POST ${r.path}). Returning 200 anyway` });
+      const url: string = r.body.messages[1].content[1].image_url.url;
+      json(res, 200, openAiReply(`{"code":"${readCodeFromRequest(url)}"}`));
+    });
+    const ok = await provider('local', '', { apiKey: null }).probe();
+    expect(ok).toMatchObject({ ok: true });
+    expect(mock.requests.at(-1)!.path).toBe('/v1/chat/completions');
+    // A wrong path is now a clear error carrying the server's own words (openai-style bases keep their path).
+    mock.setHandler((r, res) => json(res, 200, { error: `Unexpected endpoint or method. (POST ${r.path}). Returning 200 anyway` }));
+    const bad = await provider('openai', '/wrong', { apiKey: 'sk-test' }).probe();
+    expect(bad.ok).toBe(false);
+    expect(bad.error).toMatch(/answered without a chat completion: "Unexpected endpoint or method/);
+    await expect(provider('openai', '/wrong').analyze(new Blob([new Uint8Array([0xff, 0xd8, 0xff])], { type: 'image/jpeg' }), 'q', { allowedEvents: ['fire'], maxOutputTokens: 50 })).rejects.toMatchObject({ kind: 'parse' });
+  });
+
+  it('an empty answer is reported as empty, and listModels returns the ids a server serves', async () => {
+    mock.setHandler((_r, res) => json(res, 200, openAiReply('')));
+    const r = await provider('local', '/v1', { apiKey: null }).probe();
+    expect(r.error).toMatch(/empty answer/);
+    mock.setHandler((r2, res) => json(res, 200, r2.path === '/v1/models' ? { data: [{ id: 'qwen/qwen3-vl-4b' }, { id: 'google/gemma-3-4b' }] } : {}));
+    const { listModels } = await import('../src');
+    expect(await listModels({ id: 'local', baseUrl: mock.url, apiKey: null, fetchFn })).toEqual(['qwen/qwen3-vl-4b', 'google/gemma-3-4b']);
+  });
+
   it('C10: Ollama 403 yields the exact OLLAMA_ORIGINS command for the OS', async () => {
     mock.setHandler((_r, res) => json(res, 403, ''));
     const r = await provider('local', '/v1', { apiKey: null }).probe({ os: 'linux', extensionOrigin: 'chrome-extension://abc' });

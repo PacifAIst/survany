@@ -31,12 +31,25 @@ Open the settings: right-click the extension icon → **Options**.
 - [ ] Under **AI providers**, set **Vision provider** to `openrouter`. The card shows base URL
   `https://openrouter.ai/api/v1` and model `qwen/qwen2.5-vl-72b-instruct` (the model benchmarked in
   `docs/BENCHMARKS.md`).
-- [ ] In that card, paste your key into **API key** and press **Store**. Chrome asks to allow
-  `openrouter.ai`: allow it. Expect "(key_openrouter: set)".
-- [ ] Press **Test connection**. Expect "Vision OK: read the code back in N ms" (about 1–3 s). A failure
-  shows what the model read; note it.
+- [ ] In that card, paste your key into **API key**. It is saved when you leave the field (or press Enter
+  or **Store**). Expect "(key_openrouter: set)". The same applies to every cloud provider's key.
+- [ ] Press **Test connection**. Chrome asks to allow `openrouter.ai`: allow it. Expect "Vision OK: read the
+  code back in N ms" (about 1–3 s). A failure shows what the model read and, where it can, what to do:
+  "no API key is stored under key_openrouter" (paste the key again), "the provider rejected the API key"
+  (HTTP 401/403: a revoked or incompletely copied key), or a list of the model ids the server offers.
 - [ ] Under **Failover chain**, the list probably still says `local`: press **Remove local from chain**,
   then **Add openrouter to chain**. The list shows only `openrouter`.
+
+### A2b. Or a local model in LM Studio (optional, no API key)
+
+- [ ] In LM Studio, load a vision model (for example `qwen3-vl-4b-instruct`) and start the server
+  (Developer tab; it shows `http://127.0.0.1:1234`).
+- [ ] Options → **AI providers** → card **local**: **Base URL** `http://127.0.0.1:1234` (with or without `/v1`;
+  the card shows "this will use http://127.0.0.1:1234/v1"), **Model** the id exactly as LM Studio shows it.
+- [ ] **Test connection**: expect "Vision OK". If the model id is wrong, the failure lists the ids the server
+  serves: copy one into **Model**. If it says "the model returned an empty answer", the model is not
+  loaded or cannot read images.
+- [ ] To use it for alerts, set **Vision provider** to `local` and put `local` first in the failover chain.
 
 ### A3. Telegram, straight from the browser
 
@@ -49,24 +62,20 @@ Open the settings: right-click the extension icon → **Options**.
 
 ### A4. A rule your webcam can trigger
 
-The built-in **Person in restricted zone** rule asks the model about "the marked restricted area", but the
-image the model receives has no marking on it, so the model may answer "no". This is a **known issue** (to
-be fixed after testing). For this test, import a simple rule instead:
+The built-in **Person in restricted zone** rule watches the right half of the frame. You will make your own
+copy with the zone where you want it.
 
-- [ ] Save this as `person-visible.watch.json`:
-
-  ```json
-  {
-    "id": "person-visible",
-    "title": "Person in view",
-    "gate": { "type": "detector", "model": "yolox-tiny-coco", "classes": ["person"], "minConfidence": 0.6 },
-    "confirm": { "prompt": "Is at least one person clearly visible in this image?", "framesPerCheck": 1 },
-    "severity": "info"
-  }
-  ```
-
-- [ ] Options → **Watch rules** → **Import a recipe** → choose the file. "Person in view" appears in the list.
-- [ ] Tick **Person in view**, untick **Fire or smoke** and **Anything unusual**.
+- [ ] Options → **Watch rules**: click the name **Person in restricted zone**. Its description and JSON open.
+  The zone is `"region"`: fractions of the frame (`x`, `y` from the top left, `w` width, `h` height), so
+  `{"x":0.5,"y":0,"w":0.5,"h":1}` is the right half.
+- [ ] Press **Copy JSON**. The button says "Copied"; paste somewhere to check it is the whole rule.
+- [ ] Press **Use as template**. The **Add your own rule** box fills with a copy whose id is
+  `person-in-restricted-zone-custom` and title "Person in restricted zone (custom)". Change the region to
+  the part of your camera's view you want, for example `{"x":0,"y":0,"w":0.5,"h":1}` for the left half.
+- [ ] Press **Add rule**. Expect "Added "Person in restricted zone (custom)" …" and the rule in the list.
+  (Optional: paste the built-in rule unchanged and press **Add rule**: it is refused as a built-in id.
+  **Field guide** under the box lists every field.)
+- [ ] Tick **Person in restricted zone (custom)**, untick **Fire or smoke** and **Anything unusual**.
 - [ ] Optional, to see the full path at once: under **Privacy and egress**, leave **Alert media** ticked so the
   Telegram alert includes a snapshot.
 - [ ] Press **Save**. Saving runs the probe again. Expect "Saved at …"; any error lists the exact field.
@@ -83,9 +92,11 @@ Do at least one of these. The camera path is the simplest.
 
 ### A6. Verify the alert
 
-- [ ] Walk into view and stay 10–15 s. Expected: a Telegram message within about **15 s** (2 scans of 5 s
-  each, then about 1–3 s for OpenRouter), title "Person in view", confirmed by `openrouter`, with a confidence
-  and a short reason (and the snapshot, if Alert media is on). A browser notification appears at the same time.
+- [ ] Walk into the zone and stay 10–15 s. Expected: a Telegram message within about **15 s** (2 scans of 5 s
+  each, then about 1–3 s for OpenRouter), title "Person in restricted zone (custom)", confirmed by
+  `openrouter`, with a confidence and a short reason. If Alert media is on, the snapshot shows the zone as a
+  black-and-white dashed rectangle (the model sees the same rectangle). A browser notification appears too.
+- [ ] Stand only in the other part of the frame: **no** alert.
 - [ ] Stay in view for a minute: **no** second alert (one alert per event; cooldown 60 s).
 - [ ] Leave, wait 30 s, come back: a new alert.
 - [ ] Popup: "AI calls today: N / 500" counts one call per alert, not per frame.

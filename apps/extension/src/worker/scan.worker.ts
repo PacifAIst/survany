@@ -5,7 +5,8 @@
  * Per tick: grab the latest frame, run the motion filter, the needed detectors, then each rule's gate
  * and its N-of-M window. Rising edges become candidates for the service worker to confirm.
  */
-import { DETECTOR_MODELS, type Recipe } from '@survey-anything/recipes';
+import { DETECTOR_MODELS, outlineRegion, type Recipe, type Region } from '@survey-anything/recipes';
+import { drawOutline, outlineRect } from './outline';
 import { type ChecksumEntry, ChecksumMismatchError, configureOrt, Detector, loadVerifiedAsset } from './detector';
 import { evaluateGate, HitWindow, normalizeDetections, type NormalizedDetection } from './gate';
 import { ANALYSIS_H, ANALYSIS_W, changedFraction, type Gray, meanLuma, rgbaToGray } from './motion';
@@ -181,13 +182,15 @@ function pushRing(source: CanvasImageSource, w: number, h: number, maxPx: number
   while (ring.length > 4) ring.shift()?.close();
 }
 
-async function encodeJpeg(frames: ImageBitmap[], quality: number, maxPx: number): Promise<string> {
+async function encodeJpeg(frames: ImageBitmap[], quality: number, maxPx: number, region: Region | null): Promise<string> {
   const last = frames[frames.length - 1];
   if (!last) throw new Error('no frame to encode');
   if (frames.length === 1) {
     snapCanvas.width = last.width;
     snapCanvas.height = last.height;
-    snapCanvas.getContext('2d')?.drawImage(last, 0, 0);
+    const ctx = snapCanvas.getContext('2d');
+    ctx?.drawImage(last, 0, 0);
+    if (ctx && region) drawOutline(ctx, outlineRect(region, 0, 0, last.width, last.height));
   } else {
     // §6.3 montage: 2 frames side by side, 3-4 frames in a 2x2 grid, time order left-right, top-bottom.
     const cols = 2;
@@ -200,7 +203,12 @@ async function encodeJpeg(frames: ImageBitmap[], quality: number, maxPx: number)
     if (!ctx) throw new Error('2D context unavailable');
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, snapCanvas.width, snapCanvas.height);
-    frames.forEach((f, i) => ctx.drawImage(f, (i % cols) * cellW, Math.floor(i / cols) * cellH, cellW, cellH));
+    frames.forEach((f, i) => {
+      const x0 = (i % cols) * cellW;
+      const y0 = Math.floor(i / cols) * cellH;
+      ctx.drawImage(f, x0, y0, cellW, cellH);
+      if (region) drawOutline(ctx, outlineRect(region, x0, y0, cellW, cellH));
+    });
   }
   return blobToB64(await snapCanvas.convertToBlob({ type: 'image/jpeg', quality }));
 }
@@ -209,8 +217,10 @@ async function emitCandidate(kind: 'candidate' | 'still-hot', r: Recipe, gate: {
   const n = Math.min(r.confirm.framesPerCheck, ring.length);
   if (n === 0) return;
   const frames = ring.slice(-n);
-  const confirmImageB64 = await encodeJpeg(frames, s.jpegQuality, s.downscaleMaxPx);
-  const snapshotB64 = n === 1 ? confirmImageB64 : await encodeJpeg(frames.slice(-1), s.jpegQuality, s.downscaleMaxPx);
+  // The rule's region is outlined so the model (and the person reading the alert) can see where it applies.
+  const region = outlineRegion(r);
+  const confirmImageB64 = await encodeJpeg(frames, s.jpegQuality, s.downscaleMaxPx, region);
+  const snapshotB64 = n === 1 ? confirmImageB64 : await encodeJpeg(frames.slice(-1), s.jpegQuality, s.downscaleMaxPx, region);
   post({ type: kind, rule: r.id, confirmImageB64, snapshotB64, framesPerCheck: n, gate });
 }
 

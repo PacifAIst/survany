@@ -89,8 +89,11 @@ code in an image and must read it back, so a model that cannot see is refused.
   browser extensions until you allow them with `OLLAMA_ORIGINS`; Test Connection shows the exact command
   for your system.
 - **vLLM, LM Studio, llama.cpp:** any OpenAI-compatible `…/v1` endpoint with a vision model; allow the
-  extension's origin in the server's CORS settings.
-- **Cloud:** paste a key, or keep keys on your backend with proxy mode.
+  extension's origin in the server's CORS settings. A local base URL without a path (LM Studio shows
+  `http://127.0.0.1:1234`) is used under `/v1`. Use the model id exactly as the server lists it; when the
+  probe fails, Test Connection lists the ids the server serves.
+- **Cloud:** paste a key (it is stored when you leave the field), or keep keys on your backend with proxy
+  mode.
 
 Details, licenses of local models, failover and budget: `docs/PROVIDERS.md`.
 
@@ -139,9 +142,12 @@ vulnerabilities privately: `SECURITY.md`.
 A rule is a small JSON recipe: what triggers the on-device gate (a detector class, motion, a change in a
 region, or a timer) and the question the model is asked. Built in: Fire or smoke, Robbery or break-in,
 Anything unusual, Package left at the door, 3D print failure, Dashboard turns red, Queue too long, Water
-leak, Door left open, Person in restricted zone. Import your own in Options; imported recipes cannot change
-who is alerted, what leaves your computer, or which actions exist. New recipes are welcome as pull requests
-(`.github/PULL_REQUEST_TEMPLATE/recipe.md`).
+leak, Door left open, Person in restricted zone. In Options → Watch rules, click a rule's name to see its
+JSON, copy it in one click, or use it as a template; add your own by typing or pasting into the editor or by
+importing a file (a field guide is under the editor). Added recipes cannot change who is alerted, what
+leaves your computer, or which actions exist. When a rule watches only a region, the image the model sees
+has that region outlined with a black-and-white dashed rectangle, and the question says so. New recipes are
+welcome as pull requests (`.github/PULL_REQUEST_TEMPLATE/recipe.md`).
 
 ## Responsible use
 

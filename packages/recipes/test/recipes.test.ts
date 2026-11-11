@@ -67,3 +67,20 @@ describe('SG-18 imported recipes cannot change routing, egress or actions', () =
     expect(() => importRecipe('x'.repeat(20_001))).toThrow(/20 kB/);
   });
 });
+
+describe('region outline for the vision model', () => {
+  it('outlines a partial region and tells the model what the rectangle is; leaves whole-frame and region-less rules alone', async () => {
+    const { builtinRecipe, confirmQuestion, outlineRegion, OUTLINE_NOTE } = await import('../src');
+    const zone = builtinRecipe('person-in-restricted-zone')!;
+    expect(outlineRegion(zone)).toEqual({ x: 0.5, y: 0, w: 0.5, h: 1 });
+    expect(confirmQuestion(zone)).toBe(`${zone.confirm.prompt} ${OUTLINE_NOTE}`);
+    expect(zone.confirm.prompt).toMatch(/outlined/);
+    expect(outlineRegion(builtinRecipe('door-left-open')!)).not.toBeNull();
+    expect(outlineRegion(builtinRecipe('dashboard-turns-red')!)).toBeNull(); // the whole frame: nothing to point at
+    const fire = builtinRecipe('fire')!;
+    expect(outlineRegion(fire)).toBeNull();
+    expect(confirmQuestion(fire)).toBe(fire.confirm.prompt);
+    // The outline is neutral: never described with a color a recipe might check for.
+    expect(OUTLINE_NOTE).not.toMatch(/\b(red|green|blue|yellow|orange)\b/i);
+  });
+});

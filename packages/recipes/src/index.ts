@@ -12,6 +12,7 @@ import dashboardTurnsRed from '../recipes/dashboard-turns-red.watch.json';
 import waterLeak from '../recipes/water-leak.watch.json';
 import { findForbiddenKeys, type Recipe, RecipeSchema } from './schema';
 
+export * from './confirm';
 export * from './models';
 export * from './schema';
 

@@ -85,3 +85,32 @@ export function moveInList<T>(list: T[], index: number, delta: number): T[] {
 export function omit<T>(obj: Record<string, T>, key: string): Record<string, T> {
   return Object.fromEntries(Object.entries(obj).filter(([k]) => k !== key));
 }
+
+/** "Use as template": the recipe as pretty JSON with an id and title that cannot collide with an existing rule. */
+export function recipeTemplate(r: { id: string; title: string } & Record<string, unknown>, takenIds: readonly string[]): string {
+  const base = `${r.id}-custom`.slice(0, 44);
+  let id = base;
+  for (let i = 2; takenIds.includes(id); i++) id = `${base}-${i}`;
+  return JSON.stringify({ ...r, id, title: `${r.title} (custom)`.slice(0, 80) }, null, 2);
+}
+
+/**
+ * Validates a recipe typed or pasted into the editor with the same rules as a file import (SG-18), and
+ * refuses a built-in id so a custom copy can never silently replace a built-in rule.
+ */
+export function checkNewRecipe<R extends { id: string }>(
+  text: string,
+  builtinIds: readonly string[],
+  parse: (t: string) => R,
+): { ok: true; recipe: R } | { ok: false; errors: string[] } {
+  if (!text.trim()) return { ok: false, errors: ['paste or type a recipe first'] };
+  let recipe: R;
+  try {
+    recipe = parse(text);
+  } catch (e) {
+    const problems = (e as { problems?: unknown }).problems;
+    return { ok: false, errors: Array.isArray(problems) ? problems.map(String) : [e instanceof Error ? e.message : String(e)] };
+  }
+  if (builtinIds.includes(recipe.id)) return { ok: false, errors: [`id "${recipe.id}" is a built-in rule: choose another id (for example "${recipe.id}-custom")`] };
+  return { ok: true, recipe };
+}

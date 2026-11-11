@@ -3,7 +3,7 @@
 /** Options page for config schema v1 (§6.2). Every key is editable here or in the raw JSON editor. */
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
-import { BUILTIN_RECIPES, importRecipe, type Recipe } from '@survey-anything/recipes';
+import { BUILTIN_RECIPES, type Recipe } from '@survey-anything/recipes';
 import {
   DEFAULT_BASE_URLS,
   DEFAULT_MODELS,
@@ -16,11 +16,12 @@ import {
   type ContactStatus,
   type ProviderId,
 } from '@survey-anything/shared';
-import type { ProbeResult } from '@survey-anything/providers';
+import { openAiBase, type ProbeResult } from '@survey-anything/providers';
 import type { ActionToolsResponse } from '@survey-anything/shared';
 import type { BudgetReport } from '../sw/budget';
 import type { PopupStatus } from '../sw/messages';
 import { requestHost, sw } from '../ui/rpc';
+import { RecipeLibrary } from './recipes';
 import { type Draft, getPath, importConfigJson, moveInList, needsNonRedundantAck, omit, setPath, toggleChannel } from './model';
 
 type Secrets = Record<string, string>;
@@ -62,21 +63,39 @@ function TextField(p: { label: string; path: string; draft: Draft; set: (path: s
   );
 }
 
+/**
+ * Key writes in flight. A key is saved as soon as the field loses focus (or on Store / Enter); Test
+ * connection and Save wait for these writes, so a key that was typed but not explicitly stored still counts.
+ */
+let secretWrites: Promise<void> = Promise.resolve();
+export const pendingSecretWrites = (): Promise<void> => secretWrites;
+
 function SecretField(p: { label: string; refName: string | null; secrets: Secrets; onSet: (ref: string, value: string) => void }) {
   const [val, setVal] = useState('');
   if (!p.refName) return null;
   const present = Boolean(p.secrets[p.refName]);
+  const commit = (): void => {
+    const v = val.trim();
+    if (!v) return;
+    p.onSet(p.refName as string, v);
+    setVal('');
+  };
   return (
     <label>
       {p.label} <span class="muted">({p.refName}: {present ? 'set' : 'not set'})</span>{' '}
-      <input type="password" autocomplete="off" value={val} placeholder={present ? '•••••• (replace)' : 'paste key'} onInput={(e) => setVal((e.target as HTMLInputElement).value)} />
-      <button
-        disabled={!val}
-        onClick={() => {
-          p.onSet(p.refName as string, val.trim());
-          setVal('');
+      <input
+        type="password"
+        autocomplete="off"
+        aria-label={`${p.label} (${p.refName})`}
+        value={val}
+        placeholder={present ? '•••••• (replace)' : 'paste key'}
+        onInput={(e) => setVal((e.target as HTMLInputElement).value)}
+        onChange={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') commit();
         }}
-      >
+      />
+      <button disabled={!val} onClick={commit}>
         Store
       </button>
     </label>
@@ -98,6 +117,7 @@ function ProviderCard(p: { id: ProviderId; path: string; draft: Draft; set: (pat
       // C9: user-typed origins need optional host permission, requested from this click. In proxy mode the
       // backend calls the provider, so the browser needs no access to the provider's host.
       if (!proxyMode && !(await requestHost(baseUrl))) throw new Error('permission to reach this host was not granted');
+      await pendingSecretWrites();
       // The draft is never saved by a test: only this profile and the draft's two policy switches are sent.
       const profile = { id: p.id, ...(getPath(p.draft, p.path) as Record<string, unknown>) };
       setProbe(await sw<ProbeResult>({ type: 'test-provider', profile, allowCloudProviders: getPath(p.draft, 'allowCloudProviders') === true, proxyMode }));
@@ -116,6 +136,9 @@ function ProviderCard(p: { id: ProviderId; path: string; draft: Draft; set: (pat
         {p.onRemove && <button onClick={p.onRemove}>Remove</button>}
       </div>
       <TextField label="Base URL" path={`${p.path}.baseUrl`} draft={p.draft} set={p.set} size={44} />
+      {p.id === 'local' && baseUrl && openAiBase('local', baseUrl) !== baseUrl.replace(/\/+$/, '') && (
+        <div class="muted">Local servers (LM Studio, Ollama, vLLM, llama.cpp) serve the API under /v1: this will use {openAiBase('local', baseUrl)}</div>
+      )}
       <TextField label="Model" path={`${p.path}.model`} draft={p.draft} set={p.set} nullable />
       {model && <div class="muted">License: {MODEL_LICENSES[model] ?? 'unknown: read the model card before use'}</div>}
       {p.id === 'openrouter' && (
@@ -209,11 +232,15 @@ function Options() {
 
   // Page state only knows which keys are set, never their values. Merge into what is stored now, so
   // storing one key can never overwrite another (such as the backend device token).
-  const storeSecret = async (ref: string, value: string): Promise<void> => {
-    const cur = ((await chrome.storage.local.get('secrets')) as { secrets?: Secrets }).secrets ?? {};
-    const next = { ...cur, [ref]: value };
-    await chrome.storage.local.set({ secrets: next });
-    setSecrets(Object.fromEntries(Object.keys(next).map((k) => [k, 'set'])));
+  const storeSecret = (ref: string, value: string): Promise<void> => {
+    const write = secretWrites.then(async () => {
+      const cur = ((await chrome.storage.local.get('secrets')) as { secrets?: Secrets }).secrets ?? {};
+      const next = { ...cur, [ref]: value };
+      await chrome.storage.local.set({ secrets: next });
+      setSecrets(Object.fromEntries(Object.keys(next).map((k) => [k, 'set'])));
+    });
+    secretWrites = write.catch(() => undefined);
+    return write;
   };
 
   const load = (d: Draft): void => {
@@ -237,6 +264,7 @@ function Options() {
       setErrors(['Permission to reach the Vision provider was not granted.']);
       return;
     }
+    await pendingSecretWrites();
     const r = await sw<{ ok: boolean; errors: string[]; hint?: string | null }>({ type: 'save-config', config: d });
     if (!r.ok) setErrors([...r.errors, ...(r.hint ? [r.hint] : [])]);
     else {
@@ -545,32 +573,21 @@ function Options() {
       </table>
 
       <h2>Watch rules</h2>
-      {allRecipes.map((r) => (
-        <label class="inline" key={r.id} title={r.confirm.prompt}>
-          <input type="checkbox" checked={rules.includes(r.id)} onChange={(e) => {
-            const on = (e.target as HTMLInputElement).checked;
-            set('rules', on ? [...rules, r.id] : rules.filter((x) => x !== r.id));
-            if (!on) set('routing', omit(routing, r.id));
-          }} /> {r.title} <span class="muted">({r.gate.type}, {r.severity})</span>
-        </label>
-      ))}
-      <div class="card">
-        <strong>Import a recipe</strong> <span class="muted">Recipes are data only and cannot change routing, egress or actions.</span>
-        <input type="file" accept=".json,application/json" onChange={(e) => {
-          const f = (e.target as HTMLInputElement).files?.[0];
-          if (!f) return;
-          void f.text().then(async (t) => {
-            try {
-              const r = importRecipe(t);
-              const next = [...imported.filter((x) => x.id !== r.id), r];
-              await chrome.storage.local.set({ importedRecipes: next });
-              setImported(next);
-            } catch (err) {
-              setErrors([err instanceof Error ? err.message : String(err)]);
-            }
-          });
-        }} />
-      </div>
+      <RecipeLibrary
+        recipes={allRecipes}
+        imported={imported}
+        enabled={rules}
+        onToggle={(id, on) => {
+          set('rules', on ? [...rules, id] : rules.filter((x) => x !== id));
+          if (!on) set('routing', omit(routing, id));
+        }}
+        onImported={async (next) => {
+          await chrome.storage.local.set({ importedRecipes: next });
+          setImported(next);
+          const ids = new Set([...BUILTIN_RECIPES.map((r) => r.id), ...next.map((r) => r.id)]);
+          if (rules.some((id) => !ids.has(id))) set('rules', rules.filter((id) => ids.has(id)));
+        }}
+      />
 
       <h2>Human-approved actions (MCP)</h2>
       <BoolField label="Enabled" path="mcp.enabled" draft={draft} set={set} hint="Requires Telegram and an approver. Email never approves." />

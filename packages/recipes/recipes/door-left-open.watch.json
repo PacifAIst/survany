@@ -1,10 +1,10 @@
 {
   "id": "door-left-open",
   "title": "Door left open",
-  "description": "Draw the region over the door. The gate fires while the region differs from the frame captured at arm time.",
+  "description": "The door is the region in the gate (fractions of the frame: x, y, width, height). To fit your camera, copy this recipe, change the numbers and add it as your own. The gate fires while the region differs from the frame captured at arm time.",
   "gate": { "type": "region-diff", "region": { "x": 0.3, "y": 0.1, "w": 0.4, "h": 0.8 }, "mode": "any-change", "threshold": 0.2 },
   "confirm": {
-    "prompt": "Is the door in this image open or ajar?",
+    "prompt": "Is the door inside the outlined area open or ajar?",
     "framesPerCheck": 1
   },
   "severity": "warning"
