@@ -30,6 +30,11 @@ pnpm pack:source     # -> release/survey-anything-source-<version>.zip, the comm
 
 Run `pnpm pack:source` after committing: it packs `HEAD`, not uncommitted changes.
 
+Checked on 2026-11-12: the source zip, unpacked into an empty folder, then `pnpm install --frozen-lockfile`
+(which downloads and verifies the fire/smoke model) and `build:firefox`, gives the same package byte for
+byte: all 35 files identical and the same zip SHA-256 as the uploaded one. That is what AMO's reviewers
+compare.
+
 ## Test
 
 **Automated, in a real Firefox** (needs Firefox 140 or later, and LM Studio serving a vision model at
