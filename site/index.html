@@ -17,32 +17,50 @@
 <header class="top">
   <div class="wrap bar">
     <a class="brand" href="#" aria-label="Survany home">
-      <img src="favicon.svg" alt="" width="26" height="26"> survany
+      <img src="favicon.svg" alt="" width="26" height="26"> Survany
     </a>
     <nav aria-label="Sections">
       <a href="#how">How it works</a>
       <a href="#why">Why it's different</a>
       <a href="#numbers">Numbers</a>
-      <a href="#start" class="nav-cta">Get started</a>
+      <a href="#start">Get started</a>
+      <a href="#download" class="nav-cta">Download</a>
     </nav>
   </div>
 </header>
 
 <main>
 <section class="hero wrap">
-  <p class="kicker">Free · open source · runs on your computer</p>
-  <h1>Survany<span class="dot">.</span></h1>
-  <p class="expand">Survany stands for <strong>Survey Anything</strong>.</p>
-  <p class="lead">Point it at a webcam or any browser tab, say what to watch for, and get a Telegram or
-    email alert when it happens. A detector runs on your computer for free, and an AI model you choose
-    confirms what it saw, before anyone is bothered.</p>
-  <div class="actions">
-    <a class="btn primary" href="#start">Get started in 7 steps</a>
-    <a class="btn" href="https://github.com/PacifAIst/survany">Source on GitHub</a>
+  <div class="hero-head">
+    <p class="kicker">Free · open source · runs on your computer</p>
+    <h1 class="title"><img class="logo" src="favicon.svg" alt="" width="88" height="88"> Survany</h1>
+    <p class="expand">Survany stands for <strong>Survey Anything</strong>.</p>
   </div>
-  <ul class="badges" aria-label="Facts">
-    <li>Chrome extension</li><li>0.1.0 preview</li><li>AGPL-3.0</li><li>No account, no telemetry</li>
-  </ul>
+  <div class="hero-body">
+    <p class="lead">Point it at a webcam or any browser tab, say what to watch for, and get a Telegram or
+      email alert when it happens. A detector runs on your computer for free, and an AI model you choose
+      confirms what it saw, before anyone is bothered.</p>
+    <div class="actions">
+      <a class="btn" href="#start">Set it up in 6 steps</a>
+      <a class="btn" href="https://github.com/PacifAIst/survany">Source on GitHub</a>
+    </div>
+    <ul class="badges" aria-label="Facts">
+      <li>Chrome and Firefox</li><li>Free</li><li>AGPL-3.0</li><li>No account, no telemetry</li>
+    </ul>
+  </div>
+  <aside id="download" class="download" aria-label="Download the extension">
+    <p class="dl-title">Get the extension</p>
+    <a class="store chrome" href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik">
+      <span class="store-name">Add to Chrome <span aria-hidden="true">→</span></span>
+      <span class="store-sub">Chrome Web Store · free · version 0.1.0</span>
+    </a>
+    <!-- FIREFOX: replace this span with <a class="store firefox" href="(addons.mozilla.org link)"> once the add-on is approved. -->
+    <span class="store firefox pending" aria-disabled="true">
+      <span class="store-name">Add to Firefox</span>
+      <span class="store-sub">In review at Firefox Add-ons · coming soon</span>
+    </span>
+    <p class="dl-note">Every version, with its source: <a href="https://github.com/PacifAIst/survany/releases">GitHub releases</a>.</p>
+  </aside>
 </section>
 
 <section id="how" class="wrap section">
@@ -110,30 +128,23 @@
 
 <section id="start" class="wrap section">
   <p class="label">Get started</p>
-  <h2>Seven steps, about 30 minutes, all free.</h2>
-  <p class="muted">Version 0.1.0 is a preview and not in the Chrome Web Store yet, so you build it once from
-    the source. You need Chrome, <a href="https://nodejs.org">Node.js</a> 24 or later, <a href="https://git-scm.com">Git</a> and Telegram.</p>
+  <h2>Six steps, about 20 minutes, all free.</h2>
+  <p class="muted">No build needed: install it from the store. You need Chrome (Firefox once its review is done) and Telegram.</p>
   <ol class="steps">
-    <li><h3>Build it</h3>
-<pre><code>git clone https://github.com/PacifAIst/survany
-cd survany
-corepack enable
-pnpm install
-pnpm build</code></pre></li>
-    <li><h3>Load it into Chrome</h3><p>Open <code>chrome://extensions</code>, turn on <b>Developer mode</b>, press <b>Load unpacked</b> and pick <code>survany/apps/extension/dist</code>. Accept the consent page and allow the camera.</p></li>
+    <li><h3>Install it</h3><p><a href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik">Add Survey Anything to Chrome</a>. The consent page opens: read it, tick the boxes and press <b>I agree</b>, then allow the camera.</p></li>
     <li><h3>Free AI on your computer</h3><p>Install <a href="https://lmstudio.ai">LM Studio</a>, download and load <code>qwen3-vl-4b-instruct</code>, and start its server (Developer tab). In the extension's Options, local card, press <b>LM Studio</b> and then <b>Test connection</b>.</p></li>
     <li><h3>A Telegram bot</h3><p>In Telegram, message <b>@BotFather</b>, send <code>/newbot</code> and copy the token. Open your bot, press <b>Start</b> and <b>send it "hi"</b>. Open <code>https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code> and copy the number after <code>"chat":{"id":</code>. In Options, tick <b>Direct Telegram</b>, paste the token and enter that chat ID.</p></li>
     <li><h3>Free email (optional)</h3><p>Sign up at <a href="https://resend.com">resend.com</a>, create an API key, and in Options tick <b>Direct email (Resend)</b> with From <code>onboarding@resend.dev</code> and your sign-up address as the recipient.</p></li>
     <li><h3>Pick a rule</h3><p>Under <b>Watch rules</b>, tick <b>Person left the camera view</b> (or fire, a package at the door, a dashboard turning red…) and press <b>Save</b>.</p></li>
-    <li><h3>Watch</h3><p>Click the extension's icon and press <b>Watch camera</b>, or <b>Watch this tab</b> on any page. Walk away to test.</p></li>
+    <li><h3>Watch</h3><p>Click the extension's icon and press <b>Watch camera</b>, or <b>Watch this tab</b> on any page (in Firefox: <b>Watch a window or screen</b>). Walk away to test.</p></li>
   </ol>
   <div class="shots">
-    <figure><img src="img/local-model.png" width="888" height="383" alt="The local model card: LM Studio found qwen3-vl-4b-instruct and the vision test passed"><figcaption>Step 3: the local model, found and tested in two clicks.</figcaption></figure>
-    <figure class="narrow"><img src="img/popup.png" width="380" height="258" alt="The extension popup while watching the camera, showing one local AI call today"><figcaption>Step 7: watching. The AI is asked only when something happens.</figcaption></figure>
+    <figure><img src="img/local-model.png" width="888" height="383" alt="The local model card: LM Studio found qwen3-vl-4b-instruct and the vision test passed"><figcaption>Step 2: the local model, found and tested in two clicks.</figcaption></figure>
+    <figure class="narrow"><img src="img/popup.png" width="380" height="258" alt="The extension popup while watching the camera, showing one local AI call today"><figcaption>Step 6: watching. The AI is asked only when something happens.</figcaption></figure>
   </div>
   <div class="actions">
     <a class="btn primary" href="https://github.com/PacifAIst/survany/blob/main/docs/GUIDE_LEAVE_ALERT.md">Full guide with screenshots</a>
-    <a class="btn" href="https://github.com/PacifAIst/survany#readme">README</a>
+    <a class="btn" href="https://github.com/PacifAIst/survany#readme">Build from source</a>
   </div>
 </section>
 

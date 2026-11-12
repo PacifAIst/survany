@@ -3,7 +3,7 @@
 This guide sets up one simple job from scratch: your laptop's camera watches you, and when you walk away you
 get a Telegram message and an email. While you sit there, nothing happens. Everything here is free: the
 AI model runs on your own computer (LM Studio), Telegram bots are free, and Resend has a free email plan.
-No server is needed. Allow about 30 minutes the first time.
+No server is needed. Allow about 20 minutes the first time.
 
 Contents: [1. Install](#1-install-the-extension) · [2. AI model](#2-a-free-ai-model-on-your-computer-lm-studio) ·
 [3. The rule](#3-choose-the-rule) · [4. Telegram](#4-telegram-bot-free) · [5. Email](#5-free-email-with-resend-optional) ·
@@ -11,13 +11,22 @@ Contents: [1. Install](#1-install-the-extension) · [2. AI model](#2-a-free-ai-m
 
 ## What you need
 
-- A computer with a webcam, and Chrome or Chromium 120 or later.
-- [Node.js](https://nodejs.org) 24 or later and [Git](https://git-scm.com), to build the extension once.
+- A computer with a webcam, and Chrome or Chromium 120 or later (Firefox once its review is done).
 - Telegram on your phone or computer.
 - [LM Studio](https://lmstudio.ai) (free) for the AI check. Optional, but it makes alerts much more reliable.
 - A free [Resend](https://resend.com) account, only if you also want email.
 
 ## 1. Install the extension
+
+1. Open [Survey Anything on the Chrome Web Store](https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik) and press **Add to Chrome**.
+2. A consent page opens. Read it, tick the boxes and press **I agree**. Then press **Allow camera access**
+   and accept Chrome's camera prompt (Chrome uses your default camera).
+3. Click the puzzle icon in Chrome's toolbar and pin **Survey Anything**, so its icon is always visible.
+
+The settings page is: right-click the extension's icon → **Options**.
+
+**Or build it yourself** (developers, or to run the newest code), with [Node.js](https://nodejs.org) 24 or
+later and [Git](https://git-scm.com):
 
 1. Open a terminal (on Windows: PowerShell or Git Bash) and run:
 
@@ -34,11 +43,7 @@ Contents: [1. Install](#1-install-the-extension) · [2. AI model](#2-a-free-ai-m
    choose the folder `survany/apps/extension/dist`.
    Load this folder itself, not a copy: to update later you run `git pull` and `pnpm build`, then press the
    reload arrow on the extension's card.
-3. A consent page opens. Read it, tick the boxes and press **I agree**. Then press **Allow camera access**
-   and accept Chrome's camera prompt.
-4. Click the puzzle icon in Chrome's toolbar and pin **Survey Anything**, so its icon is always visible.
-
-The settings page is: right-click the extension's icon → **Options**.
+3. Continue with the consent page as above.
 
 **Using Firefox (140 or later)?** Build with `pnpm --filter @survey-anything/extension build:firefox`, open
 `about:debugging#/runtime/this-firefox`, press **Load Temporary Add-on…** and pick
@@ -172,7 +177,7 @@ seconds, so one call per time you leave.
 | No email | **From address** must be `onboarding@resend.dev` and **Email for owner** your Resend sign-up address. Look in the spam folder. |
 | An alert while you were sitting there | Light from a window behind you can hide you. Turn on a lamp in front of you. The AI check usually stops these. |
 | An alert when you covered the camera | Expected: with the camera covered, nobody is visible. |
-| "Camera stopped delivering frames", or the camera light stays off | The add-on may be using a virtual camera (NVIDIA Broadcast, OBS…), which shows nothing while its app is closed. Click the extension's icon → **Camera…** → **Choose the camera**, and pick your real webcam. The pinned tab (Firefox) and the log name the camera in use. |
+| "Camera stopped delivering frames", or the camera light stays off | The add-on may be using a virtual camera (NVIDIA Broadcast, OBS…), which shows nothing while its app is closed. From version 0.1.1 (the Firefox add-on, or a build from source): click the extension's icon → **Camera…** → **Choose the camera**, and pick your real webcam. In Chrome 0.1.0, make your real webcam the default in Chrome's camera settings. The pinned tab (Firefox) and the log name the camera in use. |
 | Anything else | In Options press F12, open **Console**, paste the line below, and send the output with your issue. |
 
 ```js

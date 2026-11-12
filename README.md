@@ -1,6 +1,14 @@
 # Survey Anything
 
-Website: **[survany.pages.dev](https://survany.pages.dev)** (Survany stands for Survey Anything).
+<p align="center">
+  <a href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik"><img alt="Add to Chrome: Chrome Web Store" src="https://img.shields.io/chrome-web-store/v/pmdlodffhjadcmjipbjhgoggneokieik?style=for-the-badge&amp;logo=googlechrome&amp;logoColor=white&amp;label=Add%20to%20Chrome&amp;color=ff4fa3"></a>
+  &nbsp;
+  <!-- FIREFOX: point this at the addons.mozilla.org listing once the add-on is approved. -->
+  <a href="docs/release/FIREFOX.md"><img alt="Firefox Add-ons: in review" src="https://img.shields.io/badge/Firefox-in%20review-555555?style=for-the-badge&amp;logo=firefoxbrowser&amp;logoColor=white"></a>
+</p>
+
+Website: **[survany.pages.dev](https://survany.pages.dev)** (Survany stands for Survey Anything). Every
+version, with its source: [Releases](https://github.com/PacifAIst/survany/releases).
 
 **Point it at any browser tab or camera, say what to watch for, and get a Telegram and email alert when
 it happens. Nothing acts without your tap.**
@@ -16,6 +24,13 @@ taps Approve.
   adversarial test results are in `docs/BENCHMARKS.md`.
 - **Anything is a sensor.** A vendor's camera portal, a Grafana board, a 3D printer feed, a shop queue:
   if it is in a tab, it can be watched. Rules are shareable JSON recipes.
+
+## Install
+
+- **Chrome:** [Add to Chrome](https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik) from the Chrome Web Store, then follow the step-by-step guide,
+  [`docs/GUIDE_LEAVE_ALERT.md`](docs/GUIDE_LEAVE_ALERT.md).
+- **Firefox:** in review at Firefox Add-ons. Until then, see [Firefox](#firefox) below.
+- **From source:** the five-minute quickstart below, or a zip from [Releases](https://github.com/PacifAIst/survany/releases).
 
 ## Try it in about five minutes
 
