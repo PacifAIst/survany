@@ -171,6 +171,7 @@ seconds, so one call per time you leave.
 | No email | **From address** must be `onboarding@resend.dev` and **Email for owner** your Resend sign-up address. Look in the spam folder. |
 | An alert while you were sitting there | Light from a window behind you can hide you. Turn on a lamp in front of you. The AI check usually stops these. |
 | An alert when you covered the camera | Expected: with the camera covered, nobody is visible. |
+| "Camera stopped delivering frames", or the camera light stays off | The add-on may be using a virtual camera (NVIDIA Broadcast, OBS…), which shows nothing while its app is closed. Click the extension's icon → **Camera…** → **Choose the camera**, and pick your real webcam. The pinned tab (Firefox) and the log name the camera in use. |
 | Anything else | In Options press F12, open **Console**, paste the line below, and send the output with your issue. |
 
 ```js

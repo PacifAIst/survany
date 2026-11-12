@@ -174,7 +174,9 @@ async function start(src: SourceSpec, setup: ScanSetup, clip: { seconds: number;
     clips = new ClipRecorders(opened, clip);
     clips.start();
   }
-  showState(`Watching: ${src.label}.`, true);
+  // Name the device, so a person can see when the wrong camera (for example a virtual one) is in use.
+  if (src.kind === 'camera') log('info', `camera in use: ${track.label || 'unnamed device'}`);
+  showState(`Watching: ${src.label}${src.kind === 'camera' && track.label ? ` (${track.label})` : ''}.`, true);
 }
 
 async function stop(): Promise<void> {

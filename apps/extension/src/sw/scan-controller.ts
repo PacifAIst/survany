@@ -112,7 +112,8 @@ async function armNow(src: ArmSource): Promise<void> {
   await setIndicator('armed', src.label);
   // A window or screen (Firefox) is chosen with a click on the monitor tab, so bring it to the front.
   await ensureOffscreen({ focus: src.kind === 'display' });
-  const source: SourceSpec = src.kind === 'tab' ? { ...src } : src.kind === 'display' ? { kind: 'display', label: src.label } : { kind: 'camera', deviceId: null, label: src.label };
+  const cameraId = await store.get('cameraDeviceId');
+  const source: SourceSpec = src.kind === 'tab' ? { ...src } : src.kind === 'display' ? { kind: 'display', label: src.label } : { kind: 'camera', deviceId: cameraId, label: src.label };
   try {
     await sendToOffscreen({ target: 'offscreen', type: 'start', source, setup: buildScanSetup(config, recipes), clip: await clipSetup(config) });
   } catch (e) {
@@ -175,7 +176,7 @@ async function recoverNow(why: string): Promise<void> {
     await sendToOffscreen({
       target: 'offscreen',
       type: 'start',
-      source: { kind: 'camera', deviceId: null, label: armed.source.label },
+      source: { kind: 'camera', deviceId: await store.get('cameraDeviceId'), label: armed.source.label },
       setup: buildScanSetup(config, await enabledRecipes(config)),
       clip: await clipSetup(config),
     });
@@ -388,7 +389,9 @@ export async function handleSourceHealth(state: 'ok' | 'frozen' | 'black' | 'no-
   const armed = await store.get('armed');
   if (!armed.armed) return;
   const what = state === 'black' ? 'is showing black frames' : state === 'frozen' ? 'is frozen' : 'stopped delivering frames';
-  await raiseNotice('camera-offline', `${armed.source?.label ?? 'The source'} ${what}.`);
+  // A virtual camera (NVIDIA Broadcast, OBS) delivers nothing while its app is closed: say how to pick another.
+  const hint = armed.source?.kind === 'camera' ? ' If this computer has more than one camera, choose the real one: extension popup → Camera….' : '';
+  await raiseNotice('camera-offline', `${armed.source?.label ?? 'The source'} ${what}.${hint}`);
 }
 
 export async function handleSourceEnded(reason: string): Promise<void> {

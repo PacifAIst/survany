@@ -138,8 +138,9 @@ How to try it without any account:
 
 AMO never accepts the same version number twice, even for a version that is still in review or disabled.
 After any change, raise `version` in `apps/extension/package.json` and upload the new zip and source zip as
-a new version (Developer Hub → the add-on → **Upload New Version**). 0.1.1 fixes a double click on
-"Watch camera" that left the camera without frames (found in the owner's first Firefox test).
+a new version (Developer Hub → the add-on → **Upload New Version**). 0.1.1 adds the camera choice
+(popup → **Camera…**): on a PC with a virtual camera such as NVIDIA Broadcast, Firefox used the virtual one
+by default and watching got no frames (found in the owner's first Firefox test).
 
 ## After approval
 

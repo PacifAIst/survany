@@ -55,6 +55,9 @@ export interface StoreShape {
   log: string[];
   /** Firefox: the id of the monitor tab while it exists (cleared at browser start). */
   monitorTabId: number | null;
+  /** The camera chosen on the camera page (null: automatic, preferring a real camera over virtual ones). */
+  cameraDeviceId: string | null;
+  cameraLabel: string | null;
 }
 
 const DEFAULTS: { [K in keyof StoreShape]: () => StoreShape[K] } = {
@@ -73,6 +76,8 @@ const DEFAULTS: { [K in keyof StoreShape]: () => StoreShape[K] } = {
   recentNotices: () => [],
   log: () => [],
   monitorTabId: () => null,
+  cameraDeviceId: () => null,
+  cameraLabel: () => null,
 };
 
 export async function get<K extends keyof StoreShape>(key: K): Promise<StoreShape[K]> {

@@ -234,7 +234,9 @@ With Home Assistant, follow `docs/MCP_PAIRING.md` section 3 (ha-mcp) instead.
   `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on…** → `apps/extension/dist-firefox/manifest.json`.
 - [ ] Consent, camera, Options as in Part A (LM Studio button, Test connection, Telegram, the rule, Save). Firefox
   asks once to allow the addresses (127.0.0.1, api.telegram.org): allow them.
-- [ ] Popup → **Watch camera**. A pinned **Survey Anything** tab opens and says "Watching: Camera". Leave it
+- [ ] If the PC has more than one camera (for example NVIDIA Broadcast or OBS): popup → **Camera…** → **Choose the
+  camera** → pick the real webcam. Virtual cameras are marked.
+- [ ] Popup → **Watch camera**. A pinned **Survey Anything** tab opens and says "Watching: Camera (<camera name>)". Leave it
   pinned and switch to other tabs: watching continues. Walk away: the Telegram alert arrives as in A6.
 - [ ] Close the pinned tab: watching stops and a notice says why.
 - [ ] Popup → **Watch a window or screen** → the pinned tab shows **Choose a window or screen to watch** →

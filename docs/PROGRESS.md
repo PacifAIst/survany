@@ -2,7 +2,7 @@
 
 **Goal:** v1.0 as defined at the end of §8 of docs/PLAN.md
 **Current milestone:** M8 on hold at 0.1.0: owner manual testing first (`docs/MANUAL_TESTING.md`)
-**Last updated:** 2026-11-12 11:00
+**Last updated:** 2026-11-12 12:00
 
 ## Milestones
 | ID | Status (todo/doing/done) | Acceptance evidence | Notes |
@@ -168,6 +168,12 @@ Accepted for v1.0 by the owner, with the reason; each can be revisited after rel
 | 2026-11-09 | Container images | Docker Hub | Pinned digests: OME v0.21.0 `sha256:172da912…`, caddy 2.10.2-alpine `sha256:4c6e91c6…`, mailpit v1.27 `sha256:e22dce5b…`, node 24-alpine `sha256:a34ab6d7…`, python 3.13-slim `sha256:e48f59cd…`. |
 
 ## Session log (newest first)
+### 2026-11-12 12:00: camera choice (the real cause of the dark camera in Firefox)
+- Correction to the 11:00 entry: the owner did not triple-click. Windows' camera usage records showed the owner's Firefox had not opened the physical webcam since May, and the PC has two cameras: "Integrated Camera" and "Camera (NVIDIA Broadcast)" (virtual). Firefox's default was the virtual one, and the add-on never chose a device, so even picking "Integrated Camera" in Firefox's prompt did not stick: the monitor tab later asked for the default camera again. Chrome's default was the real camera. (The three simultaneous starts in the owner's log stay unexplained; the 11:00 serialisation makes them harmless.)
+- Fix (both browsers): the camera page lists the cameras after permission, marks virtual ones and saves the choice (`cameraDeviceId`); the popup has "Camera…"; watching opens the chosen camera, else the browser's default unless that is a virtual camera and a real one exists; the monitor tab and the log name the camera in use; the "no frames" notice says how to choose another camera. Also restored the house style in two files an earlier Prettier run had reformatted (the repo has no Prettier config).
+- Tests run: unit (`pickCamera`: virtual-first list picks the real camera, explicit choice wins, a vanished choice falls back) → 275 passed; Chrome e2e 9 passed on a fresh build; Firefox 20/20 on the 0.1.1 zip; a visible Firefox with the owner's real camera and the monitor tab in the background: Integrated Camera, frames every scan, no notices (background tabs are not the problem); addons-linter 0 errors.
+- Next: owner reloads the Firefox build, chooses "Integrated Camera" (popup → Camera…), tests, then uploads 0.1.1 to AMO.
+- Blockers: none.
 ### 2026-11-12 11:00: 0.1.1, double-click on "Watch camera" fixed
 - Owner's Firefox test: the camera stayed dark ("Camera stopped delivering frames") while window sharing worked. The debug log showed three camera starts within 20 ms. Reproduced in Firefox with the owner's real camera (no image kept): one click works; three quick clicks start three captures that stop each other's stream.
 - Fix (both browsers): arm, disarm and recovery run one at a time in the background, and a repeated Watch for the source already being watched is ignored; the capture page queues start/stop/close; the popup drops clicks while a request is in flight.

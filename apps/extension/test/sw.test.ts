@@ -72,6 +72,27 @@ describe('messages come only from this extension (Chrome and Firefox)', () => {
   });
 });
 
+describe('which camera to open (found on a PC with NVIDIA Broadcast, 2026-11-12)', () => {
+  it('uses the chosen camera, else the first real one, and recognises virtual cameras', async () => {
+    const { pickCamera, VIRTUAL_CAMERA } = await import('../src/offscreen/source-camera');
+    const owner = [
+      { deviceId: 'nv', label: 'Camera (NVIDIA Broadcast)' },
+      { deviceId: 'int', label: 'Integrated Camera' },
+    ];
+    // Firefox listed the virtual camera first and used it by default; the real one must win.
+    expect(pickCamera(owner, null)).toBe('int');
+    // A person's explicit choice wins, even a virtual camera (NVIDIA Broadcast works while its app runs).
+    expect(pickCamera(owner, 'nv')).toBe('nv');
+    // A chosen camera that is gone falls back to the automatic choice.
+    expect(pickCamera(owner, 'unplugged')).toBe('int');
+    // Only virtual cameras, or names not readable yet: leave it to the browser.
+    expect(pickCamera([{ deviceId: 'obs', label: 'OBS Virtual Camera' }], null)).toBeNull();
+    expect(pickCamera([{ deviceId: 'x', label: '' }], null)).toBeNull();
+    for (const v of ['Camera (NVIDIA Broadcast)', 'OBS Virtual Camera', 'Snap Camera', 'ManyCam Virtual Webcam', 'XSplit VCam']) expect(VIRTUAL_CAMERA.test(v), v).toBe(true);
+    for (const r of ['Integrated Camera', 'HD Pro Webcam C920', 'FaceTime HD Camera', 'Logitech BRIO', 'fake_device_0']) expect(VIRTUAL_CAMERA.test(r), r).toBe(false);
+  });
+});
+
 describe('budget report for the Options page (M3)', () => {
   it('reports use against each limit, which limit blocked, and the next UTC midnight', async () => {
     const limits = { maxCallsPerMinute: 5, dailyMaxApiCalls: 2, dailyTokenCap: 10_000, hardStopOnBudget: true as const };
