@@ -48,17 +48,12 @@ nav .nav-cta { color: var(--pink-2); }
 .title .logo { width: clamp(56px, 9vw, 88px); height: auto; flex: none; }
 .download { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; box-shadow: 0 0 0 1px var(--pink-dim), 0 24px 64px rgba(255, 79, 163, 0.1); }
 .dl-title { margin: 0 0 4px; font-weight: 700; font-size: 1.05rem; }
-.store { display: flex; flex-direction: column; gap: 2px; margin-top: 14px; padding: 18px 20px; border-radius: 14px; border: 1px solid var(--line); text-decoration: none; }
-.store-name { font-size: 1.35rem; font-weight: 800; color: var(--text); letter-spacing: -0.01em; }
-.store-sub { color: var(--muted); font-size: 0.88rem; }
-.store.chrome { background: var(--pink); border-color: var(--pink); }
-.store.chrome .store-name { color: #17070f; }
-.store.chrome .store-sub { color: #4a1530; }
-.store.chrome:hover { background: var(--pink-2); border-color: var(--pink-2); }
-.store.firefox { background: var(--surface-2); }
-a.store.firefox:hover { border-color: var(--pink); }
-.store.pending { border-style: dashed; cursor: default; }
-.store.pending .store-name { color: var(--muted); }
+/* Both official badges at the same height (resizing is the only change the stores allow). */
+.store-badge { display: block; margin-top: 16px; width: fit-content; }
+.store-badge img { display: block; height: 64px; width: auto; }
+a.store-badge:hover img, a.store-badge:focus-visible img { transform: translateY(-1px); }
+.store-badge.pending img { opacity: 0.55; }
+.badge-note { display: block; color: var(--muted); font-size: 0.85rem; margin-top: 6px; }
 .dl-note { color: var(--muted); font-size: 0.85rem; margin: 16px 0 0; }
 .kicker { color: var(--pink-2); font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 12px; }
 h1 { font-size: clamp(3.2rem, 9vw, 6rem); line-height: 1; margin: 0; letter-spacing: -0.03em; }

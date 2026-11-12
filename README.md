@@ -1,11 +1,12 @@
 # Survey Anything
 
 <p align="center">
-  <a href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik"><img alt="Add to Chrome: Chrome Web Store" src="https://img.shields.io/chrome-web-store/v/pmdlodffhjadcmjipbjhgoggneokieik?style=for-the-badge&amp;logo=googlechrome&amp;logoColor=white&amp;label=Add%20to%20Chrome&amp;color=ff4fa3"></a>
-  &nbsp;
-  <!-- FIREFOX: point this at the addons.mozilla.org listing once the add-on is approved. -->
-  <a href="docs/release/FIREFOX.md"><img alt="Firefox Add-ons: in review" src="https://img.shields.io/badge/Firefox-in%20review-555555?style=for-the-badge&amp;logo=firefoxbrowser&amp;logoColor=white"></a>
+  <a href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik"><img alt="Available in the Chrome Web Store" src="site/img/badge-chrome-web-store.png" height="60"></a>
+  &nbsp;&nbsp;
+  <!-- FIREFOX: when approved, wrap this image in <a href="(addons.mozilla.org link)"> and drop the "in review" line. -->
+  <img alt="Get the add-on for Firefox (in review)" src="site/img/badge-firefox-get-the-addon.svg" height="60">
 </p>
+<p align="center"><sub>Firefox: in review at Firefox Add-ons, coming soon.</sub></p>
 
 Website: **[survany.pages.dev](https://survany.pages.dev)** (Survany stands for Survey Anything). Every
 version, with its source: [Releases](https://github.com/PacifAIst/survany/releases).
