@@ -10,7 +10,7 @@ sharing. Needs LM Studio serving a vision model at http://127.0.0.1:1234. Telegr
 token, so the send is refused; the test checks that the alert was produced and the send attempted.
 
     python -m pip install selenium==4.38.0
-    python apps/extension/e2e-firefox/firefox_e2e.py --firefox <path to firefox.exe> --extension release/survey-anything-firefox-0.1.0.zip
+    python apps/extension/e2e-firefox/firefox_e2e.py --firefox <path to firefox.exe> --extension release/survey-anything-firefox-0.1.1.zip
 
 Selenium downloads geckodriver itself. Measured 2026-11-12 on Firefox 160: 20/20 (docs/release/FIREFOX.md).
 """

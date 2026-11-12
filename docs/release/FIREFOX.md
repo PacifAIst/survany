@@ -42,7 +42,7 @@ compare.
 
 ```bash
 python -m pip install selenium==4.38.0
-python apps/extension/e2e-firefox/firefox_e2e.py --firefox "<path to firefox.exe>" --extension release/survey-anything-firefox-0.1.0.zip
+python apps/extension/e2e-firefox/firefox_e2e.py --firefox "<path to firefox.exe>" --extension release/survey-anything-firefox-0.1.1.zip
 ```
 
 It installs the zip as a temporary add-on and walks the real pages with Firefox's fake camera:
@@ -61,7 +61,7 @@ only because the test uses a placeholder token).
 `apps/extension/dist-firefox/manifest.json`. A temporary add-on stays until Firefox restarts. Then follow
 `docs/GUIDE_LEAVE_ALERT.md`; in Firefox the popup says **Watch a window or screen** instead of **Watch this tab**.
 
-**Mozilla's linter** (the same checks AMO runs on upload): `npx addons-linter@10.15.0 release/survey-anything-firefox-0.1.0.zip`
+**Mozilla's linter** (the same checks AMO runs on upload): `npx addons-linter@10.15.0 release/survey-anything-firefox-0.1.1.zip`
 gives 0 errors and the 4 warnings explained in the reviewer notes below.
 
 ## Submitting to addons.mozilla.org
@@ -133,6 +133,13 @@ How to try it without any account:
    appears. The Telegram send fails with the dummy token, which is expected.
 5. Close the pinned tab to stop, or use "Disarm" in the popup.
 ```
+
+## Uploading a fixed version
+
+AMO never accepts the same version number twice, even for a version that is still in review or disabled.
+After any change, raise `version` in `apps/extension/package.json` and upload the new zip and source zip as
+a new version (Developer Hub → the add-on → **Upload New Version**). 0.1.1 fixes a double click on
+"Watch camera" that left the camera without frames (found in the owner's first Firefox test).
 
 ## After approval
 

@@ -2,7 +2,7 @@
 
 **Goal:** v1.0 as defined at the end of §8 of docs/PLAN.md
 **Current milestone:** M8 on hold at 0.1.0: owner manual testing first (`docs/MANUAL_TESTING.md`)
-**Last updated:** 2026-11-12 10:00
+**Last updated:** 2026-11-12 11:00
 
 ## Milestones
 | ID | Status (todo/doing/done) | Acceptance evidence | Notes |
@@ -168,6 +168,12 @@ Accepted for v1.0 by the owner, with the reason; each can be revisited after rel
 | 2026-11-09 | Container images | Docker Hub | Pinned digests: OME v0.21.0 `sha256:172da912…`, caddy 2.10.2-alpine `sha256:4c6e91c6…`, mailpit v1.27 `sha256:e22dce5b…`, node 24-alpine `sha256:a34ab6d7…`, python 3.13-slim `sha256:e48f59cd…`. |
 
 ## Session log (newest first)
+### 2026-11-12 11:00: 0.1.1, double-click on "Watch camera" fixed
+- Owner's Firefox test: the camera stayed dark ("Camera stopped delivering frames") while window sharing worked. The debug log showed three camera starts within 20 ms. Reproduced in Firefox with the owner's real camera (no image kept): one click works; three quick clicks start three captures that stop each other's stream.
+- Fix (both browsers): arm, disarm and recovery run one at a time in the background, and a repeated Watch for the source already being watched is ignored; the capture page queues start/stop/close; the popup drops clicks while a request is in flight.
+- Version 0.1.1 (AMO never accepts a version number twice; 0.1.0 was uploaded). Tests: `pnpm vitest run` 274, Chrome e2e 9 passed on a fresh build, Firefox `firefox_e2e.py` 20/20 on the 0.1.1 zip, real camera one click and three clicks: frames flowing, no notices; addons-linter 0 errors.
+- Next: owner uploads 0.1.1 (zip and source zip) on AMO.
+- Blockers: none.
 ### 2026-11-12 10:00: Firefox port and AMO package
 - Done: Firefox build (see Decisions), `release/survey-anything-firefox-0.1.0.zip` (reproducible; sha256 b5293f45… for commit-time sources) and `pnpm pack:source` for AMO's source review; `docs/release/FIREFOX.md` (differences, build, test, AMO submission steps, listing text, reviewer notes); README, beginner guide and MANUAL_TESTING Part D.
 - Bugs found only by running in real Firefox, fixed in shared code: (1) every page-to-background message was refused, because the sender check assumed `chrome-extension://` URLs (Firefox pages are `moz-extension://<uuid>/`); (2) the bundled-model integrity check refused `moz-extension://`, so no detector loaded; (3) Firefox accepts permission requests only while a click is handled, so `requestHost` no longer awaits anything first, keys are stored even if the request is refused, and Save asks for every host the configuration needs (provider, Telegram, Resend) in one prompt; (4) notification options Firefox does not support are dropped there; (5) failed direct alert sends are now logged (a wrong token showed only a red badge). CI then caught that asking for the Telegram host at Save prompted in Chrome too (the README quickstart test stores the token without that permission and hung at Save; locally the release build was older): Save asks for the alert hosts on Firefox only, Chrome's Save is as before.

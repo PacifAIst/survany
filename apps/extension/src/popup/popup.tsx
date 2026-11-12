@@ -11,6 +11,8 @@ function page(path: string): void {
   void chrome.tabs.create({ url: chrome.runtime.getURL(path) });
 }
 
+let inFlight = false;
+
 function Popup() {
   const [s, setS] = useState<PopupStatus | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -31,6 +33,9 @@ function Popup() {
   }, []);
 
   const run = async (fn: () => Promise<unknown>): Promise<void> => {
+    // Disabled buttons only take effect after a re-render, so quick extra clicks are dropped here.
+    if (inFlight) return;
+    inFlight = true;
     setBusy(true);
     setErr(null);
     try {
@@ -39,6 +44,7 @@ function Popup() {
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
+      inFlight = false;
       setBusy(false);
     }
   };

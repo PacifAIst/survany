@@ -69,7 +69,37 @@ async function clipSetup(c: Config): Promise<ClipSetup | null> {
 
 export class ArmError extends Error {}
 
-export async function arm(src: ArmSource): Promise<void> {
+/**
+ * Arm, disarm and capture recovery run one at a time. Overlapping requests (a double click on
+ * "Watch camera", found in Firefox where three starts arrived within 20 ms) otherwise start several
+ * captures that stop each other's camera stream, and watching silently gets no frames.
+ */
+let captureLock: Promise<unknown> = Promise.resolve();
+function exclusive<T>(fn: () => Promise<T>): Promise<T> {
+  const run = captureLock.then(fn, fn);
+  captureLock = run.catch(() => undefined);
+  return run;
+}
+
+export function arm(src: ArmSource): Promise<void> {
+  return exclusive(() => armNow(src));
+}
+
+export function disarm(reason = 'user'): Promise<void> {
+  return exclusive(() => disarmNow(reason));
+}
+
+export function recoverSource(why: string): Promise<void> {
+  return exclusive(() => recoverNow(why));
+}
+
+async function armNow(src: ArmSource): Promise<void> {
+  // Already watching this camera or shared window: a repeated request changes nothing.
+  const current = await store.get('armed');
+  if (current.armed && src.kind !== 'tab' && current.source?.kind === src.kind && (await offscreenStatus())?.running) {
+    await store.appendLog(`arm ignored: already watching ${src.kind}`);
+    return;
+  }
   if (!(await store.get('consentAt'))) throw new ArmError('Accept the consent and disclosure screen first.');
   const { config, errors } = await store.loadConfig();
   // §10 "Zero channels configured": an invalid (e.g. tampered) config refuses to arm with a hard error.
@@ -98,7 +128,7 @@ export async function arm(src: ArmSource): Promise<void> {
   void probeLiveView(config);
 }
 
-export async function disarm(reason = 'user'): Promise<void> {
+async function disarmNow(reason: string): Promise<void> {
   const streaming = await store.get('streaming');
   if (streaming) await stopStream();
   // Firefox: forget the monitor tab first, so its closing below is not mistaken for the user closing it.
@@ -128,14 +158,14 @@ export async function stopStream(): Promise<void> {
  * Restores capture after the offscreen document or the browser went away (§10). Camera sources
  * resume automatically; tab sources cannot (C20: tab capture needs a user gesture).
  */
-export async function recoverSource(why: string): Promise<void> {
+async function recoverNow(why: string): Promise<void> {
   const armed = await store.get('armed');
   if (!armed.armed || !armed.source) return;
   if (armed.source.kind === 'tab' || armed.source.kind === 'display') {
     // Tabs (C20) and shared windows or screens can only be picked again by the user.
     const what = armed.source.kind === 'tab' ? 'Tab watching stopped' : 'Window or screen watching stopped';
     await raiseNotice('re-arm-needed', `${what} (${why}). Press Watch again in the extension.`);
-    await disarm(`${armed.source.kind} source lost: ${why}`);
+    await disarmNow(`${armed.source.kind} source lost: ${why}`);
     return;
   }
   const { config } = await store.loadConfig();

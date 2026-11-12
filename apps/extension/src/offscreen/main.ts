@@ -140,6 +140,14 @@ function attachFrames(track: MediaStreamTrack): void {
   log('info', 'frame source: video element fallback');
 }
 
+/** Start, stop and close run one at a time: overlapping starts would stop each other's stream. */
+let queue: Promise<unknown> = Promise.resolve();
+function serial<T>(fn: () => Promise<T>): Promise<T> {
+  const run = queue.then(fn, fn);
+  queue = run.catch(() => undefined);
+  return run;
+}
+
 async function start(src: SourceSpec, setup: ScanSetup, clip: { seconds: number; videoBitsPerSecond: number } | null): Promise<void> {
   await stop();
   source = src;
@@ -268,13 +276,13 @@ chrome.runtime.onMessage.addListener((raw: unknown, sender, sendResponse) => {
   };
   switch (msg.type) {
     case 'start':
-      return reply(start(msg.source, msg.setup, msg.clip));
+      return reply(serial(() => start(msg.source, msg.setup, msg.clip)));
     case 'update':
       worker?.postMessage({ type: 'update', setup: msg.setup } satisfies MainToWorker);
       sendResponse({ ok: true, value: null });
       return false;
     case 'stop':
-      return reply(stop());
+      return reply(serial(() => stop()));
     case 'status':
       return reply(status());
     case 'get-clip':
@@ -301,11 +309,11 @@ chrome.runtime.onMessage.addListener((raw: unknown, sender, sendResponse) => {
       );
     case 'close':
       return reply(
-        (async () => {
+        serial(async () => {
           await stop();
           const t = await ownTab();
           if (t?.id !== undefined) await chrome.tabs.remove(t.id);
-        })(),
+        }),
       );
   }
 });

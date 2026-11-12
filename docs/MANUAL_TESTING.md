@@ -1,4 +1,4 @@
-# Manual testing checklist (0.1.0 preview)
+# Manual testing checklist (0.1.1 preview)
 
 For a person testing the real thing before 1.0.0: a real webcam, a real OpenRouter model, a real Telegram
 bot, and, in part B, a real server for live view and an approved action. Tick each box; when something
@@ -20,7 +20,7 @@ key (the old one was revoked), and for part B a Linux VPS with Docker, a public 
 - [ ] `git clone https://github.com/PacifAIst/survany && cd survany && corepack enable && pnpm install && pnpm build`
   (`pnpm install` prints `downloaded models/fire-smoke/fire_smoke_yolox_tiny.onnx (sha256 808ce9b61dcc…)`).
 - [ ] Open `chrome://extensions`, turn on **Developer mode**, **Load unpacked**, pick `apps/extension/dist`.
-  The card shows **Survey Anything 0.1.0** with no errors.
+  The card shows **Survey Anything 0.1.1** with no errors.
 - [ ] A consent page opens by itself. Read it, tick every box, press **I agree**. Expect "Thank you".
 - [ ] Press **Allow camera access**, then **Allow camera**, and accept Chrome's prompt. Expect "Camera access granted".
 
@@ -240,7 +240,7 @@ With Home Assistant, follow `docs/MCP_PAIRING.md` section 3 (ha-mcp) instead.
 - [ ] Popup → **Watch a window or screen** → the pinned tab shows **Choose a window or screen to watch** →
   pick a window in Firefox's picker → "Watching: Window or screen".
 - [ ] Optional: the automated run, `python apps/extension/e2e-firefox/firefox_e2e.py --firefox <firefox.exe>
-  --extension release/survey-anything-firefox-0.1.0.zip` (see `docs/release/FIREFOX.md`).
+  --extension release/survey-anything-firefox-0.1.1.zip` (see `docs/release/FIREFOX.md`).
 
 ---
 
