@@ -311,15 +311,17 @@ function Options() {
       setErrors(pre.errors);
       return;
     }
-    // Every host this configuration talks to from the browser, asked in one prompt (none if all are granted).
+    // The Vision provider's host, asked from this click. Firefox only: also Telegram and Resend, because
+    // Firefox accepts a permission request only while a click is handled, so the request made when a key
+    // was stored by leaving its field may have been refused. (Chrome asks when the key is stored.)
     const c = pre.config;
-    const hosts = [
-      ...(c.vision.enableVision && !c.proxyMode ? [c.provider.baseUrl] : []),
+    const alertHosts = [
       ...(c.direct.telegram && c.alerts.channels.includes('telegram') && !c.backend.url ? ['https://api.telegram.org'] : []),
       ...(c.direct.email && c.alerts.channels.includes('email') && !c.backend.url ? ['https://api.resend.com'] : []),
     ];
+    const hosts = [...(c.vision.enableVision ? [c.provider.baseUrl] : []), ...(__FIREFOX__ ? alertHosts : [])];
     if (!(await requestHosts(hosts).catch(() => false))) {
-      setErrors(['Permission to reach the AI provider, Telegram or Resend was not granted. Press Save again and allow it.']);
+      setErrors([__FIREFOX__ ? 'Permission to reach the AI provider, Telegram or Resend was not granted. Press Save again and allow it.' : 'Permission to reach the Vision provider was not granted.']);
       return;
     }
     await pendingSecretWrites();
