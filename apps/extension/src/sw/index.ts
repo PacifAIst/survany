@@ -10,6 +10,7 @@ import { BudgetLedger } from './budget';
 import { createGuardedFetch, type PolicyConfig } from './guarded-fetch';
 import { HEARTBEAT_ALARM, ensureHeartbeatAlarm, sendHeartbeat } from './heartbeat';
 import { isFromExtension, type LocalDetect, type PopupStatus, type ToSw } from './messages';
+import { raiseNotice } from './notices';
 import { backendClient } from './runtime';
 import {
   arm,
@@ -45,6 +46,7 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 chrome.runtime.onStartup.addListener(() => {
   void (async () => {
+    await store.set('monitorTabId', null); // tab ids do not survive a browser restart
     await boot();
     // C20: after a browser restart a tab source needs a re-arm; a camera resumes automatically.
     await recoverSource('browser restarted');
@@ -96,7 +98,7 @@ async function probeProfile(policy: PolicyConfig, p: ResolvedProfile): Promise<P
     directBrowser: true,
   });
   const platform = await chrome.runtime.getPlatformInfo();
-  const r = await provider.probe({ os: osForProbe(platform.os), extensionOrigin: `chrome-extension://${chrome.runtime.id}` });
+  const r = await provider.probe({ os: osForProbe(platform.os), extensionOrigin: chrome.runtime.getURL('').replace(/\/$/, '') });
   if (r.ok || r.hint) return r;
   // Nothing listening: name the address and the usual ports instead of the browser's "Failed to fetch".
   if (p.id === 'local' && r.got === null && /failed to fetch|networkerror|err_connection/i.test(r.error ?? '')) {
@@ -246,6 +248,8 @@ async function handle(msg: ToSw): Promise<unknown> {
       await store.appendLog(`live view: ${msg.state} ${msg.detail}`);
       return null;
     case 'offscreen-ready':
+      // Firefox: the capture page is a tab; remember it so closing it stops watching (see tabs.onRemoved).
+      if (typeof msg.tabId === 'number') await store.set('monitorTabId', msg.tabId);
       return null;
     case 'log':
       await store.appendLog(`[offscreen ${msg.level}] ${msg.msg}`);
@@ -262,6 +266,17 @@ chrome.runtime.onMessage.addListener((raw: unknown, sender, sendResponse) => {
     (e: unknown) => sendResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }),
   );
   return true;
+});
+
+// Firefox: closing the "Survey Anything is watching" tab is how a person stops watching from the tab bar.
+chrome.tabs.onRemoved.addListener((tabId) => {
+  void (async () => {
+    if ((await store.get('monitorTabId')) !== tabId) return;
+    await store.set('monitorTabId', null);
+    if (!(await store.get('armed')).armed) return;
+    await raiseNotice('re-arm-needed', 'Watching stopped because the Survey Anything tab was closed. Press Watch in the extension to start again.');
+    await disarm('monitor tab closed');
+  })();
 });
 
 chrome.notifications.onClicked.addListener((id) => {

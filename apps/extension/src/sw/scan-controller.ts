@@ -80,8 +80,9 @@ export async function arm(src: ArmSource): Promise<void> {
   if (recipes.length === 0) throw new ArmError('No watch rules enabled.');
 
   await setIndicator('armed', src.label);
-  await ensureOffscreen();
-  const source: SourceSpec = src.kind === 'tab' ? { ...src } : { kind: 'camera', deviceId: null, label: src.label };
+  // A window or screen (Firefox) is chosen with a click on the monitor tab, so bring it to the front.
+  await ensureOffscreen({ focus: src.kind === 'display' });
+  const source: SourceSpec = src.kind === 'tab' ? { ...src } : src.kind === 'display' ? { kind: 'display', label: src.label } : { kind: 'camera', deviceId: null, label: src.label };
   try {
     await sendToOffscreen({ target: 'offscreen', type: 'start', source, setup: buildScanSetup(config, recipes), clip: await clipSetup(config) });
   } catch (e) {
@@ -90,7 +91,7 @@ export async function arm(src: ArmSource): Promise<void> {
   }
   await store.set('armed', {
     armed: true,
-    source: src.kind === 'tab' ? { kind: 'tab', tabId: src.tabId, label: src.label } : { kind: 'camera', label: src.label },
+    source: src.kind === 'tab' ? { kind: 'tab', tabId: src.tabId, label: src.label } : src.kind === 'display' ? { kind: 'display', label: src.label } : { kind: 'camera', label: src.label },
     armedAt: Date.now(),
   });
   await store.appendLog(`armed: ${src.kind} "${src.label}"`);
@@ -100,6 +101,8 @@ export async function arm(src: ArmSource): Promise<void> {
 export async function disarm(reason = 'user'): Promise<void> {
   const streaming = await store.get('streaming');
   if (streaming) await stopStream();
+  // Firefox: forget the monitor tab first, so its closing below is not mistaken for the user closing it.
+  await store.set('monitorTabId', null);
   if (await hasOffscreen()) {
     await sendToOffscreen({ target: 'offscreen', type: 'stop' }).catch(() => undefined);
     await closeOffscreen().catch(() => undefined);
@@ -128,9 +131,11 @@ export async function stopStream(): Promise<void> {
 export async function recoverSource(why: string): Promise<void> {
   const armed = await store.get('armed');
   if (!armed.armed || !armed.source) return;
-  if (armed.source.kind === 'tab') {
-    await raiseNotice('re-arm-needed', `Tab watching stopped (${why}). Open the tab and press Arm again.`);
-    await disarm(`tab source lost: ${why}`);
+  if (armed.source.kind === 'tab' || armed.source.kind === 'display') {
+    // Tabs (C20) and shared windows or screens can only be picked again by the user.
+    const what = armed.source.kind === 'tab' ? 'Tab watching stopped' : 'Window or screen watching stopped';
+    await raiseNotice('re-arm-needed', `${what} (${why}). Press Watch again in the extension.`);
+    await disarm(`${armed.source.kind} source lost: ${why}`);
     return;
   }
   const { config } = await store.loadConfig();

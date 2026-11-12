@@ -20,6 +20,7 @@ import { resendSend } from './email-direct';
 import { applyEgressPolicy, canEmailSnapshot, canSendAlertMedia, canStreamLive, canUploadClip } from './egress-policy';
 import type { ClipPayload } from './messages';
 import { sendToOffscreen } from './offscreen-host';
+import { notificationOptions } from './platform';
 import { enqueue, RetryableError } from './outbox';
 import { backendClient, guardedFetch } from './runtime';
 import * as store from './storage';
@@ -124,6 +125,8 @@ export async function dispatchDirect(d: AlertDraft, c: Config): Promise<{ key: s
     else {
       const msg = s.reason instanceof Error ? s.reason.message : String(s.reason);
       out.push({ key: j.key, ok: false, error: msg });
+      // Logged so a wrong token, chat ID or address shows up in the debug log, not only as a red badge.
+      await store.appendLog(`${j.kind} alert not sent${s.reason instanceof RetryableError ? ' (will retry)' : ''}: ${msg.slice(0, 200)}`);
       if (s.reason instanceof RetryableError) await enqueue(j.kind, j.key, j.payload, msg);
     }
   }
@@ -132,13 +135,13 @@ export async function dispatchDirect(d: AlertDraft, c: Config): Promise<{ key: s
 
 async function localNotification(d: AlertDraft): Promise<void> {
   const t = buildAlertText(textInput(d));
-  await chrome.notifications.create(`sa-alert-${d.eventId}`, {
+  await chrome.notifications.create(`sa-alert-${d.eventId}`, notificationOptions({
     type: 'basic',
     iconUrl: chrome.runtime.getURL('icons/icon-128.png'),
     title: t.subject.slice(0, 120),
     message: t.plain.split('\n').slice(1, 4).join('\n').slice(0, 300),
     priority: 2,
-  });
+  }));
 }
 
 async function uploadClipFor(eventId: string): Promise<void> {
@@ -194,13 +197,13 @@ export async function dispatchAlert(d: AlertDraft, c: Config): Promise<void> {
       await store.appendLog(`backend alert failed: ${msg}`);
       // §10 "Backend unreachable": queue locally, retry, notify, and use T0 direct send if configured.
       await enqueue('backend-event', `${d.eventId}:backend`, sub, msg);
-      await chrome.notifications.create(`sa-backend-down-${d.eventId}`, {
+      await chrome.notifications.create(`sa-backend-down-${d.eventId}`, notificationOptions({
         type: 'basic',
         iconUrl: chrome.runtime.getURL('icons/icon-128.png'),
         title: 'Backend unreachable: alert queued',
         message: 'The alert will be retried. Direct channels are used if configured.',
         priority: 2,
-      });
+      }));
     }
   }
   const results = await dispatchDirect(d, c);

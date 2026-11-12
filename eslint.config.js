@@ -28,6 +28,8 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/dist/**',
       '**/dist-e2e/**',
+      '**/dist-firefox/**',
+      '**/dist-firefox-e2e/**',
       '**/coverage/**',
       'apps/extension/public/**',
       'apps/viewer/public/**',

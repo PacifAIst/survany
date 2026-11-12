@@ -1,6 +1,8 @@
 node_modules/
 dist/
 dist-e2e/
+dist-firefox/
+dist-firefox-e2e/
 # Downloaded and SHA-256-verified by scripts/fetch-model.ts from the GitHub release (models/fire-smoke/CHECKSUMS.txt)
 models/fire-smoke/*.onnx
 coverage/

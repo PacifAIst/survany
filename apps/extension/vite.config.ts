@@ -11,13 +11,13 @@ const root = __dirname;
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as { version: string };
 
 /** Writes manifest.json and fails the build if a bundled model or WASM file does not match its pinned SHA-256 (SG-26). */
-function extensionPlugin(outDir: string, e2e: boolean): Plugin {
+function extensionPlugin(outDir: string, e2e: boolean, target: 'chrome' | 'firefox'): Plugin {
   return {
     name: 'survey-anything-extension',
     apply: 'build',
     closeBundle() {
       const out = outDir;
-      writeFileSync(join(out, 'manifest.json'), JSON.stringify(buildManifest({ version: pkg.version, e2eLoopbackHosts: e2e }), null, 2));
+      writeFileSync(join(out, 'manifest.json'), JSON.stringify(buildManifest({ version: pkg.version, target, e2eLoopbackHosts: e2e }), null, 2));
       const sums = JSON.parse(readFileSync(join(root, '..', '..', 'models', 'checksums.json'), 'utf8')) as { files: { path: string; sha256: string }[] };
       for (const f of sums.files) {
         const p = join(out, f.path);
@@ -35,22 +35,27 @@ function extensionPlugin(outDir: string, e2e: boolean): Plugin {
   };
 }
 
-// `vite build --mode e2e` writes dist-e2e/ for the end-to-end tests; see buildManifest's e2eLoopbackHosts.
+// Modes: (default) dist/ for Chrome; `e2e` dist-e2e/ for the Chrome end-to-end tests (see buildManifest's
+// e2eLoopbackHosts); `firefox` dist-firefox/ for Firefox; `firefox-e2e` dist-firefox-e2e/ for its tests.
+const OUT_DIRS: Record<string, string> = { e2e: 'dist-e2e', firefox: 'dist-firefox', 'firefox-e2e': 'dist-firefox-e2e' };
 export default defineConfig(({ mode }) => {
-  const e2e = mode === 'e2e';
-  const outDir = resolve(root, e2e ? 'dist-e2e' : 'dist');
+  const e2e = mode === 'e2e' || mode === 'firefox-e2e';
+  const target = mode.startsWith('firefox') ? 'firefox' : 'chrome';
+  const outDir = resolve(root, OUT_DIRS[mode] ?? 'dist');
   return {
   root,
   base: '/',
   publicDir: resolve(root, 'public'),
-  plugins: [preact(), extensionPlugin(outDir, e2e)],
+  plugins: [preact(), extensionPlugin(outDir, e2e, target)],
+  // Lets each build drop the other browser's code paths (src/build-target.d.ts).
+  define: { __FIREFOX__: JSON.stringify(target === 'firefox') },
   // ORT's extern-WASM entry loads its glue and WASM only from ort.env.wasm.wasmPaths, i.e. the
   // checksummed files in public/ort (SG-26), instead of Vite emitting a second, unchecked copy.
   resolve: { conditions: ['onnxruntime-web-use-extern-wasm', 'module', 'browser', 'production'] },
   build: {
     outDir,
     emptyOutDir: true,
-    target: 'chrome120',
+    target: target === 'firefox' ? 'firefox140' : 'chrome120',
     modulePreload: false,
     sourcemap: false,
     assetsInlineLimit: 0,

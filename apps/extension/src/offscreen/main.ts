@@ -3,6 +3,8 @@
 /**
  * Offscreen document (§4.1): owns the MediaStream, frame grabbing, clip recorders and the WHIP
  * publisher. Only chrome.runtime is available here (S4); everything else goes through the SW.
+ * On Firefox the same page runs as the pinned monitor tab (sw/offscreen-host.ts), so it also shows
+ * what it is doing and can be closed by the person watching.
  */
 import { allowWhipOrigin, fetchBundledAsset } from '../sw/guarded-fetch';
 import type { ClipPayload, FromOffscreen, OffscreenStatus, SourceSpec, ToOffscreen } from '../sw/messages';
@@ -10,6 +12,7 @@ import type { ChecksumEntry } from '../worker/detector';
 import type { MainToWorker, ScanSetup, TickStats, WorkerToMain } from '../worker/protocol';
 import { ClipRecorders } from './clip-recorders';
 import { openCameraSource } from './source-camera';
+import { openDisplaySource } from './source-display';
 import { openTabSource } from './source-tab';
 import { blackProbeTrack, WhipPublisher } from './whip-publisher';
 
@@ -28,10 +31,19 @@ let source: SourceSpec | null = null;
 let clips: ClipRecorders | null = null;
 let publisher: WhipPublisher | null = null;
 let whipState: OffscreenStatus['whip'] = 'idle';
-let imageCapture: { grabFrame(): Promise<ImageBitmap> } | null = null;
+/** Fallback frame grabber when the worker cannot read the track itself (ImageCapture, or a <video> on Firefox). */
+let grabFrame: (() => Promise<ImageBitmap>) | null = null;
+let video: HTMLVideoElement | null = null;
 let statsSeq = 0;
 const statsWaiters = new Map<number, (s: TickStats) => void>();
 let checksums: ChecksumEntry[] | null = null;
+
+/** The visible state on Firefox's monitor tab (invisible in Chrome's offscreen document). */
+function showState(text: string, watching: boolean): void {
+  const el = document.getElementById('state');
+  if (el) el.textContent = text;
+  document.title = watching ? '● Watching · Survey Anything' : 'Survey Anything';
+}
 
 function toSw(msg: FromOffscreen): void {
   chrome.runtime.sendMessage(msg).catch(() => undefined);
@@ -85,8 +97,8 @@ async function grabFallbackFrame(): Promise<void> {
   const w = worker;
   if (!w) return;
   try {
-    if (!imageCapture) throw new Error('no ImageCapture');
-    const bitmap = await imageCapture.grabFrame();
+    if (!grabFrame) throw new Error('no frame grabber');
+    const bitmap = await grabFrame();
     const msg: MainToWorker = { type: 'frame', bitmap, capturedAt: Date.now() };
     w.postMessage(msg, [bitmap]);
   } catch {
@@ -109,16 +121,40 @@ function attachFrames(track: MediaStreamTrack): void {
     }
   }
   if (g.ImageCapture) {
-    imageCapture = new g.ImageCapture(track);
+    const ic = new g.ImageCapture(track);
+    grabFrame = () => ic.grabFrame();
     log('info', 'frame source: ImageCapture fallback');
+    return;
   }
+  // Firefox has neither: play the stream in a muted <video> and copy its current frame on request.
+  const v = document.createElement('video');
+  v.muted = true;
+  v.playsInline = true;
+  v.srcObject = new MediaStream([track]);
+  void v.play().catch((e: unknown) => log('warn', `video element did not start: ${e instanceof Error ? e.message : String(e)}`));
+  video = v;
+  grabFrame = async () => {
+    if (v.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || v.videoWidth === 0) throw new Error('no frame yet');
+    return createImageBitmap(v);
+  };
+  log('info', 'frame source: video element fallback');
 }
 
 async function start(src: SourceSpec, setup: ScanSetup, clip: { seconds: number; videoBitsPerSecond: number } | null): Promise<void> {
   await stop();
   source = src;
-  stream = src.kind === 'tab' ? await openTabSource(src.streamId) : await openCameraSource(src.deviceId);
-  const track = stream.getVideoTracks()[0];
+  if (src.kind === 'display') showState('Click the button to choose the window or screen to watch.', false);
+  const pick = document.getElementById('pick') as HTMLButtonElement | null;
+  const opened =
+    src.kind === 'tab'
+      ? await openTabSource(src.streamId)
+      : src.kind === 'display'
+        ? pick
+          ? await openDisplaySource(pick)
+          : await Promise.reject(new Error('this page cannot ask for a window or screen'))
+        : await openCameraSource(src.deviceId);
+  stream = opened;
+  const track = opened.getVideoTracks()[0];
   if (!track) throw new Error('source produced no video track');
   track.addEventListener('ended', () => toSw({ target: 'sw', type: 'source-ended', reason: 'track ended' }));
   worker = new Worker(new URL('../worker/scan.worker.ts', import.meta.url), { type: 'module' });
@@ -127,9 +163,10 @@ async function start(src: SourceSpec, setup: ScanSetup, clip: { seconds: number;
   worker.postMessage({ type: 'init', assetBase: chrome.runtime.getURL('/'), checksums: await loadChecksums(), setup } satisfies MainToWorker);
   attachFrames(track);
   if (clip) {
-    clips = new ClipRecorders(stream, clip);
+    clips = new ClipRecorders(opened, clip);
     clips.start();
   }
+  showState(`Watching: ${src.label}.`, true);
 }
 
 async function stop(): Promise<void> {
@@ -141,10 +178,20 @@ async function stop(): Promise<void> {
   worker?.postMessage({ type: 'stop' } satisfies MainToWorker);
   worker?.terminate();
   worker = null;
-  imageCapture = null;
+  grabFrame = null;
+  if (video) video.srcObject = null;
+  video = null;
   stream?.getTracks().forEach((t) => t.stop());
   stream = null;
   source = null;
+  showState('Not watching. You can close this tab.', false);
+}
+
+/** Firefox monitor tab: this page's own tab, or null in Chrome's offscreen document. */
+async function ownTab(): Promise<chrome.tabs.Tab | null> {
+  const tabs = (chrome as { tabs?: typeof chrome.tabs }).tabs;
+  if (!tabs?.getCurrent) return null;
+  return (await tabs.getCurrent()) ?? null;
 }
 
 async function status(): Promise<OffscreenStatus> {
@@ -244,7 +291,25 @@ chrome.runtime.onMessage.addListener((raw: unknown, sender, sendResponse) => {
       );
     case 'whip-probe':
       return reply(whipProbe(msg.url, msg.iceServers));
+    case 'focus':
+      return reply(
+        (async () => {
+          const t = await ownTab();
+          if (t?.id !== undefined) await chrome.tabs.update(t.id, { active: true });
+          if (t?.windowId !== undefined) await chrome.windows.update(t.windowId, { focused: true });
+        })(),
+      );
+    case 'close':
+      return reply(
+        (async () => {
+          await stop();
+          const t = await ownTab();
+          if (t?.id !== undefined) await chrome.tabs.remove(t.id);
+        })(),
+      );
   }
 });
 
-toSw({ target: 'sw', type: 'offscreen-ready' });
+void ownTab()
+  .catch(() => null)
+  .then((t) => toSw({ target: 'sw', type: 'offscreen-ready', ...(t?.id !== undefined ? { tabId: t.id } : {}) }));

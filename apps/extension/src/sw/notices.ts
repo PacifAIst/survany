@@ -10,6 +10,7 @@ import { resendSend } from './email-direct';
 import { enqueue, RetryableError } from './outbox';
 import { backendClient, guardedFetch } from './runtime';
 import * as store from './storage';
+import { notificationOptions } from './platform';
 import { telegramSendText } from './telegram-direct';
 
 const MIN_INTERVAL: Partial<Record<NoticeKind, number>> = {
@@ -34,13 +35,13 @@ export async function raiseNotice(kind: NoticeKind, detail: string, now = Date.n
   if (min > 0 && sent[kind] !== undefined && now - (sent[kind] ?? 0) < min) return false;
   await store.set('noticesSentAt', { ...sent, [kind]: now });
   await store.update('recentNotices', (l) => [...l.slice(-19), `${new Date(now).toISOString()} ${TITLES[kind]}: ${detail}`]);
-  await chrome.notifications.create(`sa-notice-${kind}-${now}`, {
+  await chrome.notifications.create(`sa-notice-${kind}-${now}`, notificationOptions({
     type: 'basic',
     iconUrl: chrome.runtime.getURL('icons/icon-128.png'),
     title: TITLES[kind],
     message: detail.slice(0, 300),
     priority: 1,
-  });
+  }));
   const backend = await backendClient();
   if (backend) {
     try {

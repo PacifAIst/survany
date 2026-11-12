@@ -8,6 +8,8 @@
     "fetch-assets": "node ../../scripts/fetch-model.ts && node scripts/fetch-assets.ts",
     "build": "node ../../scripts/fetch-model.ts && node scripts/fetch-assets.ts && tsc -p tsconfig.json && vite build",
     "build:e2e": "vite build --mode e2e",
+    "build:firefox": "node ../../scripts/fetch-model.ts && node scripts/fetch-assets.ts && tsc -p tsconfig.json && vite build --mode firefox",
+    "build:firefox-e2e": "vite build --mode firefox-e2e",
     "typecheck": "tsc -p tsconfig.json",
     "e2e": "vite build --mode e2e && playwright test -c e2e/playwright.config.ts"
   },

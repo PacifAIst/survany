@@ -1,18 +1,71 @@
 // Copyright (C) 2026 PacifAIst
 // SPDX-License-Identifier: AGPL-3.0-only
-/** Creates and talks to the single offscreen document (S4). */
-import type { ToOffscreen } from './messages';
+/**
+ * Creates and talks to the single capture page (S4). On Chrome it is the offscreen document. Firefox has
+ * no offscreen documents, so the same page runs in a pinned extension tab (the "monitor tab"), which
+ * also tells the user that watching is on. Messages are the same in both cases.
+ */
+import type { ToOffscreen } from "./messages";
 
-const OFFSCREEN_PATH = 'src/offscreen/offscreen.html';
+export const OFFSCREEN_PATH = "src/offscreen/offscreen.html";
 let creating: Promise<void> | null = null;
 
-export async function hasOffscreen(): Promise<boolean> {
-  const contexts = await chrome.runtime.getContexts({ contextTypes: [chrome.runtime.ContextType.OFFSCREEN_DOCUMENT] });
-  return contexts.length > 0;
+/** Firefox: the monitor tabs that are loaded (a background page can list extension views). */
+function monitorViews(): Window[] {
+  const path = `/${OFFSCREEN_PATH}`;
+  return chrome.extension.getViews({ type: "tab" }).filter((v) => {
+    try {
+      return v.location.pathname === path;
+    } catch {
+      return false;
+    }
+  });
 }
 
-export async function ensureOffscreen(): Promise<void> {
-  if (await hasOffscreen()) return;
+export async function hasOffscreen(): Promise<boolean> {
+  if (__FIREFOX__) {
+    return monitorViews().length > 0;
+  } else {
+    const contexts = await chrome.runtime.getContexts({
+      contextTypes: [chrome.runtime.ContextType.OFFSCREEN_DOCUMENT],
+    });
+    return contexts.length > 0;
+  }
+}
+
+/**
+ * Makes sure the capture page exists. `focus` (Firefox) brings the monitor tab to the front, for
+ * choosing a window or screen to share, which Firefox allows only from a click on that page.
+ */
+export async function ensureOffscreen(
+  opts: { focus?: boolean } = {},
+): Promise<void> {
+  if (__FIREFOX__) {
+    if (monitorViews().length > 0) {
+      if (opts.focus)
+        await sendToOffscreen({ target: "offscreen", type: "focus" }).catch(
+          () => undefined,
+        );
+      return;
+    }
+    creating ??= chrome.tabs
+      .create({
+        url: chrome.runtime.getURL(OFFSCREEN_PATH),
+        pinned: true,
+        active: opts.focus === true,
+      })
+      .then(() => undefined)
+      .finally(() => {
+        creating = null;
+      });
+    await creating;
+  } else {
+    await ensureChromeOffscreen();
+  }
+}
+
+async function ensureChromeOffscreen(): Promise<void> {
+  if (__FIREFOX__ || (await hasOffscreen())) return;
   creating ??= chrome.offscreen
     .createDocument({
       url: OFFSCREEN_PATH,
@@ -23,7 +76,8 @@ export async function ensureOffscreen(): Promise<void> {
         chrome.offscreen.Reason.WORKERS,
         chrome.offscreen.Reason.BLOBS,
       ],
-      justification: 'Watches the tab or camera you armed: frame analysis, 10 s clip recording and private live view.',
+      justification:
+        "Watches the tab or camera you armed: frame analysis, 10 s clip recording and private live view.",
     })
     .finally(() => {
       creating = null;
@@ -32,7 +86,15 @@ export async function ensureOffscreen(): Promise<void> {
 }
 
 export async function closeOffscreen(): Promise<void> {
-  if (await hasOffscreen()) await chrome.offscreen.closeDocument();
+  if (__FIREFOX__) {
+    // The monitor tab removes itself (closing a tab needs its id, which only the page knows for sure).
+    if (monitorViews().length > 0)
+      await sendToOffscreen({ target: "offscreen", type: "close" }, 1).catch(
+        () => undefined,
+      );
+  } else if (await hasOffscreen()) {
+    await chrome.offscreen.closeDocument();
+  }
 }
 
 interface Reply<T> {
@@ -41,14 +103,17 @@ interface Reply<T> {
   error?: string;
 }
 
-/** Sends to the offscreen document, retrying briefly while it finishes loading. */
-export async function sendToOffscreen<T>(msg: ToOffscreen, attempts = 10): Promise<T> {
+/** Sends to the capture page, retrying briefly while it finishes loading. */
+export async function sendToOffscreen<T>(
+  msg: ToOffscreen,
+  attempts = 10,
+): Promise<T> {
   let lastErr: unknown = null;
   for (let i = 0; i < attempts; i++) {
     try {
       const r = (await chrome.runtime.sendMessage(msg)) as Reply<T> | undefined;
-      if (!r) throw new Error('no reply from offscreen document');
-      if (!r.ok) throw new Error(r.error ?? 'offscreen error');
+      if (!r) throw new Error("no reply from offscreen document");
+      if (!r.ok) throw new Error(r.error ?? "offscreen error");
       return r.value as T;
     } catch (e) {
       lastErr = e;

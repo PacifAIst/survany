@@ -17,9 +17,17 @@ export function originPattern(url: string): string {
   return `${u.protocol}//${u.hostname}/*`;
 }
 
-/** Host permissions are optional (C9) and must be requested from a user gesture on a visible page. */
-export async function requestHost(url: string): Promise<boolean> {
-  const origins = [originPattern(url)];
-  if (await chrome.permissions.contains({ origins })) return true;
+/**
+ * Host permissions are optional (C9) and must be requested from a user gesture on a visible page.
+ * The request is made at once, with nothing awaited before it: Firefox accepts permissions.request only
+ * while the click is still being handled. A permission already granted resolves true without a prompt.
+ */
+export function requestHost(url: string): Promise<boolean> {
+  return requestHosts([url]);
+}
+
+export function requestHosts(urls: readonly string[]): Promise<boolean> {
+  const origins = [...new Set(urls.map(originPattern))];
+  if (origins.length === 0) return Promise.resolve(true);
   return chrome.permissions.request({ origins });
 }

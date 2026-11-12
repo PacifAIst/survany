@@ -5,6 +5,7 @@
  * SECURITY-GATE SG-13: a stream cannot start until the LIVE badge and the "Streaming to" banner are set and verified; no config flag exists to hide them.
  */
 import * as store from './storage';
+import { notificationOptions } from './platform';
 
 export const LIVE_BADGE = 'LIVE';
 const LIVE_NOTIFICATION_ID = 'sa-live';
@@ -44,14 +45,14 @@ export async function beginLiveIndicator(eventId: string, recipients: string[]):
   const who = recipients.join(', ') || 'your contacts';
   await setIndicator('live', who);
   await store.set('streaming', { eventId, recipients, since: Date.now() });
-  await chrome.notifications.create(LIVE_NOTIFICATION_ID, {
+  await chrome.notifications.create(LIVE_NOTIFICATION_ID, notificationOptions({
     type: 'basic',
     iconUrl: chrome.runtime.getURL('icons/icon-128.png'),
     title: `🔴 Streaming to ${who}`,
     message: 'Live view is on. Open the extension and press Stop to end it.',
     requireInteraction: true,
     priority: 2,
-  });
+  }));
   const text = await chrome.action.getBadgeText({});
   const banner = await store.get('streaming');
   if (text !== LIVE_BADGE || banner?.eventId !== eventId) {

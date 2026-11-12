@@ -228,6 +228,22 @@ With Home Assistant, follow `docs/MCP_PAIRING.md` section 3 (ha-mcp) instead.
 
 ---
 
+## Part D: Firefox (about 15 minutes)
+
+- [ ] `pnpm --filter @survey-anything/extension build:firefox`. In Firefox 140 or later open
+  `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on…** → `apps/extension/dist-firefox/manifest.json`.
+- [ ] Consent, camera, Options as in Part A (LM Studio button, Test connection, Telegram, the rule, Save). Firefox
+  asks once to allow the addresses (127.0.0.1, api.telegram.org): allow them.
+- [ ] Popup → **Watch camera**. A pinned **Survey Anything** tab opens and says "Watching: Camera". Leave it
+  pinned and switch to other tabs: watching continues. Walk away: the Telegram alert arrives as in A6.
+- [ ] Close the pinned tab: watching stops and a notice says why.
+- [ ] Popup → **Watch a window or screen** → the pinned tab shows **Choose a window or screen to watch** →
+  pick a window in Firefox's picker → "Watching: Window or screen".
+- [ ] Optional: the automated run, `python apps/extension/e2e-firefox/firefox_e2e.py --firefox <firefox.exe>
+  --extension release/survey-anything-firefox-0.1.0.zip` (see `docs/release/FIREFOX.md`).
+
+---
+
 ## Part C: what to send back for a failure
 
 For each failure: the step number (e.g. "A6, second box"), what you expected, what happened, the time, and:

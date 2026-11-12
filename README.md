@@ -64,6 +64,19 @@ You need Node.js 24 or later, Git, Chrome or Chromium 120 or later, and a Telegr
 This path is tested end to end on every change (`apps/extension/e2e/quickstart.spec.ts`), with Chromium's
 fake camera playing the same fire scene, because automation cannot click the toolbar button.
 
+### Firefox
+
+The same extension builds for Firefox 140 or later:
+`pnpm --filter @survey-anything/extension build:firefox`, then in Firefox open
+`about:debugging#/runtime/this-firefox` → **Load Temporary Add-on…** → `apps/extension/dist-firefox/manifest.json`.
+
+Two things differ, because Firefox has no offscreen documents and no tab capture:
+- Watching runs in a pinned **Survey Anything** tab; closing it stops watching.
+- Instead of **Watch this tab**, you get **Watch a window or screen**, using Firefox's sharing picker.
+
+Everything else works the same. The packaging and the addons.mozilla.org submission steps are in
+`docs/release/FIREFOX.md`.
+
 ## What it costs
 
 | Setup | Per confirmation | Measured |

@@ -6,7 +6,11 @@
  * metadata), so the same commit always produces the same bytes and anyone can check a release by
  * rebuilding. Writes release/survey-anything-extension-<version>.zip and its .sha256.
  *   pnpm build && pnpm pack:extension
+ * Firefox (addons.mozilla.org): packs apps/extension/dist-firefox the same way, and the source code AMO
+ * asks for when code is bundled (the committed tree, via git archive):
+ *   pnpm --filter @survey-anything/extension build:firefox && pnpm pack:firefox && pnpm pack:source
  */
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
@@ -87,17 +91,42 @@ export function deterministicZip(files: { name: string; data: Uint8Array }[]): B
   return Buffer.concat([...locals, cd, end]);
 }
 
+function writeWithSha(root: string, name: string, data: Buffer): string {
+  const sha = createHash('sha256').update(data).digest('hex');
+  mkdirSync(join(root, 'release'), { recursive: true });
+  writeFileSync(join(root, 'release', name), data);
+  writeFileSync(join(root, 'release', `${name}.sha256`), `${sha}  ${name}\n`);
+  return sha;
+}
+
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const root = join(fileURLToPath(new URL('.', import.meta.url)), '..');
-  const dist = join(root, 'apps', 'extension', 'dist');
-  const manifest = JSON.parse(readFileSync(join(dist, 'manifest.json'), 'utf8')) as { version: string; host_permissions?: unknown };
-  if (manifest.host_permissions) throw new Error('dist/manifest.json has host_permissions: this is an e2e build, not a release build');
-  const files = listFiles(dist).filter((p) => statSync(p).size >= 0).map((p) => ({ name: relative(dist, p).split(sep).join('/'), data: readFileSync(p) }));
-  const zip = deterministicZip(files);
-  const sha = createHash('sha256').update(zip).digest('hex');
-  mkdirSync(join(root, 'release'), { recursive: true });
-  const name = `survey-anything-extension-${manifest.version}.zip`;
-  writeFileSync(join(root, 'release', name), zip);
-  writeFileSync(join(root, 'release', `${name}.sha256`), `${sha}  ${name}\n`);
-  console.info(`release/${name}: ${files.length} files, ${zip.length} bytes, sha256 ${sha}`);
+  const firefox = process.argv.includes('--firefox');
+  const pkgVersion = (JSON.parse(readFileSync(join(root, 'apps', 'extension', 'package.json'), 'utf8')) as { version: string }).version;
+  if (process.argv.includes('--source')) {
+    // The committed tree only (uncommitted changes are not in it), as AMO asks for bundled code.
+    const name = `survey-anything-source-${pkgVersion}.zip`;
+    const data = execFileSync('git', ['archive', '--format=zip', 'HEAD'], { cwd: root, maxBuffer: 512 * 1024 * 1024 });
+    const commit = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
+    const sha = writeWithSha(root, name, data);
+    console.info(`release/${name}: commit ${commit}, ${data.length} bytes, sha256 ${sha}`);
+  } else {
+    const dist = join(root, 'apps', 'extension', firefox ? 'dist-firefox' : 'dist');
+    const manifest = JSON.parse(readFileSync(join(dist, 'manifest.json'), 'utf8')) as {
+      version: string;
+      host_permissions?: unknown;
+      background?: { scripts?: unknown };
+      browser_specific_settings?: { gecko?: { id?: string; data_collection_permissions?: unknown } };
+    };
+    if (manifest.host_permissions) throw new Error(`${firefox ? 'dist-firefox' : 'dist'}/manifest.json has host_permissions: this is an e2e build, not a release build`);
+    const gecko = manifest.browser_specific_settings?.gecko;
+    if (firefox && (!gecko?.id || !gecko.data_collection_permissions || !manifest.background?.scripts)) {
+      throw new Error('dist-firefox/manifest.json is not a Firefox build (run: pnpm --filter @survey-anything/extension build:firefox)');
+    }
+    const files = listFiles(dist).filter((p) => statSync(p).size >= 0).map((p) => ({ name: relative(dist, p).split(sep).join('/'), data: readFileSync(p) }));
+    const zip = deterministicZip(files);
+    const name = `survey-anything-${firefox ? 'firefox' : 'extension'}-${manifest.version}.zip`;
+    const sha = writeWithSha(root, name, zip);
+    console.info(`release/${name}: ${files.length} files, ${zip.length} bytes, sha256 ${sha}`);
+  }
 }

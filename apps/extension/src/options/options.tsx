@@ -20,7 +20,7 @@ import { openAiBase, type ProbeResult } from '@survey-anything/providers';
 import type { ActionToolsResponse } from '@survey-anything/shared';
 import type { BudgetReport } from '../sw/budget';
 import type { LocalDetect, PopupStatus } from '../sw/messages';
-import { requestHost, sw } from '../ui/rpc';
+import { requestHost, requestHosts, sw } from '../ui/rpc';
 import { RecipeLibrary } from './recipes';
 import { type Draft, getPath, importConfigJson, moveInList, needsNonRedundantAck, omit, pickLocalModel, setPath, toggleChannel } from './model';
 
@@ -311,9 +311,15 @@ function Options() {
       setErrors(pre.errors);
       return;
     }
-    const primaryUrl = getPath(d, 'provider.baseUrl') as string;
-    if (pre.config.vision.enableVision && !(await requestHost(primaryUrl))) {
-      setErrors(['Permission to reach the Vision provider was not granted.']);
+    // Every host this configuration talks to from the browser, asked in one prompt (none if all are granted).
+    const c = pre.config;
+    const hosts = [
+      ...(c.vision.enableVision && !c.proxyMode ? [c.provider.baseUrl] : []),
+      ...(c.direct.telegram && c.alerts.channels.includes('telegram') && !c.backend.url ? ['https://api.telegram.org'] : []),
+      ...(c.direct.email && c.alerts.channels.includes('email') && !c.backend.url ? ['https://api.resend.com'] : []),
+    ];
+    if (!(await requestHosts(hosts).catch(() => false))) {
+      setErrors(['Permission to reach the AI provider, Telegram or Resend was not granted. Press Save again and allow it.']);
       return;
     }
     await pendingSecretWrites();
@@ -653,8 +659,10 @@ function Options() {
       {getPath(draft, 'direct.telegram') ? (
         <div class="card">
           <SecretField label="Bot token" refName="key_telegram_bot" secrets={secrets} onSet={(r, v) => void (async () => {
-            await requestHost('https://api.telegram.org');
+            // Asked first, while the click or key press is handled; the token is stored either way (Save asks again).
+            const granted = requestHost('https://api.telegram.org').catch(() => false);
             await storeSecret(r, v);
+            await granted;
           })()} />
           {Object.keys(contactsCfg).map((cid) => (
             <TextField key={cid} label={`Chat ID for ${cid}`} path={`direct.telegram.chatIds.${cid}`} draft={draft} set={set} size={16} />
@@ -666,8 +674,9 @@ function Options() {
       {getPath(draft, 'direct.email') ? (
         <div class="card">
           <SecretField label="Resend API key" refName="key_resend" secrets={secrets} onSet={(r, v) => void (async () => {
-            await requestHost('https://api.resend.com');
+            const granted = requestHost('https://api.resend.com').catch(() => false);
             await storeSecret(r, v);
+            await granted;
           })()} />
           <TextField label="From address (a domain verified in Resend)" path="direct.email.from" draft={draft} set={set} />
           {Object.keys(contactsCfg).map((cid) => (

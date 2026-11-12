@@ -40,6 +40,11 @@ Contents: [1. Install](#1-install-the-extension) · [2. AI model](#2-a-free-ai-m
 
 The settings page is: right-click the extension's icon → **Options**.
 
+**Using Firefox (140 or later)?** Build with `pnpm --filter @survey-anything/extension build:firefox`, open
+`about:debugging#/runtime/this-firefox`, press **Load Temporary Add-on…** and pick
+`apps/extension/dist-firefox/manifest.json`. Every step below is the same. When you start watching, Firefox
+opens a pinned **Survey Anything** tab that says "Watching: Camera": keep it open, and close it to stop.
+
 ## 2. A free AI model on your computer (LM Studio)
 
 The extension checks every few seconds, on your computer, whether a person is in view. When it thinks you

@@ -71,7 +71,7 @@ export type EventResponse = z.infer<typeof EventResponseSchema>;
 export const HeartbeatSchema = z
   .object({
     armed: z.boolean(),
-    sourceKind: z.enum(['tab', 'camera']).nullable(),
+    sourceKind: z.enum(['tab', 'camera', 'display']).nullable(),
     sourceLabel: z.string().max(200),
     lastTickAt: IsoUtc.nullable(),
   })

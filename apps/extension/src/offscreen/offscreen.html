@@ -2,9 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Survey Anything capture</title>
+    <title>Survey Anything</title>
+    <link rel="stylesheet" href="../ui/style.css" />
   </head>
   <body>
+    <!-- Chrome: an invisible offscreen document. Firefox: the pinned "monitor tab" a person can see and close. -->
+    <main>
+      <h1>Survey Anything</h1>
+      <p id="state" class="muted">Not watching.</p>
+      <button id="pick" class="primary" hidden>Choose a window or screen to watch</button>
+      <p class="muted">While watching, keep this tab open. Close it to stop watching.</p>
+    </main>
     <script type="module" src="./main.ts"></script>
   </body>
 </html>

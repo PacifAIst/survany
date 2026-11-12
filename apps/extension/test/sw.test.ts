@@ -51,6 +51,27 @@ describe('per-rule state machine (§6.4)', () => {
   });
 });
 
+describe('messages come only from this extension (Chrome and Firefox)', () => {
+  it('accepts its own pages in either browser and refuses everything else', async () => {
+    const { isFromExtension } = await import('../src/sw/messages');
+    const g = globalThis as unknown as { chrome: unknown };
+    const prev = g.chrome;
+    try {
+      for (const base of ['chrome-extension://abcdefgh/', 'moz-extension://5e5e5e5e-0000-4000-8000-000000000001/']) {
+        // Firefox: runtime.id is the add-on id, while page URLs use a per-install UUID.
+        const id = base.startsWith('moz') ? 'survany@pacifaist' : 'abcdefgh';
+        g.chrome = { runtime: { id, getURL: (p: string) => base + p } };
+        expect(isFromExtension({ id, url: `${base}src/options/index.html` })).toBe(true);
+        expect(isFromExtension({ id, url: 'https://evil.example/' })).toBe(false);
+        expect(isFromExtension({ id: 'other-extension', url: `${base}src/options/index.html` })).toBe(false);
+        expect(isFromExtension({ id })).toBe(false);
+      }
+    } finally {
+      g.chrome = prev;
+    }
+  });
+});
+
 describe('budget report for the Options page (M3)', () => {
   it('reports use against each limit, which limit blocked, and the next UTC midnight', async () => {
     const limits = { maxCallsPerMinute: 5, dailyMaxApiCalls: 2, dailyTokenCap: 10_000, hardStopOnBudget: true as const };
@@ -192,7 +213,7 @@ describe('SG-23: capture is video only', () => {
 
   it('only the e2e test build pre-grants host access, and only to the two loopback origins', () => {
     expect(buildManifest({ version: '0.1.0', e2eLoopbackHosts: false }).host_permissions).toBeUndefined();
-    expect(buildManifest({ version: '0.1.0', e2eLoopbackHosts: true }).host_permissions).toEqual(['http://localhost/*', 'http://127.0.0.1/*']);
+    expect(buildManifest({ version: '0.1.0', e2eLoopbackHosts: true }).host_permissions).toEqual(['http://localhost/*', 'http://127.0.0.1/*', 'https://api.telegram.org/*', 'https://api.resend.com/*']);
   });
 
   it('the shipped dist/manifest.json, when built, has no host_permissions', async () => {
@@ -363,6 +384,11 @@ describe('SG-26 bundled assets only, checksum-verified', () => {
     const { fetchBundledAsset } = await import('../src/sw/guarded-fetch');
     await expect(fetchBundledAsset('https://cdn.example/model.onnx', 'chrome-extension://abc/')).rejects.toThrow(/not inside the extension package/);
     await expect(fetchBundledAsset('chrome-extension://other/model.onnx', 'chrome-extension://abc/')).rejects.toThrow(/not inside the extension package/);
+    // Firefox packages: the same rules with moz-extension:// (another add-on, or a web URL, is refused).
+    await expect(fetchBundledAsset('moz-extension://other-uuid/model.onnx', 'moz-extension://5e5e-uuid/')).rejects.toThrow(/not inside the extension package/);
+    await expect(fetchBundledAsset('https://cdn.example/model.onnx', 'moz-extension://5e5e-uuid/')).rejects.toThrow(/not inside the extension package/);
+    await expect(fetchBundledAsset('chrome-extension://5e5e-uuid/model.onnx', 'moz-extension://5e5e-uuid/')).rejects.toThrow(/not inside the extension package/);
+    await expect(fetchBundledAsset('moz-extension://x/m.onnx', 'https://example.org/')).rejects.toThrow(/not inside the extension package/);
   });
 
   it('rejects a model whose SHA-256 differs from checksums.json, and one not listed at all', async () => {

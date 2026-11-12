@@ -133,8 +133,10 @@ export async function fetchBundledAsset(url: string, extensionBase: string): Pro
   const u = new URL(url);
   const base = new URL(extensionBase);
   // Compare scheme and host explicitly: URL.origin is the opaque string "null" for non-special schemes
-  // in some runtimes, which would make every chrome-extension:// origin look equal.
-  if (base.protocol !== 'chrome-extension:' || u.protocol !== base.protocol || u.host !== base.host || u.host === '') {
+  // in some runtimes, which would make every extension origin look equal. Chrome packages are
+  // chrome-extension://<id>/, Firefox packages moz-extension://<uuid>/.
+  const extensionScheme = base.protocol === 'chrome-extension:' || base.protocol === 'moz-extension:';
+  if (!extensionScheme || u.protocol !== base.protocol || u.host !== base.host || u.host === '') {
     throw new EgressBlockedError(`asset ${url} is not inside the extension package`);
   }
   const res = await fetch(u.href);

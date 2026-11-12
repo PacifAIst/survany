@@ -6,7 +6,9 @@ import type { BudgetReport } from './budget';
 
 export type SourceSpec =
   | { kind: 'tab'; streamId: string; tabId: number; label: string }
-  | { kind: 'camera'; deviceId: string | null; label: string };
+  | { kind: 'camera'; deviceId: string | null; label: string }
+  /** Firefox: a window or the screen, chosen in Firefox's own picker from a click on the monitor tab. */
+  | { kind: 'display'; label: string };
 
 export interface ClipSetup {
   seconds: number;
@@ -23,7 +25,10 @@ export type ToOffscreen =
   | { target: 'offscreen'; type: 'get-clip' }
   | { target: 'offscreen'; type: 'whip-start'; url: string; iceServers: RTCIceServer[] }
   | { target: 'offscreen'; type: 'whip-stop' }
-  | { target: 'offscreen'; type: 'whip-probe'; url: string; iceServers: RTCIceServer[] };
+  | { target: 'offscreen'; type: 'whip-probe'; url: string; iceServers: RTCIceServer[] }
+  /** Firefox monitor tab only: bring it to the front, or close it. */
+  | { target: 'offscreen'; type: 'focus' }
+  | { target: 'offscreen'; type: 'close' };
 
 export interface OffscreenStatus {
   running: boolean;
@@ -39,7 +44,8 @@ export interface ClipPayload {
 }
 
 export type FromOffscreen =
-  | { target: 'sw'; type: 'offscreen-ready' }
+  /** tabId is set when the capture page is a tab (Firefox), so closing that tab can stop watching. */
+  | { target: 'sw'; type: 'offscreen-ready'; tabId?: number }
   | {
       target: 'sw';
       type: 'candidate' | 'still-hot';
@@ -55,7 +61,7 @@ export type FromOffscreen =
   | { target: 'sw'; type: 'whip-state'; state: 'connecting' | 'live' | 'failed' | 'closed'; detail: string }
   | { target: 'sw'; type: 'log'; level: 'info' | 'warn' | 'error'; msg: string };
 
-export type ArmSource = { kind: 'tab'; streamId: string; tabId: number; label: string } | { kind: 'camera'; label: string };
+export type ArmSource = { kind: 'tab'; streamId: string; tabId: number; label: string } | { kind: 'camera'; label: string } | { kind: 'display'; label: string };
 
 export type ToSw =
   | { target: 'sw'; type: 'arm'; source: ArmSource }
@@ -92,6 +98,10 @@ export interface PopupStatus {
   backendPaired: boolean;
 }
 
+/**
+ * True only for this extension's own pages. Compared with the extension's base URL rather than a built
+ * string: Chrome pages are chrome-extension://<id>/, Firefox pages moz-extension://<per-install uuid>/.
+ */
 export function isFromExtension(sender: chrome.runtime.MessageSender): boolean {
-  return sender.id === chrome.runtime.id && (sender.url?.startsWith(`chrome-extension://${chrome.runtime.id}/`) ?? false);
+  return sender.id === chrome.runtime.id && (sender.url?.startsWith(chrome.runtime.getURL('')) ?? false);
 }

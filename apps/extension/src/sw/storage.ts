@@ -13,7 +13,7 @@ import type { OutboxItem } from './outbox';
 
 export interface ArmedState {
   armed: boolean;
-  source: { kind: 'tab'; tabId: number; label: string } | { kind: 'camera'; label: string } | null;
+  source: { kind: 'tab'; tabId: number; label: string } | { kind: 'camera'; label: string } | { kind: 'display'; label: string } | null;
   armedAt: number | null;
 }
 
@@ -53,6 +53,8 @@ export interface StoreShape {
   importedRecipes: Recipe[];
   recentNotices: string[];
   log: string[];
+  /** Firefox: the id of the monitor tab while it exists (cleared at browser start). */
+  monitorTabId: number | null;
 }
 
 const DEFAULTS: { [K in keyof StoreShape]: () => StoreShape[K] } = {
@@ -70,6 +72,7 @@ const DEFAULTS: { [K in keyof StoreShape]: () => StoreShape[K] } = {
   importedRecipes: () => [],
   recentNotices: () => [],
   log: () => [],
+  monitorTabId: () => null,
 };
 
 export async function get<K extends keyof StoreShape>(key: K): Promise<StoreShape[K]> {
@@ -115,7 +118,8 @@ export async function secret(ref: string | null | undefined): Promise<string | n
 
 export async function restrictStorageAccess(): Promise<void> {
   await chrome.storage.local.setAccessLevel?.({ accessLevel: 'TRUSTED_CONTEXTS' }).catch(() => undefined);
-  await chrome.storage.session.setAccessLevel({ accessLevel: 'TRUSTED_CONTEXTS' });
+  // Firefox has no setAccessLevel: its storage is reachable only from extension pages anyway (no content scripts exist, C2).
+  await chrome.storage.session.setAccessLevel?.({ accessLevel: 'TRUSTED_CONTEXTS' }).catch(() => undefined);
 }
 
 export async function appendLog(line: string): Promise<void> {
