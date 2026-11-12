@@ -2,7 +2,7 @@
 
 **Goal:** v1.0 as defined at the end of §8 of docs/PLAN.md
 **Current milestone:** M8 on hold at 0.1.0: owner manual testing first (`docs/MANUAL_TESTING.md`)
-**Last updated:** 2026-11-12 12:00
+**Last updated:** 2026-11-12 13:00
 
 ## Milestones
 | ID | Status (todo/doing/done) | Acceptance evidence | Notes |
@@ -168,6 +168,12 @@ Accepted for v1.0 by the owner, with the reason; each can be revisited after rel
 | 2026-11-09 | Container images | Docker Hub | Pinned digests: OME v0.21.0 `sha256:172da912…`, caddy 2.10.2-alpine `sha256:4c6e91c6…`, mailpit v1.27 `sha256:e22dce5b…`, node 24-alpine `sha256:a34ab6d7…`, python 3.13-slim `sha256:e48f59cd…`. |
 
 ## Session log (newest first)
+### 2026-11-12 13:00: the real cause: Firefox starts a camera only for the tab in front
+- The camera choice was not enough: the owner's camera still did not start. Reproduced faithfully for the first time (visible Firefox, real camera, the REAL permission prompt answered through the browser UI: Integrated Camera, "Remember for all cameras", Allow; earlier automated runs used `media.navigator.permission.disabled`, which skips this). Firefox stored `camera=1` permanently for the extension, yet getUserMedia in the pinned monitor tab waited while that tab was in the background; the moment the tab came to the front, the camera started, and it kept delivering frames after the tab went back to the background. This explains the owner's dark camera, the three starts released within 20 ms (queued requests released when the owner clicked the tab), and why window/screen sharing worked (that tab is brought to the front for the picker).
+- Fix (Firefox only): Watch camera, and camera recovery, bring the monitor tab to the front, start the camera, then return to the previous tab; the camera start gives up after 45 s with a clear message (so it can no longer hold up Disarm); the monitor tab says what it is waiting for. Diagnostics added to the log: first frame time, track mute/unmute/ended, video and track state while frames are missing.
+- Tests run: the same faithful run, hands off: the add-on brought its tab forward, Integrated Camera started (first frame 5.0 s), the previous tab came back to the front, frames every scan, no notices. `pnpm vitest run` 275; Chrome e2e 9 passed on a fresh build; Firefox `firefox_e2e.py` 13/20 because LM Studio was not running after the owner's restart (the 7 AI checks; unchanged code, 20/20 on the previous build); addons-linter 0 errors.
+- Next: owner starts LM Studio, tests in Firefox, uploads 0.1.1.
+- Blockers: none.
 ### 2026-11-12 12:00: camera choice (the real cause of the dark camera in Firefox)
 - Correction to the 11:00 entry: the owner did not triple-click. Windows' camera usage records showed the owner's Firefox had not opened the physical webcam since May, and the PC has two cameras: "Integrated Camera" and "Camera (NVIDIA Broadcast)" (virtual). Firefox's default was the virtual one, and the add-on never chose a device, so even picking "Integrated Camera" in Firefox's prompt did not stick: the monitor tab later asked for the default camera again. Chrome's default was the real camera. (The three simultaneous starts in the owner's log stay unexplained; the 11:00 serialisation makes them harmless.)
 - Fix (both browsers): the camera page lists the cameras after permission, marks virtual ones and saves the choice (`cameraDeviceId`); the popup has "Camera…"; watching opens the chosen camera, else the browser's default unless that is a virtual camera and a real one exists; the monitor tab and the log name the camera in use; the "no frames" notice says how to choose another camera. Also restored the house style in two files an earlier Prettier run had reformatted (the repo has no Prettier config).

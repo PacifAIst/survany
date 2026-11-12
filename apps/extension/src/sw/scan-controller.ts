@@ -34,7 +34,7 @@ import { BudgetLedger, type MeteredCall } from './budget';
 import { dispatchAlert } from './dispatch';
 import type { ArmSource, ClipSetup, FromOffscreen, OffscreenStatus, SourceSpec } from './messages';
 import { raiseNotice } from './notices';
-import { closeOffscreen, ensureOffscreen, hasOffscreen, sendToOffscreen } from './offscreen-host';
+import { closeOffscreen, ensureOffscreen, hasOffscreen, returnFocus, sendToOffscreen } from './offscreen-host';
 import { initialRuleState, onCandidate, onClear, onConfirmed, type RulePersist } from './rule-state';
 import { backendClient, guardedFetch } from './runtime';
 import * as store from './storage';
@@ -110,8 +110,8 @@ async function armNow(src: ArmSource): Promise<void> {
   if (recipes.length === 0) throw new ArmError('No watch rules enabled.');
 
   await setIndicator('armed', src.label);
-  // A window or screen (Firefox) is chosen with a click on the monitor tab, so bring it to the front.
-  await ensureOffscreen({ focus: src.kind === 'display' });
+  // Firefox: the monitor tab must be in front to start a camera, and for the window/screen picker click.
+  const previousTab = await ensureOffscreen({ focus: src.kind === 'display' || (__FIREFOX__ && src.kind === 'camera') });
   const cameraId = await store.get('cameraDeviceId');
   const source: SourceSpec = src.kind === 'tab' ? { ...src } : src.kind === 'display' ? { kind: 'display', label: src.label } : { kind: 'camera', deviceId: cameraId, label: src.label };
   try {
@@ -126,6 +126,7 @@ async function armNow(src: ArmSource): Promise<void> {
     armedAt: Date.now(),
   });
   await store.appendLog(`armed: ${src.kind} "${src.label}"`);
+  await returnFocus(previousTab);
   void probeLiveView(config);
 }
 
@@ -172,7 +173,7 @@ async function recoverNow(why: string): Promise<void> {
   const { config } = await store.loadConfig();
   if (!config) return;
   try {
-    await ensureOffscreen();
+    const previousTab = await ensureOffscreen({ focus: __FIREFOX__ });
     await sendToOffscreen({
       target: 'offscreen',
       type: 'start',
@@ -181,6 +182,7 @@ async function recoverNow(why: string): Promise<void> {
       clip: await clipSetup(config),
     });
     await setIndicator('armed', armed.source.label);
+    await returnFocus(previousTab);
     await store.appendLog(`camera restored after: ${why}`);
   } catch (e) {
     await setIndicator('error', 'camera could not be restored');

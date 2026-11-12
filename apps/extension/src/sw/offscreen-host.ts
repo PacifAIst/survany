@@ -32,14 +32,17 @@ export async function hasOffscreen(): Promise<boolean> {
 }
 
 /**
- * Makes sure the capture page exists. `focus` (Firefox) brings the monitor tab to the front, for
- * choosing a window or screen to share, which Firefox allows only from a click on that page.
+ * Makes sure the capture page exists. `focus` (Firefox) brings the monitor tab to the front: Firefox starts
+ * a camera only for the tab in front (getUserMedia waits while a tab is in the background, even with the
+ * permission remembered; found 2026-11-12), and opens its window/screen picker only from a click on that
+ * page. Returns the tab that was in front before, so the caller can switch back once capture runs.
  */
-export async function ensureOffscreen(opts: { focus?: boolean } = {}): Promise<void> {
+export async function ensureOffscreen(opts: { focus?: boolean } = {}): Promise<number | null> {
   if (__FIREFOX__) {
+    const before = opts.focus ? (await chrome.tabs.query({ active: true, lastFocusedWindow: true }).catch(() => []))[0]?.id ?? null : null;
     if (monitorViews().length > 0) {
       if (opts.focus) await sendToOffscreen({ target: 'offscreen', type: 'focus' }).catch(() => undefined);
-      return;
+      return before;
     }
     creating ??= chrome.tabs
       .create({ url: chrome.runtime.getURL(OFFSCREEN_PATH), pinned: true, active: opts.focus === true })
@@ -48,9 +51,16 @@ export async function ensureOffscreen(opts: { focus?: boolean } = {}): Promise<v
         creating = null;
       });
     await creating;
+    return before;
   } else {
     await ensureChromeOffscreen();
+    return null;
   }
+}
+
+/** Firefox: back to the tab the person was using, once capture runs (it keeps running in the background). */
+export async function returnFocus(tabId: number | null): Promise<void> {
+  if (__FIREFOX__ && tabId !== null) await chrome.tabs.update(tabId, { active: true }).catch(() => undefined);
 }
 
 async function ensureChromeOffscreen(): Promise<void> {

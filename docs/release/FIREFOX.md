@@ -9,7 +9,7 @@ the differences below.
 | | Chrome | Firefox |
 |---|---|---|
 | Background | service worker | event page (background script) |
-| Capture (camera, detector, clips, live view) | invisible offscreen document | a pinned **Survey Anything** tab that says "Watching: …". Closing it stops watching, with a notice. |
+| Capture (camera, detector, clips, live view) | invisible offscreen document | a pinned **Survey Anything** tab that says "Watching: …". Closing it stops watching, with a notice. Firefox starts a camera only for the tab in front, so **Watch camera** shows that tab for a moment, then returns to your tab; watching continues in the background. |
 | Watch a browser tab | **Watch this tab** | Not possible: Firefox has no tab capture. Instead, **Watch a window or screen**: the pinned tab shows a button, and Firefox's own sharing picker opens on the click (Firefox allows the picker only from a click). |
 | Watch the camera | **Watch camera** | the same |
 | Frames | MediaStreamTrackProcessor | a muted video element (Firefox has no MediaStreamTrackProcessor or ImageCapture) |
@@ -138,9 +138,10 @@ How to try it without any account:
 
 AMO never accepts the same version number twice, even for a version that is still in review or disabled.
 After any change, raise `version` in `apps/extension/package.json` and upload the new zip and source zip as
-a new version (Developer Hub → the add-on → **Upload New Version**). 0.1.1 adds the camera choice
-(popup → **Camera…**): on a PC with a virtual camera such as NVIDIA Broadcast, Firefox used the virtual one
-by default and watching got no frames (found in the owner's first Firefox test).
+a new version (Developer Hub → the add-on → **Upload New Version**). 0.1.1 fixes the camera in Firefox
+(found in the owner's first Firefox test): Firefox starts a camera only for the tab in front, so the pinned
+tab is brought forward for the start; and the camera can now be chosen (popup → **Camera…**), because
+Firefox's default on a PC with NVIDIA Broadcast was that virtual camera.
 
 ## After approval
 

@@ -133,11 +133,53 @@ function attachFrames(track: MediaStreamTrack): void {
   v.srcObject = new MediaStream([track]);
   void v.play().catch((e: unknown) => log('warn', `video element did not start: ${e instanceof Error ? e.message : String(e)}`));
   video = v;
+  // Diagnostics for "no frames" reports: what the video element and the track look like when a frame is missing.
+  const t0 = Date.now();
+  let misses = 0;
+  let firstFrame = true;
   grabFrame = async () => {
-    if (v.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || v.videoWidth === 0) throw new Error('no frame yet');
+    if (v.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || v.videoWidth === 0) {
+      if (misses++ % 10 === 0) {
+        log('warn', `no camera frame yet after ${((Date.now() - t0) / 1000).toFixed(1)} s: video readyState ${v.readyState}, ${v.videoWidth}x${v.videoHeight}, paused ${v.paused}; track ${track.readyState}, muted ${track.muted}, enabled ${track.enabled}`);
+      }
+      throw new Error('no frame yet');
+    }
+    if (firstFrame) {
+      firstFrame = false;
+      log('info', `first frame after ${((Date.now() - t0) / 1000).toFixed(1)} s (${v.videoWidth}x${v.videoHeight})`);
+    }
     return createImageBitmap(v);
   };
   log('info', 'frame source: video element fallback');
+}
+
+/**
+ * Firefox starts a camera only while this tab is in front; the background brings it to the front for the
+ * start. If the camera still has not started (the tab was left at once, or a prompt is waiting), give up with
+ * a message instead of waiting forever, which would also hold up Disarm. A stream that arrives late is closed.
+ */
+const CAMERA_START_TIMEOUT_MS = 45_000;
+function openCameraWithin(deviceId: string | null, ms: number): Promise<MediaStream> {
+  showState('Starting the camera… Firefox starts it while this tab is in front; you can switch tabs once it runs.', false);
+  return new Promise<MediaStream>((resolve, reject) => {
+    let late = false;
+    const timer = setTimeout(() => {
+      late = true;
+      showState('The camera did not start. Click this tab, then press Watch camera again.', false);
+      reject(new Error('the camera did not start within 45 s. In Firefox, click the pinned Survey Anything tab (a camera prompt may be waiting there), then press Watch camera again.'));
+    }, ms);
+    openCameraSource(deviceId).then(
+      (s) => {
+        clearTimeout(timer);
+        if (late) s.getTracks().forEach((t) => t.stop());
+        else resolve(s);
+      },
+      (e: unknown) => {
+        clearTimeout(timer);
+        reject(e instanceof Error ? e : new Error(String(e)));
+      },
+    );
+  });
 }
 
 /** Start, stop and close run one at a time: overlapping starts would stop each other's stream. */
@@ -160,11 +202,16 @@ async function start(src: SourceSpec, setup: ScanSetup, clip: { seconds: number;
         ? pick
           ? await openDisplaySource(pick)
           : await Promise.reject(new Error('this page cannot ask for a window or screen'))
-        : await openCameraSource(src.deviceId);
+        : await openCameraWithin(src.deviceId, CAMERA_START_TIMEOUT_MS);
   stream = opened;
   const track = opened.getVideoTracks()[0];
   if (!track) throw new Error('source produced no video track');
   track.addEventListener('ended', () => toSw({ target: 'sw', type: 'source-ended', reason: 'track ended' }));
+  // Diagnostics: a camera that is taken by another app or switched off shows up as mute/ended here.
+  const opened0 = Date.now();
+  for (const ev of ['mute', 'unmute', 'ended'] as const) {
+    track.addEventListener(ev, () => log(ev === 'unmute' ? 'info' : 'warn', `video track ${ev} after ${((Date.now() - opened0) / 1000).toFixed(1)} s (${track.label || 'unnamed'})`));
+  }
   worker = new Worker(new URL('../worker/scan.worker.ts', import.meta.url), { type: 'module' });
   worker.onmessage = onWorkerMessage;
   worker.onerror = (e) => log('error', `worker error: ${e.message}`);
