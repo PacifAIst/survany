@@ -25,7 +25,8 @@ export async function launch(opts: { blockNetwork?: boolean; dist?: string; extr
   const userDataDir = mkdtempSync(join(tmpdir(), 'sa-e2e-'));
   const dist = opts.dist ?? DIST;
   const context = await chromium.launchPersistentContext(userDataDir, {
-    channel: 'chromium',
+    // SA_BROWSER_CHANNEL=msedge runs the same tests in Microsoft Edge (the Chrome build installs there too).
+    channel: process.env['SA_BROWSER_CHANNEL'] ?? 'chromium',
     headless: process.env['HEADED'] !== '1',
     args: [
       `--disable-extensions-except=${dist}`,

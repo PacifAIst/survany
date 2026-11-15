@@ -3,10 +3,10 @@
 <p align="center">
   <a href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik"><img alt="Available in the Chrome Web Store" src="site/img/badge-chrome-web-store.png" height="60"></a>
   &nbsp;&nbsp;
-  <!-- FIREFOX: when approved, wrap this image in <a href="(addons.mozilla.org link)"> and drop the "in review" line. -->
-  <img alt="Get the add-on for Firefox (in review)" src="site/img/badge-firefox-get-the-addon.svg" height="60">
+  <a href="https://addons.mozilla.org/firefox/addon/survey-anything/"><img alt="Get the add-on for Firefox" src="site/img/badge-firefox-get-the-addon.svg" height="60"></a>
+  &nbsp;&nbsp;
+  <a href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik"><img alt="Works in Microsoft Edge: install from the Chrome Web Store" src="site/img/badge-edge.svg" height="60"></a>
 </p>
-<p align="center"><sub>Firefox: in review at Firefox Add-ons, coming soon.</sub></p>
 
 Website: **[survany.pages.dev](https://survany.pages.dev)** (Survany stands for Survey Anything). Every
 version, with its source: [Releases](https://github.com/PacifAIst/survany/releases).
@@ -30,7 +30,8 @@ taps Approve.
 
 - **Chrome:** [Add to Chrome](https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik) from the Chrome Web Store, then follow the step-by-step guide,
   [`docs/GUIDE_LEAVE_ALERT.md`](docs/GUIDE_LEAVE_ALERT.md).
-- **Firefox:** in review at Firefox Add-ons. Until then, see [Firefox](#firefox) below.
+- **Edge:** install from the [Chrome Web Store](https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik); Edge asks once to allow extensions from other stores.
+- **Firefox:** [Get the add-on](https://addons.mozilla.org/firefox/addon/survey-anything/) from Firefox Add-ons (Firefox 140 or later, desktop). See [Firefox](#firefox) for what differs.
 - **From source:** the five-minute quickstart below, or a zip from [Releases](https://github.com/PacifAIst/survany/releases).
 
 ## Try it in about five minutes
@@ -82,8 +83,8 @@ fake camera playing the same fire scene, because automation cannot click the too
 
 ### Firefox
 
-The same extension builds for Firefox 140 or later:
-`pnpm --filter @survey-anything/extension build:firefox`, then in Firefox open
+Install it from [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/survey-anything/) (Firefox 140 or
+later, desktop). To build it yourself: `pnpm --filter @survey-anything/extension build:firefox`, then in Firefox open
 `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on…** → `apps/extension/dist-firefox/manifest.json`.
 
 Two things differ, because Firefox has no offscreen documents and no tab capture:

@@ -1,8 +1,8 @@
 # Survey Anything: Progress
 
 **Goal:** v1.0 as defined at the end of §8 of docs/PLAN.md
-**Current milestone:** M8: Chrome 0.1.0 published; Firefox 0.1.1 in review at AMO
-**Last updated:** 2026-11-12 14:00
+**Current milestone:** M8 done: Chrome 0.1.0 and Firefox 0.1.1 published
+**Last updated:** 2026-11-15 10:00
 
 ## Milestones
 | ID | Status (todo/doing/done) | Acceptance evidence | Notes |
@@ -101,7 +101,7 @@ Accepted for v1.0 by the owner, with the reason; each can be revisited after rel
 - [x] **M8 review** answered 2026-11-09: 0.1.0 preview, CWS Utilities / camera disclosure on the consent screen / repo privacy URL, no GHCR, no CRX, legal deferred, compromises approved.
 - [ ] **Manual testing** with `docs/MANUAL_TESTING.md` (real webcam, OpenRouter, Telegram, live view on a VPS, an approved action); report failures by step number. M8 resumes after.
 - [x] **Firefox add-on submission.** 0.1.1 submitted by the owner on 2026-11-12 (desktop only); in review.
-- [ ] **Firefox listing link.** When AMO approves, replace the two `FIREFOX:` placeholders (site/index.html, README.md) with the listing URL and redeploy the site.
+- [x] **Firefox listing link.** AMO approved 0.1.1 (public); site and README link to https://addons.mozilla.org/firefox/addon/survey-anything/.
 - [x] **Chrome Web Store (M8).** 0.1.0 published by the owner on 2026-11-12.
 - [x] **Close GitHub secret-scanning alert #1** (Security → Secret scanning) with reason **"Used in tests"**. Closed by the owner on 2026-11-09. The flagged value was a fabricated fixture, never a BotFather-issued token, so there was nothing to revoke. It has been scrubbed from history (verified: no token-shaped literal in any revision; gitleaks clean over all refs).
 
@@ -169,6 +169,11 @@ Accepted for v1.0 by the owner, with the reason; each can be revisited after rel
 | 2026-11-09 | Container images | Docker Hub | Pinned digests: OME v0.21.0 `sha256:172da912…`, caddy 2.10.2-alpine `sha256:4c6e91c6…`, mailpit v1.27 `sha256:e22dce5b…`, node 24-alpine `sha256:a34ab6d7…`, python 3.13-slim `sha256:e48f59cd…`. |
 
 ## Session log (newest first)
+### 2026-11-15 10:00: Firefox approved; Edge button
+- AMO lists Survey Anything 0.1.1 as public (API: status public, Firefox 140+). Site, README, guide and the v0.1.1 release notes now link to it.
+- Edge: the Chrome build passed the whole extension e2e suite in Microsoft Edge 157 (`SA_BROWSER_CHANNEL=msedge`, new harness switch): 9 passed + soak skipped. Third button "Works in Microsoft Edge", same height as the official badges, linking to the Chrome Web Store (Microsoft's own badge is for its Edge Add-ons store, where the extension is not listed).
+- Next: optional YouTube tutorial link from the owner.
+- Blockers: none.
 ### 2026-11-12 14:00: download-first website, README buttons, GitHub releases
 - Website: one mark (the ring logo, the icon the store listings use) in the header and next to the big title; a download card in the hero with "Add to Chrome" (the store listing) and "Add to Firefox" (in review); on phones the card comes right after the title; "Get started" now begins with the store install (six steps). Deployed to survany.pages.dev and checked live.
 - README: Chrome Web Store version badge (live) and a Firefox "in review" badge as buttons; an Install section; the beginner guide starts from the store, building is the alternative. Camera-choice wording limited to 0.1.1, since the store has 0.1.0.

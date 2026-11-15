@@ -45,15 +45,17 @@
       <a class="btn" href="https://github.com/PacifAIst/survany">Source on GitHub</a>
     </div>
     <ul class="badges" aria-label="Facts">
-      <li>Chrome and Firefox</li><li>Free</li><li>AGPL-3.0</li><li>No account, no telemetry</li>
+      <li>Chrome, Edge and Firefox</li><li>Free</li><li>AGPL-3.0</li><li>No account, no telemetry</li>
     </ul>
   </div>
   <aside id="download" class="download" aria-label="Download the extension">
     <p class="dl-title">Get the extension</p>
     <!-- Official store badges (unmodified, same height): Google's and Mozilla's rules ask that each links to the listing. -->
     <a class="store-badge" href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik"><img src="img/badge-chrome-web-store.png" width="496" height="150" alt="Available in the Chrome Web Store"></a>
-    <!-- FIREFOX: when approved, replace this span with <a class="store-badge" href="(addons.mozilla.org link)"> and drop the note. -->
-    <span class="store-badge pending"><img src="img/badge-firefox-get-the-addon.svg" width="172" height="60" alt="Get the add-on for Firefox (in review)"><span class="badge-note">In review at Firefox Add-ons · coming soon</span></span>
+    <a class="store-badge" href="https://addons.mozilla.org/firefox/addon/survey-anything/"><img src="img/badge-firefox-get-the-addon.svg" width="172" height="60" alt="Get the add-on for Firefox"></a>
+    <!-- Edge installs Chrome Web Store extensions (tested in Edge 157), so this links to the Chrome listing. -->
+    <a class="store-badge" href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik"><img src="img/badge-edge.svg" width="196" height="60" alt="Works in Microsoft Edge: install from the Chrome Web Store"></a>
+    <p class="badge-note">Edge: open the Chrome Web Store link and allow extensions from other stores when Edge asks.</p>
     <p class="dl-note">Every version, with its source: <a href="https://github.com/PacifAIst/survany/releases">GitHub releases</a>.</p>
   </aside>
 </section>
@@ -124,9 +126,9 @@
 <section id="start" class="wrap section">
   <p class="label">Get started</p>
   <h2>Six steps, about 20 minutes, all free.</h2>
-  <p class="muted">No build needed: install it from the store. You need Chrome (Firefox once its review is done) and Telegram.</p>
+  <p class="muted">No build needed: install it from the store. You need Chrome, Edge or Firefox, and Telegram.</p>
   <ol class="steps">
-    <li><h3>Install it</h3><p><a href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik">Add Survey Anything to Chrome</a>. The consent page opens: read it, tick the boxes and press <b>I agree</b>, then allow the camera.</p></li>
+    <li><h3>Install it</h3><p>Add Survey Anything to <a href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik">Chrome or Edge</a> or to <a href="https://addons.mozilla.org/firefox/addon/survey-anything/">Firefox</a>. The consent page opens: read it, tick the boxes and press <b>I agree</b>, then allow the camera.</p></li>
     <li><h3>Free AI on your computer</h3><p>Install <a href="https://lmstudio.ai">LM Studio</a>, download and load <code>qwen3-vl-4b-instruct</code>, and start its server (Developer tab). In the extension's Options, local card, press <b>LM Studio</b> and then <b>Test connection</b>.</p></li>
     <li><h3>A Telegram bot</h3><p>In Telegram, message <b>@BotFather</b>, send <code>/newbot</code> and copy the token. Open your bot, press <b>Start</b> and <b>send it "hi"</b>. Open <code>https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code> and copy the number after <code>"chat":{"id":</code>. In Options, tick <b>Direct Telegram</b>, paste the token and enter that chat ID.</p></li>
     <li><h3>Free email (optional)</h3><p>Sign up at <a href="https://resend.com">resend.com</a>, create an API key, and in Options tick <b>Direct email (Resend)</b> with From <code>onboarding@resend.dev</code> and your sign-up address as the recipient.</p></li>

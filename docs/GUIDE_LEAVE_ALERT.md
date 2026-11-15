@@ -11,14 +11,16 @@ Contents: [1. Install](#1-install-the-extension) · [2. AI model](#2-a-free-ai-m
 
 ## What you need
 
-- A computer with a webcam, and Chrome or Chromium 120 or later (Firefox once its review is done).
+- A computer with a webcam, and Chrome or Edge (120 or later) or Firefox (140 or later).
 - Telegram on your phone or computer.
 - [LM Studio](https://lmstudio.ai) (free) for the AI check. Optional, but it makes alerts much more reliable.
 - A free [Resend](https://resend.com) account, only if you also want email.
 
 ## 1. Install the extension
 
-1. Open [Survey Anything on the Chrome Web Store](https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik) and press **Add to Chrome**.
+1. Open [Survey Anything on the Chrome Web Store](https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik) and press **Add to Chrome**. In Edge, use the
+   same link and allow extensions from other stores when Edge asks. In Firefox, use
+   [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/survey-anything/) instead.
 2. A consent page opens. Read it, tick the boxes and press **I agree**. Then press **Allow camera access**
    and accept Chrome's camera prompt (Chrome uses your default camera).
 3. Click the puzzle icon in Chrome's toolbar and pin **Survey Anything**, so its icon is always visible.
