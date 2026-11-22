@@ -1,4 +1,10 @@
-# Survey Anything
+# Survany (Survey Anything) [Watch our 30-sec YouTube reel:](https://www.youtube.com/watch?v=H5gX1Rth6zc)
+
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=H5gX1Rth6zc">
+    <img src="./yt.png" alt="Watch our 30-sec YouTube reel" width="44%">
+  </a>
+</div>
 
 <p align="center">
   <a href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik"><img alt="Available in the Chrome Web Store" src="site/img/badge-chrome-web-store.png" height="60"></a>
