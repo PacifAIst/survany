@@ -14,7 +14,7 @@
   <a href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik"><img alt="Works in Microsoft Edge: install from the Chrome Web Store" src="site/img/badge-edge.svg" height="60"></a>
 </p>
 
-Website: **[survany.pages.dev](https://survany.pages.dev)** (Survany stands for Survey Anything). Every
+Website: **[survany.com](https://survany.com)** (Survany stands for Survey Anything). Every
 version, with its source: [Releases](https://github.com/PacifAIst/survany/releases).
 
 **Point it at any browser tab or camera, say what to watch for, and get a Telegram and email alert when
