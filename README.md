@@ -1,4 +1,4 @@
-# Survany (Survey Anything) [Watch a 30-sec YouTube reel:](https://www.youtube.com/watch?v=H5gX1Rth6zc)
+# Survany [Watch our 30-sec YouTube reel:](https://www.youtube.com/watch?v=H5gX1Rth6zc)
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=H5gX1Rth6zc">
@@ -14,7 +14,7 @@
   <a href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik"><img alt="Works in Microsoft Edge: install from the Chrome Web Store" src="site/img/badge-edge.svg" height="60"></a>
 </p>
 
-Website: **[survany.com](https://survany.com)** (Survany stands for Survey Anything). Every
+Website: **[survany.com](https://survany.com)** (Survany stands for **Survey Anything**). Every
 version, with its source: [Releases](https://github.com/PacifAIst/survany/releases).
 
 **Point it at any browser tab or camera, say what to watch for, and get a Telegram and email alert when
