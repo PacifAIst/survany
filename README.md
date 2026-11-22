@@ -1,6 +1,4 @@
-![Survany Logo](./logo.png)
-
-### All sort of AI cam/tab alerts on your terms [Watch our 30-sec YouTube reel:](https://www.youtube.com/watch?v=H5gX1Rth6zc)
+### All sort of AI cam/tab alerts on your terms. [Watch our 30-sec YouTube reel:](https://www.youtube.com/watch?v=H5gX1Rth6zc)
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=H5gX1Rth6zc">
