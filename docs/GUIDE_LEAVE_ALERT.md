@@ -59,8 +59,9 @@ The extension checks every few seconds, on your computer, whether a person is in
 left, it asks an AI model to look at the picture and confirm, so a missed detection does not alarm you.
 With LM Studio, the picture never leaves your computer.
 
-1. Install LM Studio, search for **qwen3-vl-4b-instruct** in its model search, download it and load it.
-   Any model LM Studio marks as able to see images ("vision") works; this one was tested.
+1. Install LM Studio and download any multimodal model, one that can see images. LM Studio marks these
+   as vision models. **qwen3-vl-4b-instruct** is a good small start and was tested here; other Qwen-VL,
+   Gemma 3, Llava and similar vision models work too. Larger models are more accurate but slower. Load the model.
 2. In LM Studio open the **Developer** tab (its page is titled **Model Server**) and switch the server on.
    It shows **Status: Running** and **Reachable at: http://127.0.0.1:1234**. Nothing else needs changing.
 3. In the extension's Options, under **AI providers**: set **Vision provider** to `local`, then in the

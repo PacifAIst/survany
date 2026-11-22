@@ -2,7 +2,7 @@
 
 **Goal:** v1.0 as defined at the end of §8 of docs/PLAN.md
 **Current milestone:** M8 done: Chrome 0.1.0 and Firefox 0.1.1 published
-**Last updated:** 2026-11-15 10:00
+**Last updated:** 2026-11-22
 
 ## Milestones
 | ID | Status (todo/doing/done) | Acceptance evidence | Notes |
@@ -169,6 +169,9 @@ Accepted for v1.0 by the owner, with the reason; each can be revisited after rel
 | 2026-11-09 | Container images | Docker Hub | Pinned digests: OME v0.21.0 `sha256:172da912…`, caddy 2.10.2-alpine `sha256:4c6e91c6…`, mailpit v1.27 `sha256:e22dce5b…`, node 24-alpine `sha256:a34ab6d7…`, python 3.13-slim `sha256:e48f59cd…`. |
 
 ## Session log (newest first)
+### 2026-11-22: tutorial video on the site; any vision model
+- Site: the owner's YouTube tutorial (H5gX1Rth6zc) embedded in the download card (youtube-nocookie, lazy; CSP gains only `frame-src https://www.youtube-nocookie.com`; footer says the video is played by YouTube); the three store buttons in one row below it, equal heights at every width. Step 2 and the guide say any multimodal (vision) model works, qwen3-vl-4b-instruct as a small start. Placeholder comment for the Product Hunt banner.
+- survany.com: not yet a zone in the owner's Cloudflare account (checked via the API); the owner adds it in the dashboard and sets Cloudflare's nameservers at Namecheap, then adds the domain to the Pages project.
 ### 2026-11-15 10:00: Firefox approved; Edge button
 - AMO lists Survey Anything 0.1.1 as public (API: status public, Firefox 140+). Site, README, guide and the v0.1.1 release notes now link to it.
 - Edge: the Chrome build passed the whole extension e2e suite in Microsoft Edge 157 (`SA_BROWSER_CHANNEL=msedge`, new harness switch): 9 passed + soak skipped. Third button "Works in Microsoft Edge", same height as the official badges, linking to the Chrome Web Store (Microsoft's own badge is for its Edge Add-ons store, where the extension is not listed).

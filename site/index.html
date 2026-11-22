@@ -30,6 +30,7 @@
 </header>
 
 <main>
+<!-- PRODUCT HUNT: banner goes here once the launch page exists (owner sends the link). -->
 <section class="hero wrap">
   <div class="hero-head">
     <p class="kicker">Free · open source · runs on your computer</p>
@@ -49,12 +50,18 @@
     </ul>
   </div>
   <aside id="download" class="download" aria-label="Download the extension">
+    <!-- Privacy-enhanced YouTube player; it loads only when the visitor scrolls near it (loading=lazy). -->
+    <div class="video">
+      <iframe src="https://www.youtube-nocookie.com/embed/H5gX1Rth6zc?rel=0" title="Survany: turn any camera or browser tab into an AI sensor (video)" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+    </div>
     <p class="dl-title">Get the extension</p>
-    <!-- Official store badges (unmodified, same height): Google's and Mozilla's rules ask that each links to the listing. -->
+    <!-- Official store badges (unmodified, same height, one row): Google's and Mozilla's rules ask that each links to the listing. -->
+    <div class="badges-row">
     <a class="store-badge" href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik"><img src="img/badge-chrome-web-store.png" width="496" height="150" alt="Available in the Chrome Web Store"></a>
     <a class="store-badge" href="https://addons.mozilla.org/firefox/addon/survey-anything/"><img src="img/badge-firefox-get-the-addon.svg" width="172" height="60" alt="Get the add-on for Firefox"></a>
     <!-- Edge installs Chrome Web Store extensions (tested in Edge 157), so this links to the Chrome listing. -->
     <a class="store-badge" href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik"><img src="img/badge-edge.svg" width="196" height="60" alt="Works in Microsoft Edge: install from the Chrome Web Store"></a>
+    </div>
     <p class="badge-note">Edge: open the Chrome Web Store link and allow extensions from other stores when Edge asks.</p>
     <p class="dl-note">Every version, with its source: <a href="https://github.com/PacifAIst/survany/releases">GitHub releases</a>.</p>
   </aside>
@@ -129,7 +136,7 @@
   <p class="muted">No build needed: install it from the store. You need Chrome, Edge or Firefox, and Telegram.</p>
   <ol class="steps">
     <li><h3>Install it</h3><p>Add Survey Anything to <a href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik">Chrome or Edge</a> or to <a href="https://addons.mozilla.org/firefox/addon/survey-anything/">Firefox</a>. The consent page opens: read it, tick the boxes and press <b>I agree</b>, then allow the camera.</p></li>
-    <li><h3>Free AI on your computer</h3><p>Install <a href="https://lmstudio.ai">LM Studio</a>, download and load <code>qwen3-vl-4b-instruct</code>, and start its server (Developer tab). In the extension's Options, local card, press <b>LM Studio</b> and then <b>Test connection</b>.</p></li>
+    <li><h3>Free AI on your computer</h3><p>Install <a href="https://lmstudio.ai">LM Studio</a> (or Ollama) and download any multimodal model, one that can see images; LM Studio marks them as vision models. <code>qwen3-vl-4b-instruct</code> is a good small start; Qwen-VL, Gemma 3, Llava and others work too. Load it and start the server (Developer tab). In the extension's Options, local card, press <b>LM Studio</b>: it finds your loaded vision model. Then press <b>Test connection</b>.</p></li>
     <li><h3>A Telegram bot</h3><p>In Telegram, message <b>@BotFather</b>, send <code>/newbot</code> and copy the token. Open your bot, press <b>Start</b> and <b>send it "hi"</b>. Open <code>https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code> and copy the number after <code>"chat":{"id":</code>. In Options, tick <b>Direct Telegram</b>, paste the token and enter that chat ID.</p></li>
     <li><h3>Free email (optional)</h3><p>Sign up at <a href="https://resend.com">resend.com</a>, create an API key, and in Options tick <b>Direct email (Resend)</b> with From <code>onboarding@resend.dev</code> and your sign-up address as the recipient.</p></li>
     <li><h3>Pick a rule</h3><p>Under <b>Watch rules</b>, tick <b>Person left the camera view</b> (or fire, a package at the door, a dashboard turning red…) and press <b>Save</b>.</p></li>
@@ -167,7 +174,7 @@
 <footer class="wrap foot">
   <p><b>Survany</b> = Survey Anything · open source under AGPL-3.0 · © 2026 PacifAIst ·
     <a href="https://github.com/PacifAIst/survany">GitHub</a></p>
-  <p class="fine">This site has no cookies, analytics or trackers.</p>
+  <p class="fine">This site has no cookies, analytics or trackers of its own. The video is played by YouTube in its privacy-enhanced mode.</p>
 </footer>
 </body>
 </html>

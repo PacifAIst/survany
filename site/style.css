@@ -48,9 +48,17 @@ nav .nav-cta { color: var(--pink-2); }
 .title .logo { width: clamp(56px, 9vw, 88px); height: auto; flex: none; }
 .download { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; box-shadow: 0 0 0 1px var(--pink-dim), 0 24px 64px rgba(255, 79, 163, 0.1); }
 .dl-title { margin: 0 0 4px; font-weight: 700; font-size: 1.05rem; }
-/* Both official badges at the same height (resizing is the only change the stores allow). */
-.store-badge { display: block; margin-top: 16px; width: fit-content; }
-.store-badge img { display: block; height: 64px; width: auto; }
+.video { position: relative; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: #000; margin-bottom: 18px; }
+.video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+/* The three badges in one row at the same height: each takes width in proportion to its own shape
+   (width/height ratio), so the heights match at any card width. Resizing is the only change the stores allow. */
+.badges-row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+.badges-row .store-badge { min-width: 0; }
+.badges-row .store-badge:nth-child(1) { flex: 3.307 1 0; }
+.badges-row .store-badge:nth-child(2) { flex: 2.867 1 0; }
+.badges-row .store-badge:nth-child(3) { flex: 3.267 1 0; }
+.store-badge { display: block; }
+.store-badge img { display: block; width: 100%; height: auto; }
 a.store-badge:hover img, a.store-badge:focus-visible img { transform: translateY(-1px); }
 .store-badge.pending img { opacity: 0.55; }
 .badge-note { display: block; color: var(--muted); font-size: 0.85rem; margin-top: 6px; }
