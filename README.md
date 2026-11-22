@@ -1,4 +1,4 @@
-# Survany [Watch our 30-sec YouTube reel:](https://www.youtube.com/watch?v=H5gX1Rth6zc)
+# Survany. [Watch our 30-sec YouTube reel:](https://www.youtube.com/watch?v=H5gX1Rth6zc)
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=H5gX1Rth6zc">
