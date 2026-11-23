@@ -1,4 +1,4 @@
-### All sort of AI cam/tab alerts on your terms. [Watch our 30-sec YouTube reel:](https://www.youtube.com/watch?v=H5gX1Rth6zc) and alerts:
+### All sort of AI cam/tab alerts on your terms. [Watch our 30-sec YouTube reel:](https://www.youtube.com/watch?v=H5gX1Rth6zc) and Telegram/email alerts:
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=H5gX1Rth6zc">
