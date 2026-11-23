@@ -1,20 +1,14 @@
 ### All sort of AI cam/tab alerts on your terms. [Watch our 30-sec YouTube reel:](https://www.youtube.com/watch?v=H5gX1Rth6zc)
 
-<table align="center">
-  <tr>
-    <td align="center">
-      <a href="https://www.youtube.com/watch?v=H5gX1Rth6zc">
-        <img src="./yt.png" alt="Watch our 30-sec YouTube reel" height="200" width="200">
-      </a>
-    </td>
-    <td align="center">
-      <img src="./telegram.png" alt="Telegram" height="200" width="200">
-    </td>
-    <td align="center">
-      <img src="./email.png" alt="Email" height="200" width="200">
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=H5gX1Rth6zc">
+    <img src="./yt.png" alt="Watch our 30-sec YouTube reel" height="200" width="200">
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="./telegram.png" alt="Telegram" height="200" width="200">
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="./email.png" alt="Email" height="200" width="200">
+</p>
 
 <p align="center">
   <a href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik"><img alt="Available in the Chrome Web Store" src="site/img/badge-chrome-web-store.png" height="60"></a>
