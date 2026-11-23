@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=H5gX1Rth6zc">
-    <img src="./yt.png" alt="Watch our 30-sec YouTube reel" height="400" width="400">
+    <img src="./yt.png" alt="Watch our 30-sec YouTube reel" width="44%">
   </a>
   &nbsp;&nbsp;&nbsp;&nbsp;
   <img src="./telegram.png" alt="Telegram" height="200" width="200">
