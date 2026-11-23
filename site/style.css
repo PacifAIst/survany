@@ -89,6 +89,20 @@ p { margin: 0 0 12px; }
 .muted, .fine { color: var(--muted); }
 .fine { font-size: 0.85rem; margin-top: 14px; }
 .note { margin-top: 24px; color: var(--muted); max-width: 760px; }
+/* The example next to the real alert it produces: text left, the Telegram and email screenshots right, equal heights. */
+.example { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 32px; align-items: center; margin-top: 24px; }
+.example .note { margin: 0; max-width: 440px; }
+.alert-shots { display: flex; gap: 14px; justify-content: center; align-items: flex-start; }
+.alert-shots figure { margin: 0; text-align: center; }
+.alert-shots img { display: block; height: 240px; width: auto; border-radius: 10px; border: 1px solid var(--line); }
+.alert-shots a:hover img { border-color: var(--pink); }
+.alert-shots figcaption { color: var(--muted); font-size: 0.85rem; margin-top: 6px; }
+@media (max-width: 760px) {
+  .example { grid-template-columns: 1fr; }
+  .alert-shots img { height: auto; width: 100%; }
+  .alert-shots figure:first-child { flex: 0.778 1 0; }
+  .alert-shots figure:last-child { flex: 1.005 1 0; }
+}
 .note q { color: var(--text); }
 
 /* Pipeline */
