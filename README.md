@@ -6,6 +6,13 @@
   </a>
 </div>
 
+<table>
+  <tr>
+    <td align="center"><img src="./telegram.png" alt="Telegram" width="400"></td>
+    <td align="center"><img src="./email.png" alt="Email" width="400"></td>
+  </tr>
+</table>
+
 <p align="center">
   <a href="https://chromewebstore.google.com/detail/survey-anything/pmdlodffhjadcmjipbjhgoggneokieik"><img alt="Available in the Chrome Web Store" src="site/img/badge-chrome-web-store.png" height="60"></a>
   &nbsp;&nbsp;
