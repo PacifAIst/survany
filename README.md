@@ -8,8 +8,8 @@
 
 <table>
   <tr>
-    <td align="center"><img src="./telegram.png" alt="Telegram" height="400" width="400"></td>
-    <td align="center"><img src="./email.png" alt="Email" height="400" width="400"></td>
+    <td align="center"><img src="./telegram.png" alt="Telegram" height="200" width="200"></td>
+    <td align="center"><img src="./email.png" alt="Email" height="200" width="200"></td>
   </tr>
 </table>
 
