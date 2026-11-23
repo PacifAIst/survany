@@ -89,19 +89,23 @@ p { margin: 0 0 12px; }
 .muted, .fine { color: var(--muted); }
 .fine { font-size: 0.85rem; margin-top: 14px; }
 .note { margin-top: 24px; color: var(--muted); max-width: 760px; }
-/* The example next to the real alert it produces: text left, the Telegram and email screenshots right, equal heights. */
-.example { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 32px; align-items: center; margin-top: 24px; }
-.example .note { margin: 0; max-width: 440px; }
-.alert-shots { display: flex; gap: 14px; justify-content: center; align-items: flex-start; }
-.alert-shots figure { margin: 0; text-align: center; }
-.alert-shots img { display: block; height: 240px; width: auto; border-radius: 10px; border: 1px solid var(--line); }
-.alert-shots a:hover img { border-color: var(--pink); }
-.alert-shots figcaption { color: var(--muted); font-size: 0.85rem; margin-top: 6px; }
+/* One row, three columns: the example text, then the Telegram and email alerts it produced, both the
+   same height. The image columns are sized by their aspect ratios (467x600 and 603x600), so heights match. */
+.example { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 24px; align-items: center; margin-top: 28px; }
+.example .note { margin: 0; }
+.see-shots { display: block; margin-top: 10px; color: var(--pink-2); font-weight: 600; }
+.see-shots .arrow-down { display: none; }
+.shot { margin: 0; text-align: center; }
+.shot img { display: block; height: 200px; width: auto; border-radius: 10px; border: 1px solid var(--line); }
+.shot a:hover img { border-color: var(--pink); }
+.shot figcaption { color: var(--muted); font-size: 0.85rem; margin-top: 6px; }
 @media (max-width: 760px) {
-  .example { grid-template-columns: 1fr; }
-  .alert-shots img { height: auto; width: 100%; }
-  .alert-shots figure:first-child { flex: 0.778 1 0; }
-  .alert-shots figure:last-child { flex: 1.005 1 0; }
+  /* Phones: the text on its own row, the two alerts side by side below it. */
+  .example { grid-template-columns: minmax(0, 0.778fr) minmax(0, 1.005fr); gap: 14px; }
+  .example .note { grid-column: 1 / -1; }
+  .shot img { height: auto; width: 100%; }
+  .see-shots .arrow-right { display: none; }
+  .see-shots .arrow-down { display: inline; }
 }
 .note q { color: var(--text); }
 
