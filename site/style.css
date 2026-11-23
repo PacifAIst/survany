@@ -95,6 +95,16 @@ p { margin: 0 0 12px; }
 .example .note { margin: 0; }
 .see-shots { display: block; margin-top: 10px; color: var(--pink-2); font-weight: 600; }
 .see-shots .arrow-down { display: none; }
+.shot a { display: block; cursor: zoom-in; }
+/* Pop-up (CSS only): hidden until its id is the URL fragment. */
+.lightbox { display: none; position: fixed; inset: 0; z-index: 100; align-items: center; justify-content: center; padding: 24px; }
+.lightbox:target { display: flex; }
+.lb-backdrop { position: absolute; inset: 0; background: rgba(5, 4, 8, 0.86); backdrop-filter: blur(3px); cursor: zoom-out; }
+.lb-body { position: relative; margin: 0; text-align: center; }
+.lb-body img { display: block; max-width: min(92vw, 900px); max-height: 84vh; width: auto; height: auto; border-radius: 12px; border: 1px solid var(--line); box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6); }
+.lb-body figcaption { color: var(--muted); margin-top: 8px; font-size: 0.9rem; }
+.lb-close { position: absolute; top: max(16px, env(safe-area-inset-top, 0px)); right: 20px; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--line); color: var(--text); font-size: 28px; line-height: 1; text-decoration: none; }
+.lb-close:hover { border-color: var(--pink); color: var(--pink-2); }
 .shot { margin: 0; text-align: center; }
 .shot img { display: block; height: 200px; width: auto; border-radius: 10px; border: 1px solid var(--line); }
 .shot a:hover img { border-color: var(--pink); }

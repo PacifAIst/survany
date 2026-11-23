@@ -11,7 +11,7 @@
 <meta property="og:description" content="Point it at a webcam or any browser tab, say what to watch for, get a Telegram or email alert. Free, open source, local AI.">
 <meta property="og:type" content="website">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css?v=20261123c">
+<link rel="stylesheet" href="style.css?v=20261123d">
 </head>
 <body>
 <header class="top">
@@ -82,8 +82,20 @@
     <p class="note">Example rule, built in: <em>"Person left the camera view"</em>. While you sit at the laptop nothing is
       sent anywhere. Walk away and, about ten seconds later, your phone gets: <q>Person left the camera view.
       Confirmed by local, confidence 98%.</q> <span class="see-shots">See captures of the alerts received <span class="arrow-right" aria-hidden="true">→</span><span class="arrow-down" aria-hidden="true">↓</span></span></p>
-      <figure class="shot"><a href="https://github.com/PacifAIst/survany/blob/main/telegram.png"><img src="img/alert-telegram.webp" width="467" height="600" alt="The alert in Telegram: photo of the empty room, Person left the camera view, confirmed by local, confidence 98%" loading="lazy"></a><figcaption>Telegram</figcaption></figure>
-      <figure class="shot"><a href="https://github.com/PacifAIst/survany/blob/main/email.png"><img src="img/alert-email.webp" width="603" height="600" alt="The same alert by email, with the snapshot attached" loading="lazy"></a><figcaption>Email</figcaption></figure>
+      <figure class="shot"><a href="#view-telegram" aria-label="Enlarge the Telegram alert"><img src="img/alert-telegram.webp" width="467" height="600" alt="The alert in Telegram: photo of the empty room, Person left the camera view, confirmed by local, confidence 98%" loading="lazy"></a><figcaption>Telegram</figcaption></figure>
+      <figure class="shot"><a href="#view-email" aria-label="Enlarge the email alert"><img src="img/alert-email.webp" width="603" height="600" alt="The same alert by email, with the snapshot attached" loading="lazy"></a><figcaption>Email</figcaption></figure>
+  </div>
+  <!-- Pop-ups without JavaScript (the CSP allows no scripts): a link to #view-… shows it (:target);
+       the cross or a click outside links to #close, a fragment that does not exist, so the page does not jump. -->
+  <div class="lightbox" id="view-telegram" role="dialog" aria-label="Telegram alert, full size">
+    <a class="lb-backdrop" href="#close" aria-label="Close"></a>
+    <figure class="lb-body"><img src="img/alert-telegram-full.webp" width="916" height="1178" alt="The alert in Telegram, full size" loading="lazy"><figcaption>Telegram</figcaption></figure>
+    <a class="lb-close" href="#close" aria-label="Close">×</a>
+  </div>
+  <div class="lightbox" id="view-email" role="dialog" aria-label="Email alert, full size">
+    <a class="lb-backdrop" href="#close" aria-label="Close"></a>
+    <figure class="lb-body"><img src="img/alert-email-full.webp" width="699" height="696" alt="The alert by email, full size" loading="lazy"><figcaption>Email</figcaption></figure>
+    <a class="lb-close" href="#close" aria-label="Close">×</a>
   </div>
 </section>
 
