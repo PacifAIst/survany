@@ -5,9 +5,9 @@
     <img src="./yt.png" alt="Watch our 30-sec YouTube reel" width="44%">
   </a>
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="./telegram.png" alt="Telegram" width="18%">
+  <img src="./telegram.png" alt="Telegram" width="19%">
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="./email.png" alt="Email" width="28%">
+  <img src="./email.png" alt="Email" width="24%">
 </p>
 
 <p align="center">
